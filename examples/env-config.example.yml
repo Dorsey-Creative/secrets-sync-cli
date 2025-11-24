@@ -1,0 +1,15 @@
+# Secrets Sync CLI Configuration
+# Copy this to your project root as env-config.yml
+
+# Number of backup files to keep per env file (default: 3)
+backupRetention: 5
+
+flags:
+  noConfirm: false
+  skipUnchanged: true
+
+# Secrets to skip during sync operations
+skipSecrets:
+  - DEBUG
+  - LOCAL_ONLY_VAR
+  - TEST_*  # Wildcards supported

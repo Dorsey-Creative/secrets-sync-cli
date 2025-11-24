@@ -1,0 +1,49 @@
+{
+  "name": "@joedorsey/secrets-sync",
+  "version": "1.0.0",
+  "description": "CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration",
+  "type": "module",
+  "bin": {
+    "secrets-sync": "./dist/secrets-sync.js"
+  },
+  "scripts": {
+    "build": "bun build src/secrets-sync.ts --outdir dist --target node",
+    "dev": "bun run src/secrets-sync.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "lint": "echo 'Linting not configured yet'",
+    "prepublishOnly": "bun run build"
+  },
+  "keywords": [
+    "secrets",
+    "environment",
+    "env",
+    "dotenv",
+    "sync",
+    "github-secrets",
+    "cli"
+  ],
+  "author": "Joe Dorsey Jr.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joedorseyjr/secrets-sync-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joedorseyjr/secrets-sync-cli/issues"
+  },
+  "homepage": "https://github.com/joedorseyjr/secrets-sync-cli#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "bun-types": "latest"
+  },
+  "dependencies": {}
+}
