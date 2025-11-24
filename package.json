@@ -1,5 +1,5 @@
 {
-  "name": "@joedorsey/secrets-sync",
+  "name": "@dorsey-creative/secrets-sync",
   "version": "1.0.0",
   "description": "CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration",
   "type": "module",
@@ -23,16 +23,16 @@
     "github-secrets",
     "cli"
   ],
-  "author": "Joe Dorsey Jr.",
+  "author": "Dorsey Creative",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/joedorseyjr/secrets-sync-cli.git"
+    "url": "https://github.com/Dorsey-Creative/secrets-sync-cli.git"
   },
   "bugs": {
-    "url": "https://github.com/joedorseyjr/secrets-sync-cli/issues"
+    "url": "https://github.com/Dorsey-Creative/secrets-sync-cli/issues"
   },
-  "homepage": "https://github.com/joedorseyjr/secrets-sync-cli#readme",
+  "homepage": "https://github.com/Dorsey-Creative/secrets-sync-cli#readme",
   "files": [
     "dist",
     "README.md",

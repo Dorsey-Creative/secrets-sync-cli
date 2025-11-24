@@ -1,4 +1,4 @@
-# @joedorsey/secrets-sync
+# @dorsey-creative/secrets-sync
 
 CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration.
 
@@ -16,13 +16,13 @@ CLI tool for syncing environment secrets across environments with drift detectio
 
 ```bash
 # Using bun
-bun add @joedorsey/secrets-sync
+bun add @dorsey-creative/secrets-sync
 
 # Using npm
-npm install @joedorsey/secrets-sync
+npm install @dorsey-creative/secrets-sync
 
 # Using yarn
-yarn add @joedorsey/secrets-sync
+yarn add @dorsey-creative/secrets-sync
 ```
 
 ## Usage
@@ -132,7 +132,7 @@ secrets-sync --dir ./environments
 
 ```bash
 # Clone the repo
-git clone https://github.com/joedorseyjr/secrets-sync-cli.git
+git clone https://github.com/Dorsey-Creative/secrets-sync-cli.git
 cd secrets-sync-cli
 
 # Install dependencies
@@ -150,7 +150,7 @@ bun run build
 
 ## License
 
-MIT © Joe Dorsey Jr.
+MIT © Dorsey Creative
 
 ## Contributing
 
