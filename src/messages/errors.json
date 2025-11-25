@@ -1,0 +1,47 @@
+{
+  "ERR_DEPENDENCY_MISSING": {
+    "what": "Missing dependency: {{dependency}}",
+    "why": "This tool requires {{dependency}} to be installed",
+    "howToFix": "Install from {{installUrl}}{{#installCommand}}\nOr run: {{installCommand}}{{/installCommand}}"
+  },
+  "ERR_DEPENDENCY_AUTH": {
+    "what": "{{dependency}} not authenticated",
+    "why": "You need to authenticate with {{dependency}} before using this feature",
+    "howToFix": "Run: {{authCommand}}"
+  },
+  "ERR_NODE_VERSION": {
+    "what": "Node.js version {{currentVersion}} is too old",
+    "why": "This tool requires Node.js >= {{requiredVersion}}",
+    "howToFix": "Upgrade Node.js from https://nodejs.org"
+  },
+  "ERR_PERMISSION_READ": {
+    "what": "Permission denied reading file: {{path}}",
+    "why": "The file exists but you don't have read access",
+    "howToFix": "Fix: {{fixCommand}}"
+  },
+  "ERR_PERMISSION_WRITE": {
+    "what": "Permission denied writing file: {{path}}",
+    "why": "You don't have write access to this location",
+    "howToFix": "Fix: {{fixCommand}}"
+  },
+  "ERR_FILE_NOT_FOUND": {
+    "what": "File not found: {{path}}",
+    "why": "The file doesn't exist at this location",
+    "howToFix": "Check the path and try again"
+  },
+  "ERR_TIMEOUT": {
+    "what": "Operation timed out after {{timeoutSeconds}}s: {{operation}}",
+    "why": "The operation took too long to complete",
+    "howToFix": "Suggestions:\n- Check your internet connection\n- Try again in a few moments\n- Increase timeout: SECRETS_SYNC_TIMEOUT={{suggestedTimeout}} secrets-sync ..."
+  },
+  "ERR_VALIDATION": {
+    "what": "Validation failed{{#field}} for field: {{field}}{{/field}}",
+    "why": "{{reason}}",
+    "howToFix": "{{suggestion}}"
+  },
+  "ERR_COMMAND_FAILED": {
+    "what": "Command failed: {{command}}",
+    "why": "{{reason}}",
+    "howToFix": "{{suggestion}}"
+  }
+}

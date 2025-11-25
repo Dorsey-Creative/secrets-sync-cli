@@ -7,20 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Binary now works with Node.js (not just Bun) - changed shebang and replaced Bun.argv (#4)
-- Build script ensures executable permissions on output binary (#4)
-- Fixed TypeScript type errors with optional boolean flags (#2)
-
 ### Added
 
+- Error handling foundation: structured error classes with context support (#5)
+- Centralized error message catalog with consistent "what, why, how to fix" format (#5)
+- Logger module with 4 levels (ERROR, WARN, INFO, DEBUG) and colored output (#5)
+- `--verbose` flag to enable debug logging for troubleshooting (#5)
+- Error message builder with ANSI colors and template interpolation (#5)
+- Comprehensive unit tests for error handling (70 tests, 100% coverage) (#5)
 - TypeScript configuration (tsconfig.json) with strict mode enabled (#2)
 - Proper type checking for all flags and function parameters
-- Plan for error handling and logging
 
-
-## [1.0.6] - 2025-11-24
+### Fixed
 
 ### Fixed
 

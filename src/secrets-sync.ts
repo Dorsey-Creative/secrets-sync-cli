@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createHash } from 'node:crypto';
+import { Logger } from './utils/logger';
 
 // Avoid extra dependencies; simple argv parsing
 interface Flags {
@@ -24,6 +25,7 @@ interface Flags {
   force?: boolean;
   noConfirm?: boolean;
   skipUnchanged?: boolean;
+  verbose?: boolean;
   help?: boolean;
   version?: boolean;
 }
@@ -186,7 +188,7 @@ function applyConfigFlags(flags: Flags, configFlags?: Partial<Flags>) {
   if (!configFlags) return;
   if (configFlags.dir && !flags.dir) flags.dir = configFlags.dir;
   if (configFlags.env && !flags.env) flags.env = configFlags.env;
-  const booleanKeys: (keyof Flags)[] = ['dryRun', 'overwrite', 'force', 'noConfirm', 'skipUnchanged', 'help', 'version'];
+  const booleanKeys: (keyof Flags)[] = ['dryRun', 'overwrite', 'force', 'noConfirm', 'skipUnchanged', 'verbose', 'help', 'version'];
   for (const key of booleanKeys) {
     const value = configFlags[key];
     if (typeof value === 'boolean' && value) {
@@ -239,18 +241,24 @@ function printHeader() {
   console.log(`${COLORS.dim}================================${COLORS.reset}`);
 }
 
+// Logger instance (initialized in main with verbose flag)
+let logger: Logger;
+
 // Structured logging helpers
 function logInfo(msg: string) {
-  console.log(`${COLORS.cyan}[INFO]${COLORS.reset} ${msg}`);
+  logger?.info(msg) ?? console.log(`${COLORS.cyan}[INFO]${COLORS.reset} ${msg}`);
 }
 function logWarn(msg: string) {
-  console.warn(`${COLORS.yellow}[WARN]${COLORS.reset} ${msg}`);
+  logger?.warn(msg) ?? console.warn(`${COLORS.yellow}[WARN]${COLORS.reset} ${msg}`);
 }
 function logErr(msg: string) {
-  console.error(`${COLORS.red}[ERROR]${COLORS.reset} ${msg}`);
+  logger?.error(msg) ?? console.error(`${COLORS.red}[ERROR]${COLORS.reset} ${msg}`);
 }
 function logSuccess(msg: string) {
-  console.log(`${COLORS.green}[OK]${COLORS.reset} ${msg}`);
+  logger?.info(msg) ?? console.log(`${COLORS.green}[OK]${COLORS.reset} ${msg}`);
+}
+function logDebug(msg: string) {
+  logger?.debug(msg);
 }
 
 function printHelp() {
@@ -263,10 +271,11 @@ function printHelp() {
   console.log('  --dry-run            Perform validation and show planned actions only');
   console.log('  --overwrite          Force update all secrets (ignores manifest)');
   console.log('  --skip-unchanged     Trust manifest; skip secrets with matching hashes');
+  console.log('  --verbose            Show detailed debug output');
   console.log('  --force, -f          Prefix additional production files (e.g., .env.prod -> PROD_) instead of layering');
   console.log('  --no-confirm         Non-interactive mode (fail instead of prompting)');
-  console.log('  --help               Show this help');
-  console.log('  --version            Show version');
+  console.log('  --help, -h           Show this help');
+  console.log('  --version, -v        Show version');
   console.log('');
   console.log('Configuration (env-config.yml):');
   console.log('  backupRetention: <n> Number of backup files to keep per env file (default: 3)');
@@ -314,6 +323,7 @@ function parseFlags(argv: string[]): Flags {
     force: false,
     noConfirm: false,
     skipUnchanged: false,
+    verbose: false,
     help: false,
     version: false,
   };
@@ -335,6 +345,9 @@ function parseFlags(argv: string[]): Flags {
         break;
       case '--skip-unchanged':
         flags.skipUnchanged = true;
+        break;
+      case '--verbose':
+        flags.verbose = true;
         break;
       case '--force':
       case '-f':
@@ -909,16 +922,24 @@ async function main() {
   const args = process.argv.slice(2);
   const flags = parseFlags(args);
 
+  // Initialize logger with verbose flag
+  logger = new Logger({ verbose: flags.verbose });
+  logDebug(`Parsed flags: ${JSON.stringify(flags)}`);
+
   const initialDir = flags.dir ?? DEFAULTS.dir;
   const envConfig = loadEnvConfig(initialDir);
   applyConfigFlags(flags, envConfig.flags);
   const dir = flags.dir ?? DEFAULTS.dir;
+  
+  logDebug(`Using directory: ${dir}`);
   
   // Load required secrets configuration at runtime
   const REQUIRED_SECRETS = loadRequiredSecrets(dir);
   const REQUIRED_PROD_KEYS: string[] = Array.isArray(REQUIRED_SECRETS.production) 
     ? [...REQUIRED_SECRETS.production] 
     : [];
+  
+  logDebug(`Required production keys: ${REQUIRED_PROD_KEYS.length}`);
   
   const skipSecrets = new Set<string>((envConfig.skipSecrets ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean));
   const backupRetention = envConfig.backupRetention ?? 3;

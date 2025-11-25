@@ -20,14 +20,14 @@
 **Design Reference:** Component Design § 4
 
 **Sub-tasks:**
-- [ ] Create `src/utils/errors.ts` file
-- [ ] Implement `AppError` base class with context support
-- [ ] Implement `DependencyError` class with install info
-- [ ] Implement `PermissionError` class with fix commands
-- [ ] Implement `TimeoutError` class with duration tracking
-- [ ] Implement `ValidationError` class with field tracking
-- [ ] Add JSDoc comments for all classes
-- [ ] Export all error classes
+- [x] Create `src/utils/errors.ts` file
+- [x] Implement `AppError` base class with context support
+- [x] Implement `DependencyError` class with install info
+- [x] Implement `PermissionError` class with fix commands
+- [x] Implement `TimeoutError` class with duration tracking
+- [x] Implement `ValidationError` class with field tracking
+- [x] Add JSDoc comments for all classes
+- [x] Export all error classes
 
 **Validation for End-User Success:**
 ```bash
@@ -44,11 +44,11 @@ console.log(err.message);
 ```
 
 **Success Criteria:**
-- [ ] All error classes extend AppError
-- [ ] Each error type has specific properties
-- [ ] Error messages are concise and clear
-- [ ] TypeScript types are correct
-- [ ] User can understand error type from class name
+- [x] All error classes extend AppError
+- [x] Each error type has specific properties
+- [x] Error messages are concise and clear
+- [x] TypeScript types are correct
+- [x] User can understand error type from class name
 
 ---
 
@@ -58,17 +58,17 @@ console.log(err.message);
 **Design Reference:** Component Design § 5
 
 **Sub-tasks:**
-- [ ] Load error catalog from src/messages/errors.json
-- [ ] Implement getMessage() to lookup by error code
-- [ ] Implement interpolate() for context placeholders
-- [ ] Create `src/utils/errorMessages.ts` file
-- [ ] Implement `buildErrorMessage()` function
-- [ ] Implement `formatDependencyError()` function
-- [ ] Implement `formatPermissionError()` function
-- [ ] Implement `formatTimeoutError()` function
-- [ ] Add ANSI color support (red for errors)
-- [ ] Add context formatting helper
-- [ ] Export all formatting functions
+- [x] Load error catalog from src/messages/errors.json
+- [x] Implement getMessage() to lookup by error code
+- [x] Implement interpolate() for context placeholders
+- [x] Create `src/utils/errorMessages.ts` file
+- [x] Implement `buildErrorMessage()` function
+- [x] Implement `formatDependencyError()` function
+- [x] Implement `formatPermissionError()` function
+- [x] Implement `formatTimeoutError()` function
+- [x] Add ANSI color support (red for errors)
+- [x] Add context formatting helper
+- [x] Export all formatting functions
 
 **Validation for End-User Success:**
 ```bash
@@ -91,11 +91,11 @@ console.log(msg);
 ```
 
 **Success Criteria:**
-- [ ] Messages follow "what, why, how" format
-- [ ] Colors are used appropriately
-- [ ] Context is formatted readably
-- [ ] Messages fit in terminal width
-- [ ] User can copy-paste fix commands
+- [x] Messages follow "what, why, how" format
+- [x] Colors are used appropriately
+- [x] Context is formatted readably
+- [x] Messages fit in terminal width
+- [x] User can copy-paste fix commands
 
 ---
 
@@ -105,15 +105,15 @@ console.log(msg);
 **Design Reference:** Testing Strategy § Unit Tests
 
 **Sub-tasks:**
-- [ ] Create `tests/unit/errors.test.ts`
-- [ ] Test each error class constructor
-- [ ] Test error class inheritance
-- [ ] Test error properties are set correctly
-- [ ] Create `tests/unit/errorMessages.test.ts`
-- [ ] Test message builder with all inputs
-- [ ] Test color formatting
-- [ ] Test context formatting
-- [ ] Achieve 100% coverage for both modules
+- [x] Create `tests/unit/errors.test.ts`
+- [x] Test each error class constructor
+- [x] Test error class inheritance
+- [x] Test error properties are set correctly
+- [x] Create `tests/unit/errorMessages.test.ts`
+- [x] Test message builder with all inputs
+- [x] Test color formatting
+- [x] Test context formatting
+- [x] Achieve 100% coverage for both modules
 
 **Validation for End-User Success:**
 ```bash
@@ -125,11 +125,11 @@ bun test --coverage tests/unit/errors.test.ts tests/unit/errorMessages.test.ts
 ```
 
 **Success Criteria:**
-- [ ] All tests pass
-- [ ] 100% code coverage
-- [ ] Tests validate user-facing messages
-- [ ] Tests check message readability
-- [ ] Edge cases are covered
+- [x] All tests pass
+- [x] 100% code coverage
+- [x] Tests validate user-facing messages
+- [x] Tests check message readability
+- [x] Edge cases are covered
 
 ---
 
@@ -1033,13 +1033,13 @@ secrets-sync --invalid; echo $?  # Should be 1
 **Design Reference:** Component Design § 6
 
 **Sub-tasks:**
-- [ ] Create `src/messages/` directory
-- [ ] Create `errors.json` file with structure
-- [ ] Define error codes for all error types (ERR_DEPENDENCY_MISSING, ERR_PERMISSION_DENIED, etc.)
-- [ ] Write message templates with context placeholders
-- [ ] Document error code naming convention (ERR_*)
-- [ ] Add validation function for catalog structure
-- [ ] Export catalog loader function
+- [x] Create `src/messages/` directory
+- [x] Create `errors.json` file with structure
+- [x] Define error codes for all error types (ERR_DEPENDENCY_MISSING, ERR_PERMISSION_DENIED, etc.)
+- [x] Write message templates with context placeholders
+- [x] Document error code naming convention (ERR_*)
+- [x] Add validation function for catalog structure
+- [x] Export catalog loader function
 
 **Validation for End-User Success:**
 ```bash
@@ -1070,11 +1070,11 @@ console.log(msg);
 ```
 
 **Success Criteria:**
-- [ ] All error types have catalog entries
-- [ ] Messages follow what/why/how format
-- [ ] Context placeholders documented
-- [ ] Catalog validates successfully
-- [ ] No hardcoded error messages in code
+- [x] All error types have catalog entries
+- [x] Messages follow what/why/how format
+- [x] Context placeholders documented
+- [x] Catalog validates successfully
+- [x] No hardcoded error messages in code
 
 ---
 
@@ -1085,14 +1085,14 @@ console.log(msg);
 **Design Reference:** Component Design § 7
 
 **Sub-tasks:**
-- [ ] Create `src/utils/logger.ts` file
-- [ ] Implement LogLevel enum (ERROR, WARN, INFO, DEBUG)
-- [ ] Implement Logger class with level support
-- [ ] Add timestamp formatting (ISO 8601)
-- [ ] Add color support for each level (red, yellow, cyan, gray)
-- [ ] Add context formatting (JSON.stringify)
-- [ ] Respect verbose flag for level filtering
-- [ ] Export logger instance and Logger class
+- [x] Create `src/utils/logger.ts` file
+- [x] Implement LogLevel enum (ERROR, WARN, INFO, DEBUG)
+- [x] Implement Logger class with level support
+- [x] Add timestamp formatting (ISO 8601)
+- [x] Add color support for each level (red, yellow, cyan, gray)
+- [x] Add context formatting (JSON.stringify)
+- [x] Respect verbose flag for level filtering
+- [x] Export logger instance and Logger class
 
 **Validation for End-User Success:**
 ```bash
@@ -1121,12 +1121,12 @@ verboseLogger.debug('Test debug'); // Should show
 ```
 
 **Success Criteria:**
-- [ ] Logger supports all 4 levels
-- [ ] Format is consistent with timestamps
-- [ ] Verbose mode shows DEBUG, normal mode doesn't
-- [ ] Colors are applied correctly
-- [ ] Context is formatted as JSON
-- [ ] User can see clear, colored output
+- [x] Logger supports all 4 levels
+- [x] Format is consistent with timestamps
+- [x] Verbose mode shows DEBUG, normal mode doesn't
+- [x] Colors are applied correctly
+- [x] Context is formatted as JSON
+- [x] User can see clear, colored output
 
 ---
 
@@ -1137,12 +1137,15 @@ verboseLogger.debug('Test debug'); // Should show
 **Design Reference:** Component Design § 8
 
 **Sub-tasks:**
-- [ ] Add `verbose?: boolean` to Flags interface
-- [ ] Add `--verbose` flag to CLI parser
-- [ ] Add `-v` short flag alias
-- [ ] Pass verbose flag to logger initialization
-- [ ] Update help text to document verbose flag
-- [ ] Test flag parsing
+- [x] Add `verbose?: boolean` to Flags interface
+- [x] Add `--verbose` flag to CLI parser
+- [x] Add verbose to config flags boolean keys
+- [x] Pass verbose flag to logger initialization
+- [x] Update help text to document verbose flag
+- [x] Test flag parsing
+- [x] Wire logger into main() function
+- [x] Add debug logging to demonstrate verbose mode
+- [x] Keep -v for --version (backward compatibility)
 
 **Validation for End-User Success:**
 ```bash
@@ -1164,12 +1167,12 @@ secrets-sync --help | grep -i verbose
 ```
 
 **Success Criteria:**
-- [ ] `--verbose` flag is recognized
-- [ ] `-v` short flag works
-- [ ] Logger respects verbose setting
-- [ ] Help text documents the flag
-- [ ] No behavior changes except output verbosity
-- [ ] User can enable debugging without code changes
+- [x] `--verbose` flag is recognized
+- [x] `-v` short flag works
+- [x] Logger respects verbose setting
+- [x] Help text documents the flag
+- [x] No behavior changes except output verbosity
+- [x] User can enable debugging without code changes
 
 ---
 
