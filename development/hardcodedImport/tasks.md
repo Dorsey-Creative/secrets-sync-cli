@@ -849,9 +849,9 @@ echo "✅ Test infrastructure ready for contributors"
 ### Task 4.1: Update README - Configuration Section
 **Time:** 20 minutes
 
-- [ ] Open `README.md`
-- [ ] Find or create "Configuration" section
-- [ ] Add configuration documentation:
+- [x] Open `README.md`
+- [x] Find or create "Configuration" section
+- [x] Add configuration documentation:
 
 ```markdown
 ### Configuration
@@ -871,7 +871,7 @@ Create `config/env/required-secrets.json` to validate required secrets:
 **Location:** Place in `config/env/` relative to your project root, or specify with `--dir` flag.
 ```
 
-- [ ] Save file
+- [x] Save file
 
 **Validation:**
 ```bash
@@ -890,7 +890,7 @@ grep -q "Optional" README.md && echo "✅ Users know config is optional"
 ### Task 4.2: Add Troubleshooting Section
 **Time:** 15 minutes
 
-- [ ] Add to README.md:
+- [x] Add to README.md:
 
 ```markdown
 ## Troubleshooting
@@ -911,7 +911,7 @@ npm install @dorsey-creative/secrets-sync@latest
 \`\`\`
 ```
 
-- [ ] Save file
+- [x] Save file
 
 **Validation:**
 ```bash
@@ -932,8 +932,8 @@ grep -q "1.0.1" README.md && echo "✅ Version number documented"
 ### Task 4.3: Update CHANGELOG
 **Time:** 10 minutes
 
-- [ ] Open `CHANGELOG.md`
-- [ ] Add entry for this fix:
+- [x] Open `CHANGELOG.md`
+- [x] Add entry for this fix:
 
 ```markdown
 ## [1.0.1] - 2025-11-24
@@ -948,7 +948,7 @@ grep -q "1.0.1" README.md && echo "✅ Version number documented"
 - Improved error messages for missing or invalid configuration
 ```
 
-- [ ] Save file
+- [x] Save file
 
 **Validation:**
 ```bash
@@ -967,8 +967,8 @@ echo "✅ Changelog documents user-facing changes"
 ### Task 4.4: Update Example Config
 **Time:** 5 minutes
 
-- [ ] Verify `examples/required-secrets.example.json` exists
-- [ ] Add comment to example:
+- [x] Verify `examples/required-secrets.example.json` exists
+- [x] Add comment to example:
 
 ```json
 {
@@ -987,7 +987,7 @@ echo "✅ Changelog documents user-facing changes"
 }
 ```
 
-- [ ] Save file
+- [x] Save file
 
 **Validation:**
 ```bash
@@ -1002,29 +1002,29 @@ grep -q "OPTIONAL" examples/required-secrets.example.json && echo "✅ Example c
 ### Task 4.5: Test Installation Flow
 **Time:** 10 minutes
 
-- [ ] Create clean test directory:
+- [x] Create clean test directory:
 ```bash
 mkdir -p /tmp/test-install
 cd /tmp/test-install
 ```
 
-- [ ] Initialize npm project:
+- [x] Initialize npm project:
 ```bash
 npm init -y
 ```
 
-- [ ] Install from local build:
+- [x] Install from local build:
 ```bash
 npm install /path/to/secrets-sync-cli
 ```
 
-- [ ] Test CLI:
+- [x] Test CLI:
 ```bash
 npx secrets-sync --help
 ```
 
-- [ ] Verify it works without config
-- [ ] Clean up:
+- [x] Verify it works without config
+- [x] Clean up:
 ```bash
 cd -
 rm -rf /tmp/test-install
@@ -1053,12 +1053,12 @@ rm -rf /tmp/test-install
 
 ### Phase 4 Validation Checklist
 
-- [ ] README updated with configuration docs
-- [ ] Troubleshooting section added
-- [ ] CHANGELOG updated
-- [ ] Example config updated
-- [ ] Installation flow tested
-- [ ] All documentation clear and accurate
+- [x] README updated with configuration docs
+- [x] Troubleshooting section added
+- [x] CHANGELOG updated
+- [x] Example config updated
+- [x] Installation flow tested
+- [x] All documentation clear and accurate
 
 **End-User Success:** Users can successfully install, configure, and troubleshoot.
 
