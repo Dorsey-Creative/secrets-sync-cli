@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error messages for missing or invalid configuration
 - All configuration warnings now use [CONFIG] prefix for easy filtering
 - Updated package name from `@dorsey-creative/secrets-sync` to `secrets-sync-cli`
+- Build versions now use date-based format (YYYYMMDD.X) that resets daily
 
 ### Added
 - Comprehensive test suite with 11 passing tests (5 unit + 5 integration)
