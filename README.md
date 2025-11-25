@@ -99,8 +99,26 @@ your-project/
 | `--force` | Skip all confirmations |
 | `--no-confirm` | Skip confirmation prompts |
 | `--skip-unchanged` | Skip files with no changes |
+| `--verbose` | Show detailed debug output |
 | `--help` | Show help message |
 | `--version` | Show version |
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SECRETS_SYNC_TIMEOUT` | Timeout for network operations (ms) | `30000` (30s) |
+| `SKIP_DEPENDENCY_CHECK` | Skip dependency validation (for CI/CD) | `false` |
+
+### Examples
+
+```bash
+# Increase timeout for slow networks
+SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
+
+# Skip dependency checks in CI
+SKIP_DEPENDENCY_CHECK=1 secrets-sync --dry-run
+```
 
 ## Examples
 

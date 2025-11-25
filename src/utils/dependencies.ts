@@ -5,10 +5,7 @@
  * Runs checks in parallel and caches results for the session.
  */
 
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
-
-const execAsync = promisify(exec);
+import { execWithTimeout } from './timeout.js';
 
 export interface DependencyCheck {
   name: string;
@@ -93,7 +90,7 @@ export const ghCliCheck: DependencyCheck = {
   name: 'gh-cli',
   check: async () => {
     try {
-      await execAsync('gh --version');
+      await execWithTimeout('gh --version', { operation: 'gh CLI version check' });
       return true;
     } catch (error) {
       return false;
@@ -113,7 +110,7 @@ export const ghAuthCheck: DependencyCheck = {
   check: async () => {
     // First check if gh CLI is installed
     try {
-      await execAsync('gh --version');
+      await execWithTimeout('gh --version', { operation: 'gh CLI version check' });
     } catch (error) {
       // gh not installed, skip auth check (will be caught by ghCliCheck)
       return true;
@@ -121,7 +118,7 @@ export const ghAuthCheck: DependencyCheck = {
 
     // gh is installed, now check auth
     try {
-      await execAsync('gh auth status');
+      await execWithTimeout('gh auth status', { operation: 'gh auth status check' });
       return true;
     } catch (error) {
       return false;

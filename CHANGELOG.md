@@ -21,9 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safe file operations module with permission error handling (#5)
 - Automatic fix commands for permission errors (chmod suggestions) (#5)
 - Graceful handling of unreadable/unwritable files and directories (#5)
-- Comprehensive unit tests for error handling (80 tests, 100% coverage) (#5)
+- Network timeout protection with configurable timeout (default 30s) (#5)
+- `SECRETS_SYNC_TIMEOUT` environment variable to adjust timeout for slow networks (#5)
+- Timeout wrapper using AbortController for proper cleanup (#5)
+- All command executions now have timeout protection to prevent infinite hangs (#5)
+- Comprehensive unit tests for error handling (89 tests, 100% coverage) (#5)
 - Integration tests for dependency validation (8 tests) (#5)
 - Integration tests for file permissions (7 tests) (#5)
+- Integration tests for timeout functionality (7 tests) (#5)
 - TypeScript configuration (tsconfig.json) with strict mode enabled (#2)
 - Proper type checking for all flags and function parameters
 
@@ -32,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations now use safe wrappers with error handling (#5)
 - File permission errors now show exact paths and fix commands (#5)
 - Error messages include context for easier debugging (#5)
+- All command executions now use timeout wrapper to prevent hangs (#5)
+- Dependency checks (gh CLI, gh auth) now respect `SECRETS_SYNC_TIMEOUT` environment variable (#5)
 
 ## [1.0.6] - 2025-11-24
 

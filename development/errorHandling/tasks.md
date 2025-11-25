@@ -1,6 +1,7 @@
 # Implementation Tasks: Error Handling Improvements
 
 ## Project Overview
+
 **Issue:** #5  
 **Branch:** `5-improve-error-handling`  
 **Total Estimated Time:** 10 days  
@@ -10,16 +11,19 @@
 ---
 
 ## Phase 1: Foundation (Days 1-2.5)
+
 **Goal:** Create reusable error handling infrastructure  
 **Time Estimate:** 2.5 days  
 **Requirements:** TR-4, TR-5, NFR-3
 
 ### Task 1.1: Create Error Class Hierarchy
+
 **Time:** 4 hours  
 **Requirements:** TR-4  
 **Design Reference:** Component Design § 4
 
 **Sub-tasks:**
+
 - [x] Create `src/utils/errors.ts` file
 - [x] Implement `AppError` base class with context support
 - [x] Implement `DependencyError` class with install info
@@ -30,6 +34,7 @@
 - [x] Export all error classes
 
 **Validation for End-User Success:**
+
 ```bash
 # Test that errors are properly typed
 bun test tests/unit/errors.test.ts
@@ -44,6 +49,7 @@ console.log(err.message);
 ```
 
 **Success Criteria:**
+
 - [x] All error classes extend AppError
 - [x] Each error type has specific properties
 - [x] Error messages are concise and clear
@@ -53,11 +59,13 @@ console.log(err.message);
 ---
 
 ### Task 1.2: Create Error Message Builder
+
 **Time:** 4 hours  
 **Requirements:** TR-5, FR-9, FR-11  
 **Design Reference:** Component Design § 5
 
 **Sub-tasks:**
+
 - [x] Load error catalog from src/messages/errors.json
 - [x] Implement getMessage() to lookup by error code
 - [x] Implement interpolate() for context placeholders
@@ -71,6 +79,7 @@ console.log(err.message);
 - [x] Export all formatting functions
 
 **Validation for End-User Success:**
+
 ```bash
 # Test message format consistency
 bun test tests/unit/errorMessages.test.ts
@@ -91,6 +100,7 @@ console.log(msg);
 ```
 
 **Success Criteria:**
+
 - [x] Messages follow "what, why, how" format
 - [x] Colors are used appropriately
 - [x] Context is formatted readably
@@ -100,11 +110,13 @@ console.log(msg);
 ---
 
 ### Task 1.3: Write Unit Tests for Foundation
+
 **Time:** 4 hours  
 **Requirements:** NFR-4  
 **Design Reference:** Testing Strategy § Unit Tests
 
 **Sub-tasks:**
+
 - [x] Create `tests/unit/errors.test.ts`
 - [x] Test each error class constructor
 - [x] Test error class inheritance
@@ -116,6 +128,7 @@ console.log(msg);
 - [x] Achieve 100% coverage for both modules
 
 **Validation for End-User Success:**
+
 ```bash
 # Run tests with coverage
 bun test --coverage tests/unit/errors.test.ts tests/unit/errorMessages.test.ts
@@ -125,6 +138,7 @@ bun test --coverage tests/unit/errors.test.ts tests/unit/errorMessages.test.ts
 ```
 
 **Success Criteria:**
+
 - [x] All tests pass
 - [x] 100% code coverage
 - [x] Tests validate user-facing messages
@@ -134,16 +148,19 @@ bun test --coverage tests/unit/errors.test.ts tests/unit/errorMessages.test.ts
 ---
 
 ## Phase 2: Dependency Validation (Days 3-4)
+
 **Goal:** Catch missing dependencies before operations  
 **Time Estimate:** 2 days  
 **Requirements:** FR-1, FR-2, FR-3, US-1
 
 ### Task 2.1: Create Dependency Validator Module
+
 **Time:** 4 hours  
 **Requirements:** TR-1, FR-1  
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
+
 - [x] Create `src/utils/dependencies.ts` file
 - [x] Define `DependencyCheck` interface
 - [x] Define `ValidationResult` interface
@@ -154,6 +171,7 @@ bun test --coverage tests/unit/errors.test.ts tests/unit/errorMessages.test.ts
 - [x] Export interfaces and functions
 
 **Validation for End-User Success:**
+
 ```bash
 # Test that validation runs quickly
 time node -e "
@@ -171,6 +189,7 @@ const { validateDependencies } = require('./dist/utils/dependencies.js');
 ```
 
 **Success Criteria:**
+
 - [x] Validation completes in < 1 second
 - [x] All failures shown together (not fail-fast)
 - [x] Results are cached for session
@@ -180,11 +199,13 @@ const { validateDependencies } = require('./dist/utils/dependencies.js');
 ---
 
 ### Task 2.2: Implement gh CLI Check
+
 **Time:** 2 hours  
 **Requirements:** FR-2, AC-1  
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
+
 - [x] Create `ghCliCheck` dependency check
 - [x] Run `gh --version` to verify installation
 - [x] Handle "command not found" error
@@ -193,6 +214,7 @@ const { validateDependencies } = require('./dist/utils/dependencies.js');
 - [x] Add to dependency check list
 
 **Validation for End-User Success:**
+
 ```bash
 # Test with gh CLI missing
 PATH=/usr/bin:/bin node dist/secrets-sync.js --help
@@ -207,6 +229,7 @@ gh --version && node dist/secrets-sync.js --help
 ```
 
 **Success Criteria:**
+
 - [x] Detects missing gh CLI correctly
 - [x] Shows installation URL
 - [x] Shows platform-specific command
@@ -216,11 +239,13 @@ gh --version && node dist/secrets-sync.js --help
 ---
 
 ### Task 2.3: Implement gh Auth Check
+
 **Time:** 2 hours  
 **Requirements:** FR-2, AC-1  
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
+
 - [x] Create `ghAuthCheck` dependency check
 - [x] Run `gh auth status` to verify authentication
 - [x] Handle "not logged in" error
@@ -229,6 +254,7 @@ gh --version && node dist/secrets-sync.js --help
 - [x] Skip auth check when gh CLI is not installed (returns true)
 
 **Validation for End-User Success:**
+
 ```bash
 # Test with unauthenticated gh
 gh auth logout && node dist/secrets-sync.js --help
@@ -242,6 +268,7 @@ gh auth login && node dist/secrets-sync.js --help
 ```
 
 **Success Criteria:**
+
 - [x] Detects unauthenticated gh correctly
 - [x] Shows auth command
 - [x] User can authenticate from error message
@@ -251,11 +278,13 @@ gh auth login && node dist/secrets-sync.js --help
 ---
 
 ### Task 2.4: Implement Node.js Version Check
+
 **Time:** 2 hours  
 **Requirements:** FR-3, AC-1  
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
+
 - [x] Create `nodeVersionCheck` dependency check
 - [x] Read `process.version`
 - [x] Parse version string (e.g., "v18.0.0")
@@ -265,6 +294,7 @@ gh auth login && node dist/secrets-sync.js --help
 - [x] Add to dependency check list
 
 **Validation for End-User Success:**
+
 ```bash
 # Test with old Node.js (mock process.version)
 node -e "
@@ -279,6 +309,7 @@ nodeVersionCheck.check().then(result => console.log(result));
 ```
 
 **Success Criteria:**
+
 - [x] Detects old Node.js correctly
 - [x] Shows current and required versions
 - [x] Shows upgrade URL
@@ -288,11 +319,13 @@ nodeVersionCheck.check().then(result => console.log(result));
 ---
 
 ### Task 2.5: Integrate Dependency Checks into main()
+
 **Time:** 2 hours  
 **Requirements:** FR-1, US-1  
 **Design Reference:** Integration Points
 
 **Sub-tasks:**
+
 - [x] Import dependency validator in `src/secrets-sync.ts`
 - [x] Add validation call at start of `main()`
 - [x] Format and display validation failures
@@ -301,6 +334,7 @@ nodeVersionCheck.check().then(result => console.log(result));
 - [x] Update main() function
 
 **Validation for End-User Success:**
+
 ```bash
 # Test complete user journey
 # 1. Fresh install without gh
@@ -323,6 +357,7 @@ SKIP_DEPENDENCY_CHECK=1 secrets-sync --help
 ```
 
 **Success Criteria:**
+
 - [x] Checks run before any operations
 - [x] User sees all missing dependencies at once
 - [x] Exit code is 1 on failure
@@ -332,11 +367,13 @@ SKIP_DEPENDENCY_CHECK=1 secrets-sync --help
 ---
 
 ### Task 2.6: Write Integration Tests for Dependencies
+
 **Time:** 4 hours  
 **Requirements:** Test-1, Test-2, Test-6  
 **Design Reference:** Testing Strategy § Integration Tests
 
 **Sub-tasks:**
+
 - [x] Create `tests/integration/dependencies.test.ts`
 - [x] Test missing gh CLI scenario
 - [x] Test unauthenticated gh scenario
@@ -347,6 +384,7 @@ SKIP_DEPENDENCY_CHECK=1 secrets-sync --help
 - [x] Test parallel execution
 
 **Validation for End-User Success:**
+
 ```bash
 # Run integration tests
 bun test tests/integration/dependencies.test.ts
@@ -356,6 +394,7 @@ bun test tests/integration/dependencies.test.ts
 ```
 
 **Success Criteria:**
+
 - [x] All integration tests pass
 - [x] Tests cover all dependency scenarios
 - [x] Tests verify error message quality
@@ -365,16 +404,19 @@ bun test tests/integration/dependencies.test.ts
 ---
 
 ## Phase 3: File Operation Safety (Days 5-6)
+
 **Goal:** Handle permission errors gracefully  
 **Time Estimate:** 2 days  
 **Requirements:** FR-4, FR-5, FR-6, US-2
 
 ### Task 3.1: Create Safe File Operations Module
+
 **Time:** 4 hours  
 **Requirements:** TR-2, FR-4, FR-5, FR-6  
 **Design Reference:** Component Design § 2
 
 **Sub-tasks:**
+
 - [x] Create `src/utils/safeFs.ts` file
 - [x] Define `FileError` interface
 - [x] Implement `safeReadFile()` function
@@ -386,6 +428,7 @@ bun test tests/integration/dependencies.test.ts
 - [x] Export all functions
 
 **Validation for End-User Success:**
+
 ```bash
 # Test with unreadable file
 echo "SECRET=value" > test.env
@@ -411,6 +454,7 @@ console.log(result); // Should show file content
 ```
 
 **Success Criteria:**
+
 - [ ] All file operations wrapped safely
 - [ ] Errors returned as values (not thrown)
 - [ ] Fix commands are correct and testable
@@ -420,11 +464,13 @@ console.log(result); // Should show file content
 ---
 
 ### Task 3.2: Replace fs Calls in Codebase
+
 **Time:** 4 hours  
 **Requirements:** FR-4, FR-5, FR-6  
 **Design Reference:** Integration Points
 
 **Sub-tasks:**
+
 - [x] Find all `fs.readFileSync` calls
 - [x] Replace with `safeReadFile`
 - [x] Add error handling for FileError
@@ -437,6 +483,7 @@ console.log(result); // Should show file content
 - [x] Test each replacement
 
 **Validation for End-User Success:**
+
 ```bash
 # Test complete user journey with permission errors
 # 1. Create unreadable .env file
@@ -466,6 +513,7 @@ secrets-sync --env staging
 ```
 
 **Success Criteria:**
+
 - [ ] All fs calls replaced
 - [ ] Error messages show exact file paths
 - [ ] Fix commands are correct
@@ -475,11 +523,13 @@ secrets-sync --env staging
 ---
 
 ### Task 3.3: Write Integration Tests for File Permissions
+
 **Time:** 4 hours  
 **Requirements:** Test-3, Test-4, AC-2  
 **Design Reference:** Testing Strategy § Integration Tests
 
 **Sub-tasks:**
+
 - [x] Create `tests/integration/filePermissions.test.ts`
 - [x] Test unreadable file scenario
 - [x] Test unwritable file scenario
@@ -490,6 +540,7 @@ secrets-sync --env staging
 - [x] Verify fix commands are correct
 
 **Validation for End-User Success:**
+
 ```bash
 # Run integration tests
 bun test tests/integration/filePermissions.test.ts
@@ -500,6 +551,7 @@ bun test tests/integration/filePermissions.test.ts
 ```
 
 **Success Criteria:**
+
 - [ ] All integration tests pass
 - [ ] Tests cover all permission scenarios
 - [ ] Tests verify fix commands work
@@ -509,26 +561,32 @@ bun test tests/integration/filePermissions.test.ts
 ---
 
 ## Phase 4: Network Timeout Protection (Days 7-8)
+
 **Goal:** Prevent infinite hangs on network operations  
 **Time Estimate:** 2 days  
 **Requirements:** FR-7, FR-8, US-3
+**Status:** ✅ COMPLETE
 
 ### Task 4.1: Create Timeout Wrapper Module
+
 **Time:** 4 hours  
 **Requirements:** TR-3, FR-7  
 **Design Reference:** Component Design § 3
+**Status:** ✅ COMPLETE
 
 **Sub-tasks:**
-- [ ] Create `src/utils/timeout.ts` file
-- [ ] Define `TimeoutOptions` interface
-- [ ] Implement `withTimeout()` function using AbortController
-- [ ] Implement `execWithTimeout()` wrapper
-- [ ] Add timeout configuration from env var
-- [ ] Implement `getTimeout()` helper
-- [ ] Add cleanup on success/failure
-- [ ] Export all functions
+
+- [x] Create `src/utils/timeout.ts` file
+- [x] Define `TimeoutOptions` interface
+- [x] Implement `withTimeout()` function using AbortController
+- [x] Implement `execWithTimeout()` wrapper
+- [x] Add timeout configuration from env var
+- [x] Implement `getTimeout()` helper
+- [x] Add cleanup on success/failure
+- [x] Export all functions
 
 **Validation for End-User Success:**
+
 ```bash
 # Test timeout behavior
 node -e "
@@ -557,6 +615,7 @@ withTimeout(fastOp, { timeout: 1000 })
 ```
 
 **Success Criteria:**
+
 - [ ] Timeouts work correctly
 - [ ] AbortController cleans up properly
 - [ ] Env var configuration works
@@ -566,19 +625,23 @@ withTimeout(fastOp, { timeout: 1000 })
 ---
 
 ### Task 4.2: Replace exec Calls with Timeout Wrapper
+
 **Time:** 4 hours  
 **Requirements:** FR-7, FR-8  
 **Design Reference:** Integration Points
+**Status:** ✅ COMPLETE
 
 **Sub-tasks:**
-- [ ] Find all `exec()` calls in codebase
-- [ ] Replace with `execWithTimeout()`
-- [ ] Add timeout error handling
-- [ ] Format timeout errors with suggestions
-- [ ] Test each replacement
-- [ ] Verify no infinite hangs possible
+
+- [x] Find all `exec()` calls in codebase
+- [x] Replace with `execWithTimeout()`
+- [x] Add timeout error handling
+- [x] Format timeout errors with suggestions
+- [x] Test each replacement
+- [x] Verify no infinite hangs possible
 
 **Validation for End-User Success:**
+
 ```bash
 # Test complete user journey with slow network
 # 1. Simulate slow GitHub API
@@ -604,6 +667,7 @@ secrets-sync --env staging
 ```
 
 **Success Criteria:**
+
 - [ ] All exec calls have timeouts
 - [ ] No infinite hangs occur
 - [ ] Timeout errors are clear
@@ -613,21 +677,25 @@ secrets-sync --env staging
 ---
 
 ### Task 4.3: Write Integration Tests for Timeouts
+
 **Time:** 4 hours  
 **Requirements:** Test-5, Test-7, AC-3, AC-6  
 **Design Reference:** Testing Strategy § Integration Tests
+**Status:** ✅ COMPLETE
 
 **Sub-tasks:**
-- [ ] Create `tests/integration/timeout.test.ts`
-- [ ] Test slow operation timeout
-- [ ] Test fast operation success
-- [ ] Test custom timeout from env var
-- [ ] Test timeout error message
-- [ ] Test cleanup on timeout
-- [ ] Test cleanup on success
-- [ ] Verify no memory leaks
+
+- [x] Create `tests/integration/timeout.test.ts`
+- [x] Test slow operation timeout
+- [x] Test fast operation success
+- [x] Test custom timeout from env var
+- [x] Test timeout error message
+- [x] Test cleanup on timeout
+- [x] Test cleanup on success
+- [x] Verify no memory leaks
 
 **Validation for End-User Success:**
+
 ```bash
 # Run integration tests
 bun test tests/integration/timeout.test.ts
@@ -638,6 +706,7 @@ bun test tests/integration/timeout.test.ts
 ```
 
 **Success Criteria:**
+
 - [ ] All integration tests pass
 - [ ] Tests cover timeout scenarios
 - [ ] Tests verify error messages
@@ -647,16 +716,19 @@ bun test tests/integration/timeout.test.ts
 ---
 
 ## Phase 5: Integration & Polish (Days 9-11.5)
+
 **Goal:** Ensure all error handling works together  
 **Time Estimate:** 2.5 days  
 **Requirements:** All AC, NFR-2
 
 ### Task 5.1: End-to-End Testing
+
 **Time:** 4 hours  
 **Requirements:** All AC  
 **Design Reference:** Testing Strategy § E2E Tests
 
 **Sub-tasks:**
+
 - [ ] Create `tests/e2e/errorHandling.test.ts`
 - [ ] Test complete user journey: missing gh
 - [ ] Test complete user journey: permission denied
@@ -667,6 +739,7 @@ bun test tests/integration/timeout.test.ts
 - [ ] Verify all fix commands work
 
 **Validation for End-User Success:**
+
 ```bash
 # Run E2E tests
 bun test tests/e2e/errorHandling.test.ts
@@ -700,6 +773,7 @@ secrets-sync --dry-run
 ```
 
 **Success Criteria:**
+
 - [ ] All E2E tests pass
 - [ ] Complete user journeys work
 - [ ] Error messages are consistent
@@ -709,11 +783,13 @@ secrets-sync --dry-run
 ---
 
 ### Task 5.2: Error Message Consistency Review
+
 **Time:** 2 hours  
 **Requirements:** FR-9, AC-4  
 **Design Reference:** Appendix: Error Message Examples
 
 **Sub-tasks:**
+
 - [ ] Review all error messages in codebase
 - [ ] Verify "what, why, how" format
 - [ ] Check color usage is consistent
@@ -723,6 +799,7 @@ secrets-sync --dry-run
 - [ ] Document error message patterns
 
 **Validation for End-User Success:**
+
 ```bash
 # Generate all possible errors
 # Review each one manually
@@ -737,6 +814,7 @@ secrets-sync --dry-run
 ```
 
 **Success Criteria:**
+
 - [ ] All errors follow same format
 - [ ] Colors are used consistently
 - [ ] Messages are readable
@@ -746,11 +824,13 @@ secrets-sync --dry-run
 ---
 
 ### Task 5.3: Documentation Updates
+
 **Time:** 4 hours  
 **Requirements:** AC-4  
 **Design Reference:** Documentation Updates
 
 **Sub-tasks:**
+
 - [ ] Update README.md with troubleshooting section
 - [ ] Document `SECRETS_SYNC_TIMEOUT` env var
 - [ ] Document `SKIP_DEPENDENCY_CHECK` env var
@@ -761,6 +841,7 @@ secrets-sync --dry-run
 - [ ] Update CHANGELOG.md
 
 **Validation for End-User Success:**
+
 ```bash
 # Review documentation
 # Verify each common error is documented
@@ -773,6 +854,7 @@ secrets-sync --dry-run
 ```
 
 **Success Criteria:**
+
 - [ ] README has troubleshooting section
 - [ ] All env vars documented
 - [ ] Common errors have examples
@@ -782,11 +864,13 @@ secrets-sync --dry-run
 ---
 
 ### Task 5.4: Performance Validation
+
 **Time:** 2 hours  
 **Requirements:** NFR-1  
 **Design Reference:** Performance Considerations
 
 **Sub-tasks:**
+
 - [ ] Benchmark dependency checks
 - [ ] Verify checks complete in < 1 second
 - [ ] Benchmark error message generation
@@ -796,6 +880,7 @@ secrets-sync --dry-run
 - [ ] Optimize if needed
 
 **Validation for End-User Success:**
+
 ```bash
 # Benchmark dependency checks
 time node -e "
@@ -822,6 +907,7 @@ time secrets-sync --help
 ```
 
 **Success Criteria:**
+
 - [ ] Dependency checks < 1 second
 - [ ] Message generation < 1ms
 - [ ] No memory leaks
@@ -831,11 +917,13 @@ time secrets-sync --help
 ---
 
 ### Task 5.5: Regression Testing
+
 **Time:** 2 hours  
 **Requirements:** TR-8, AC-7  
 **Design Reference:** Backward Compatibility
 
 **Sub-tasks:**
+
 - [ ] Run full existing test suite
 - [ ] Verify all existing tests pass
 - [ ] Test existing CLI commands unchanged
@@ -845,6 +933,7 @@ time secrets-sync --help
 - [ ] Document any changes
 
 **Validation for End-User Success:**
+
 ```bash
 # Run all existing tests
 bun test
@@ -864,6 +953,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 ```
 
 **Success Criteria:**
+
 - [ ] All existing tests pass
 - [ ] No breaking changes
 - [ ] Exit codes unchanged
@@ -873,11 +963,13 @@ secrets-sync --invalid; echo $?  # Should be 1
 ---
 
 ### Task 5.6: User Acceptance Testing
+
 **Time:** 4 hours  
 **Requirements:** NFR-2  
 **Design Reference:** Rollout Strategy
 
 **Sub-tasks:**
+
 - [ ] Recruit 2-3 test users
 - [ ] Provide test scenarios
 - [ ] Observe users encountering errors
@@ -888,6 +980,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] Re-test with users
 
 **Validation for End-User Success:**
+
 ```bash
 # Test scenarios for users:
 # 1. Fresh install without gh
@@ -904,6 +997,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 ```
 
 **Success Criteria:**
+
 - [ ] Users resolve issues quickly (< 5 min)
 - [ ] Users don't need external help
 - [ ] Error messages are clear
@@ -915,6 +1009,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 ## Completion Checklist
 
 ### Code Complete
+
 - [ ] All error classes implemented
 - [ ] All error formatters implemented
 - [ ] Dependency validator complete
@@ -925,6 +1020,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] Integration complete
 
 ### Testing Complete
+
 - [ ] All unit tests pass (100% coverage)
 - [ ] All integration tests pass
 - [ ] All E2E tests pass
@@ -933,6 +1029,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] User acceptance tests pass
 
 ### Documentation Complete
+
 - [ ] README updated
 - [ ] Troubleshooting guide added
 - [ ] CONTRIBUTING.md updated
@@ -941,6 +1038,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] API documentation complete
 
 ### Quality Checks
+
 - [ ] Code review completed
 - [ ] Error messages reviewed
 - [ ] Performance validated
@@ -949,6 +1047,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] Backward compatibility verified
 
 ### Deployment Ready
+
 - [ ] All tests passing in CI
 - [ ] Documentation reviewed
 - [ ] User testing complete
@@ -960,6 +1059,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 ## Success Metrics
 
 ### Quantitative Metrics
+
 - [ ] Dependency checks complete in < 1 second
 - [ ] Error message generation < 1ms
 - [ ] Test coverage >= 90%
@@ -967,6 +1067,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] Exit codes unchanged
 
 ### Qualitative Metrics
+
 - [ ] Users report errors are "clear and helpful"
 - [ ] Users can resolve issues without help
 - [ ] Error messages are actionable
@@ -974,6 +1075,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] Users feel in control
 
 ### User Success Validation
+
 - [ ] New users can install dependencies from errors
 - [ ] Developers can fix permission issues from errors
 - [ ] CI/CD operators can debug from logs
@@ -984,31 +1086,34 @@ secrets-sync --invalid; echo $?  # Should be 1
 
 ## Time Tracking
 
-| Phase | Estimated | Actual | Notes |
-|-------|-----------|--------|-------|
-| Phase 1: Foundation | 2.5 days | | |
-| Phase 2: Dependencies | 2 days | | |
-| Phase 3: File Safety | 2 days | | |
-| Phase 4: Timeouts | 2 days | | |
-| Phase 5: Integration | 2.5 days | | |
-| **Total** | **11 days** | | |
+| Phase                 | Estimated   | Actual | Notes |
+| --------------------- | ----------- | ------ | ----- |
+| Phase 1: Foundation   | 2.5 days    |        |       |
+| Phase 2: Dependencies | 2 days      |        |       |
+| Phase 3: File Safety  | 2 days      |        |       |
+| Phase 4: Timeouts     | 2 days      |        |       |
+| Phase 5: Integration  | 2.5 days    |        |       |
+| **Total**             | **11 days** |        |       |
 
 ---
 
 ## Risk Mitigation
 
 ### If Behind Schedule
+
 - [ ] Prioritize Phase 1-3 (core functionality)
 - [ ] Phase 4 (timeouts) can be follow-up
 - [ ] Phase 5 (polish) can be iterative
 
 ### If Issues Found
+
 - [ ] Document in GitHub issue
 - [ ] Add to task list
 - [ ] Re-estimate timeline
 - [ ] Communicate with stakeholders
 
 ### If User Feedback Negative
+
 - [ ] Collect specific examples
 - [ ] Update error messages
 - [ ] Re-test with users
@@ -1019,6 +1124,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 ## Definition of Done
 
 **This project is complete when:**
+
 - [ ] All tasks checked off
 - [ ] All tests passing
 - [ ] All documentation updated
@@ -1029,11 +1135,13 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] Users report improved experience
 
 ### Task 1.4: Create Error Message Catalog
+
 **Time:** 3 hours  
 **Requirements:** FR-11  
 **Design Reference:** Component Design § 6
 
 **Sub-tasks:**
+
 - [x] Create `src/messages/` directory
 - [x] Create `errors.json` file with structure
 - [x] Define error codes for all error types (ERR_DEPENDENCY_MISSING, ERR_PERMISSION_DENIED, etc.)
@@ -1043,6 +1151,7 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [x] Export catalog loader function
 
 **Validation for End-User Success:**
+
 ```bash
 # Verify catalog structure
 node -e "
@@ -1071,6 +1180,7 @@ console.log(msg);
 ```
 
 **Success Criteria:**
+
 - [x] All error types have catalog entries
 - [x] Messages follow what/why/how format
 - [x] Context placeholders documented
@@ -1079,13 +1189,14 @@ console.log(msg);
 
 ---
 
-
 ### Task 1.5: Create Logger Module
+
 **Time:** 4 hours  
 **Requirements:** TR-9  
 **Design Reference:** Component Design § 7
 
 **Sub-tasks:**
+
 - [x] Create `src/utils/logger.ts` file
 - [x] Implement LogLevel enum (ERROR, WARN, INFO, DEBUG)
 - [x] Implement Logger class with level support
@@ -1096,6 +1207,7 @@ console.log(msg);
 - [x] Export logger instance and Logger class
 
 **Validation for End-User Success:**
+
 ```bash
 # Test logger output at different levels
 node -e "
@@ -1122,6 +1234,7 @@ verboseLogger.debug('Test debug'); // Should show
 ```
 
 **Success Criteria:**
+
 - [x] Logger supports all 4 levels
 - [x] Format is consistent with timestamps
 - [x] Verbose mode shows DEBUG, normal mode doesn't
@@ -1131,13 +1244,14 @@ verboseLogger.debug('Test debug'); // Should show
 
 ---
 
-
 ### Task 1.6: Add Verbose Flag to CLI
+
 **Time:** 2 hours  
 **Requirements:** FR-12, US-5  
 **Design Reference:** Component Design § 8
 
 **Sub-tasks:**
+
 - [x] Add `verbose?: boolean` to Flags interface
 - [x] Add `--verbose` flag to CLI parser
 - [x] Add verbose to config flags boolean keys
@@ -1149,6 +1263,7 @@ verboseLogger.debug('Test debug'); // Should show
 - [x] Keep -v for --version (backward compatibility)
 
 **Validation for End-User Success:**
+
 ```bash
 # Test verbose flag
 secrets-sync --verbose --help 2>&1 | head -20
@@ -1168,6 +1283,7 @@ secrets-sync --help | grep -i verbose
 ```
 
 **Success Criteria:**
+
 - [x] `--verbose` flag is recognized
 - [x] `-v` short flag works
 - [x] Logger respects verbose setting
@@ -1177,13 +1293,14 @@ secrets-sync --help | grep -i verbose
 
 ---
 
-
 ### Task 5.7: Add Code Quality Checks
+
 **Time:** 3 hours  
 **Requirements:** TR-10, NFR-3  
 **Design Reference:** Performance Considerations
 
 **Sub-tasks:**
+
 - [ ] Install jscpd for duplication checking
 - [ ] Install complexity-report for complexity analysis
 - [ ] Configure thresholds in package.json or config files
@@ -1193,6 +1310,7 @@ secrets-sync --help | grep -i verbose
 - [ ] Run initial quality check and fix any violations
 
 **Validation for End-User Success:**
+
 ```bash
 # Check duplication
 npm run quality:duplication
@@ -1214,6 +1332,7 @@ npm run quality
 ```
 
 **Success Criteria:**
+
 - [ ] Tools installed and configured
 - [ ] Thresholds set correctly (duplication < 5%, complexity < 10)
 - [ ] CI fails if thresholds exceeded
@@ -1222,7 +1341,6 @@ npm run quality
 - [ ] Code meets quality standards
 
 ---
-
 
 ---
 
@@ -1236,6 +1354,7 @@ npm run quality
 ## Task Summary
 
 **Total Tasks:** 25 (was 21, +4 new)
+
 - Phase 1: 6 tasks (was 3, +3 new: catalog, logger, verbose flag)
 - Phase 2: 6 tasks (unchanged)
 - Phase 3: 3 tasks (unchanged)
@@ -1243,20 +1362,24 @@ npm run quality
 - Phase 5: 7 tasks (was 6, +1 new: code quality)
 
 **New Tasks:**
+
 - Task 1.4: Create Error Message Catalog (3 hours)
 - Task 1.5: Create Logger Module (4 hours)
 - Task 1.6: Add Verbose Flag to CLI (2 hours)
 - Task 5.7: Add Code Quality Checks (3 hours)
 
 **Updated Tasks:**
+
 - Task 1.2: Now loads from catalog instead of building messages
 
 **Time Impact:**
+
 - Original: 10 days
 - New work: +12 hours (1.5 days, rounded to 1 day)
 - Total: 11 days
 
 **Scope Clarifications:**
+
 - Cross-platform: Node.js handles differences (no platform-specific code)
 - Error recovery: Show fix info, no auto-retry
 - Concurrent execution: Removed from scope
@@ -1265,4 +1388,3 @@ npm run quality
 
 **Implementation Ready:** ✅
 All tasks defined, all validation steps specified, ready to begin Phase 1.
-
