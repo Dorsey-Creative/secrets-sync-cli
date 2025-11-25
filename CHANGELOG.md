@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All configuration warnings now use [CONFIG] prefix for easy filtering
 - Updated package name from `@dorsey-creative/secrets-sync` to `secrets-sync-cli`
 - Build versions now use date-based format (YYYYMMDD.X) that resets daily
-- Recreated publish workflow to fix GitHub Actions cache issues
+- Recreated publish workflow with fresh workflow_dispatch trigger
 
 ### Added
 
