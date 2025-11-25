@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed hardcoded import path that prevented package installation (#1)
 - Configuration now loads at runtime instead of compile-time
 - Tool works without required-secrets.json (validation is optional)
+- Workflows no longer trigger on every push (manual trigger only)
 
 ### Changed
 - Required secrets configuration is now optional
