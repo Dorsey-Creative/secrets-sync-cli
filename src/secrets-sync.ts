@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
  * Secrets Sync CLI – Discovery & Parsing
  *
@@ -906,7 +906,7 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
 }
 
 async function main() {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
   const flags = parseFlags(args);
 
   const initialDir = flags.dir ?? DEFAULTS.dir;

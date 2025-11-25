@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Binary now works with Node.js (not just Bun) - changed shebang and replaced Bun.argv (#4)
+- Build script ensures executable permissions on output binary (#4)
+- Fixed TypeScript type errors with optional boolean flags (#2)
+
 ### Added
 
-- Bun lockfile and tsconfig, update flag handling for stricter typing
+- TypeScript configuration (tsconfig.json) with strict mode enabled (#2)
+- Proper type checking for all flags and function parameters
 
 
 ## [1.0.6] - 2025-11-24
