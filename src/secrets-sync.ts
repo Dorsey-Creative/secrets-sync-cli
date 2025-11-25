@@ -19,13 +19,13 @@ import { createHash } from 'node:crypto';
 interface Flags {
   env?: string;
   dir?: string;
-  dryRun: boolean;
-  overwrite: boolean;
-  force: boolean;
-  noConfirm: boolean;
-  skipUnchanged: boolean;
-  help: boolean;
-  version: boolean;
+  dryRun?: boolean;
+  overwrite?: boolean;
+  force?: boolean;
+  noConfirm?: boolean;
+  skipUnchanged?: boolean;
+  help?: boolean;
+  version?: boolean;
 }
 
 const DEFAULTS = {
@@ -161,7 +161,7 @@ function parseEnvConfig(raw: string): EnvConfig {
     for (const [key, value] of Object.entries(flags)) {
       const normalized = key as keyof Flags;
       if (['dryRun', 'overwrite', 'force', 'noConfirm', 'skipUnchanged', 'help', 'version'].includes(normalized)) {
-        config.flags[normalized] = parseBoolean(value);
+        (config.flags as any)[normalized] = parseBoolean(value);
       } else if (normalized === 'dir' || normalized === 'env') {
         config.flags[normalized] = value as any;
       }
@@ -190,7 +190,7 @@ function applyConfigFlags(flags: Flags, configFlags?: Partial<Flags>) {
   for (const key of booleanKeys) {
     const value = configFlags[key];
     if (typeof value === 'boolean' && value) {
-      flags[key] = true;
+      (flags as any)[key] = true;
     }
   }
 }
@@ -962,7 +962,7 @@ async function main() {
   let canonical: EnvFile | undefined;
   let othersProd: EnvFile[] = [];
   try {
-    const res = resolveProduction(files, flags.force);
+    const res = resolveProduction(files, flags.force ?? false);
     canonical = res.canonical;
     othersProd = res.others;
   } catch (e) {
@@ -983,7 +983,7 @@ async function main() {
 
     // Backup after parsing each file
     try {
-      writeBackup(dir, f.name, f.path, flags.dryRun, backupRetention);
+      writeBackup(dir, f.name, f.path, flags.dryRun ?? false, backupRetention);
     } catch (e) {
       console.warn('[WARN] Failed to write backup for', f.name, '-', (e as Error).message);
     }
@@ -996,7 +996,7 @@ async function main() {
 
     if (productionOverrides.has(f.path)) {
       if (flags.force) {
-        const { envName, prefix } = computePrefix(f, canonical, flags.force);
+        const { envName, prefix } = computePrefix(f, canonical, flags.force ?? false);
         const sourceByKey = Object.fromEntries(keys.map((k) => [k, f.name]));
         envSummaries.push({ name: envName, file: f.name, keyCount: keys.length, keys, prefix, data, sourceByKey });
         continue;
@@ -1015,7 +1015,7 @@ async function main() {
       continue;
     }
 
-    const { envName, prefix } = computePrefix(f, canonical, flags.force);
+    const { envName, prefix } = computePrefix(f, canonical, flags.force ?? false);
     const sourceByKey = Object.fromEntries(keys.map((k) => [k, f.name]));
     envSummaries.push({ name: envName, file: f.name, keyCount: keys.length, keys, prefix, data, sourceByKey });
   }
@@ -1098,8 +1098,8 @@ async function main() {
     prodActive,
     sourceBySecret,
     manifest,
-    flags.overwrite,
-    flags.skipUnchanged,
+    flags.overwrite ?? false,
+    flags.skipUnchanged ?? false,
     skipSecrets
   );
 
