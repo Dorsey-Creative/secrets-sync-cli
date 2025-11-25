@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI-only publishing enforcement
 - Changelog update checks in pre-push hook and GitHub Actions
 - npm provenance and trusted publishing (no tokens required)
+- Release script for controlled publishing from main branch only
 
 ## [1.0.0] - 2025-11-23
 

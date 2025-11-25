@@ -13,6 +13,7 @@
     "test:watch": "bun test --watch",
     "lint": "echo 'Linting not configured yet'",
     "prepublishOnly": "bun run build && node -e \"if (!process.env.CI) { console.error('❌ Use CI/CD to publish. Push a version tag instead.'); process.exit(1); }\"",
+    "release": "./scripts/release.sh",
     "version:build": "./scripts/bump-build.sh",
     "version:release": "./scripts/bump-release.sh"
   },
