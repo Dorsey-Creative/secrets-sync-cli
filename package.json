@@ -1,5 +1,5 @@
 {
-  "name": "@dorsey-creative/secrets-sync",
+  "name": "secrets-sync-cli",
   "version": "1.0.0",
   "description": "CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration",
   "type": "module",
