@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive test suite with 11 passing tests (5 unit + 5 integration)
 - Troubleshooting guide in README
 - Cross-platform support for test fixtures
+- CI-only publishing enforcement
+- Changelog update checks in pre-push hook and GitHub Actions
 
 ## [1.0.0] - 2025-11-23
 
