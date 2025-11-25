@@ -15,7 +15,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/release'
     
     permissions:
       contents: write
@@ -49,7 +49,7 @@ jobs:
         run: npm version ${{ inputs.version }} -m "chore: release v%s [skip ci]"
       
       - name: Push changes
-        run: git push origin main --follow-tags
+        run: git push origin release --follow-tags
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
