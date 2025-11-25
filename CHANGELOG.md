@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Required secrets configuration is now optional
 - Improved error messages for missing or invalid configuration
 - All configuration warnings now use [CONFIG] prefix for easy filtering
+- Updated package name from `@dorsey-creative/secrets-sync` to `secrets-sync-cli`
+
+### Added
+- Comprehensive test suite with 11 passing tests (5 unit + 5 integration)
+- Troubleshooting guide in README
+- Cross-platform support for test fixtures
 
 ## [1.0.0] - 2025-11-23
 
