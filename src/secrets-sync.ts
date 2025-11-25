@@ -15,6 +15,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createHash } from 'node:crypto';
 import { Logger } from './utils/logger';
+import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck } from './utils/dependencies';
 
 // Avoid extra dependencies; simple argv parsing
 interface Flags {
@@ -925,6 +926,35 @@ async function main() {
   // Initialize logger with verbose flag
   logger = new Logger({ verbose: flags.verbose });
   logDebug(`Parsed flags: ${JSON.stringify(flags)}`);
+
+  // Validate dependencies (unless skipped for CI)
+  if (!process.env.SKIP_DEPENDENCY_CHECK) {
+    logDebug('Running dependency checks...');
+    const result = await validateDependencies([
+      nodeVersionCheck,
+      ghCliCheck,
+      ghAuthCheck,
+    ]);
+
+    if (!result.success) {
+      console.error(`${COLORS.red}${COLORS.bold}❌ Missing required dependencies:${COLORS.reset}\n`);
+      result.failures.forEach((failure, index) => {
+        console.error(`${index + 1}. ${COLORS.red}${failure.errorMessage}${COLORS.reset}`);
+        if (failure.installUrl) {
+          console.error(`   Install: ${COLORS.cyan}${failure.installUrl}${COLORS.reset}`);
+        }
+        if (failure.installCommand) {
+          console.error(`   Or run: ${COLORS.cyan}${failure.installCommand}${COLORS.reset}`);
+        }
+        console.error('');
+      });
+      console.error(`${COLORS.yellow}Please install missing dependencies and try again.${COLORS.reset}`);
+      process.exit(1);
+    }
+    logDebug('All dependency checks passed');
+  } else {
+    logDebug('Skipping dependency checks (SKIP_DEPENDENCY_CHECK set)');
+  }
 
   const initialDir = flags.dir ?? DEFAULTS.dir;
   const envConfig = loadEnvConfig(initialDir);

@@ -144,14 +144,14 @@ bun test --coverage tests/unit/errors.test.ts tests/unit/errorMessages.test.ts
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
-- [ ] Create `src/utils/dependencies.ts` file
-- [ ] Define `DependencyCheck` interface
-- [ ] Define `ValidationResult` interface
-- [ ] Implement `validateDependencies()` function
-- [ ] Add parallel execution with `Promise.all()`
-- [ ] Add session caching for results
-- [ ] Add error aggregation (show all failures)
-- [ ] Export interfaces and functions
+- [x] Create `src/utils/dependencies.ts` file
+- [x] Define `DependencyCheck` interface
+- [x] Define `ValidationResult` interface
+- [x] Implement `validateDependencies()` function
+- [x] Add parallel execution with `Promise.all()`
+- [x] Add session caching for results
+- [x] Add error aggregation (show all failures)
+- [x] Export interfaces and functions
 
 **Validation for End-User Success:**
 ```bash
@@ -171,11 +171,11 @@ const { validateDependencies } = require('./dist/utils/dependencies.js');
 ```
 
 **Success Criteria:**
-- [ ] Validation completes in < 1 second
-- [ ] All failures shown together (not fail-fast)
-- [ ] Results are cached for session
-- [ ] User sees complete picture of missing deps
-- [ ] Parallel execution works correctly
+- [x] Validation completes in < 1 second
+- [x] All failures shown together (not fail-fast)
+- [x] Results are cached for session
+- [x] User sees complete picture of missing deps
+- [x] Parallel execution works correctly
 
 ---
 
@@ -185,12 +185,12 @@ const { validateDependencies } = require('./dist/utils/dependencies.js');
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
-- [ ] Create `ghCliCheck` dependency check
-- [ ] Run `gh --version` to verify installation
-- [ ] Handle "command not found" error
-- [ ] Provide installation URL: https://cli.github.com
-- [ ] Provide platform-specific install commands
-- [ ] Add to dependency check list
+- [x] Create `ghCliCheck` dependency check
+- [x] Run `gh --version` to verify installation
+- [x] Handle "command not found" error
+- [x] Provide installation URL: https://cli.github.com
+- [x] Provide platform-specific install commands
+- [x] Add to dependency check list
 
 **Validation for End-User Success:**
 ```bash
@@ -207,11 +207,11 @@ gh --version && node dist/secrets-sync.js --help
 ```
 
 **Success Criteria:**
-- [ ] Detects missing gh CLI correctly
-- [ ] Shows installation URL
-- [ ] Shows platform-specific command
-- [ ] User can install gh from error message
-- [ ] Check is fast (< 500ms)
+- [x] Detects missing gh CLI correctly
+- [x] Shows installation URL
+- [x] Shows platform-specific command
+- [x] User can install gh from error message
+- [x] Check is fast (< 500ms)
 
 ---
 
@@ -221,11 +221,12 @@ gh --version && node dist/secrets-sync.js --help
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
-- [ ] Create `ghAuthCheck` dependency check
-- [ ] Run `gh auth status` to verify authentication
-- [ ] Handle "not logged in" error
-- [ ] Provide auth command: `gh auth login`
-- [ ] Add to dependency check list
+- [x] Create `ghAuthCheck` dependency check
+- [x] Run `gh auth status` to verify authentication
+- [x] Handle "not logged in" error
+- [x] Provide auth command: `gh auth login`
+- [x] Add to dependency check list
+- [x] Skip auth check when gh CLI is not installed (returns true)
 
 **Validation for End-User Success:**
 ```bash
@@ -241,11 +242,11 @@ gh auth login && node dist/secrets-sync.js --help
 ```
 
 **Success Criteria:**
-- [ ] Detects unauthenticated gh correctly
-- [ ] Shows auth command
-- [ ] User can authenticate from error message
-- [ ] Check is fast (< 500ms)
-- [ ] Doesn't fail if gh not installed (handled by ghCliCheck)
+- [x] Detects unauthenticated gh correctly
+- [x] Shows auth command
+- [x] User can authenticate from error message
+- [x] Check is fast (< 500ms)
+- [x] Doesn't fail if gh not installed (handled by ghCliCheck)
 
 ---
 
@@ -255,13 +256,13 @@ gh auth login && node dist/secrets-sync.js --help
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
-- [ ] Create `nodeVersionCheck` dependency check
-- [ ] Read `process.version`
-- [ ] Parse version string (e.g., "v18.0.0")
-- [ ] Compare against minimum version (18.0.0)
-- [ ] Show current and required versions in error
-- [ ] Provide upgrade URL: https://nodejs.org
-- [ ] Add to dependency check list
+- [x] Create `nodeVersionCheck` dependency check
+- [x] Read `process.version`
+- [x] Parse version string (e.g., "v18.0.0")
+- [x] Compare against minimum version (18.0.0)
+- [x] Show current and required versions in error
+- [x] Provide upgrade URL: https://nodejs.org
+- [x] Add to dependency check list
 
 **Validation for End-User Success:**
 ```bash
@@ -278,11 +279,11 @@ nodeVersionCheck.check().then(result => console.log(result));
 ```
 
 **Success Criteria:**
-- [ ] Detects old Node.js correctly
-- [ ] Shows current and required versions
-- [ ] Shows upgrade URL
-- [ ] User understands version requirement
-- [ ] Check is instant (reads process.version)
+- [x] Detects old Node.js correctly
+- [x] Shows current and required versions
+- [x] Shows upgrade URL
+- [x] User understands version requirement
+- [x] Check is instant (reads process.version)
 
 ---
 
@@ -292,12 +293,12 @@ nodeVersionCheck.check().then(result => console.log(result));
 **Design Reference:** Integration Points
 
 **Sub-tasks:**
-- [ ] Import dependency validator in `src/secrets-sync.ts`
-- [ ] Add validation call at start of `main()`
-- [ ] Format and display validation failures
-- [ ] Exit with code 1 if validation fails
-- [ ] Add `SKIP_DEPENDENCY_CHECK` env var for CI
-- [ ] Update main() function
+- [x] Import dependency validator in `src/secrets-sync.ts`
+- [x] Add validation call at start of `main()`
+- [x] Format and display validation failures
+- [x] Exit with code 1 if validation fails
+- [x] Add `SKIP_DEPENDENCY_CHECK` env var for CI
+- [x] Update main() function
 
 **Validation for End-User Success:**
 ```bash
@@ -322,11 +323,11 @@ SKIP_DEPENDENCY_CHECK=1 secrets-sync --help
 ```
 
 **Success Criteria:**
-- [ ] Checks run before any operations
-- [ ] User sees all missing dependencies at once
-- [ ] Exit code is 1 on failure
-- [ ] Skip flag works for CI
-- [ ] User can resolve issues and retry
+- [x] Checks run before any operations
+- [x] User sees all missing dependencies at once
+- [x] Exit code is 1 on failure
+- [x] Skip flag works for CI
+- [x] User can resolve issues and retry
 
 ---
 
@@ -336,14 +337,14 @@ SKIP_DEPENDENCY_CHECK=1 secrets-sync --help
 **Design Reference:** Testing Strategy § Integration Tests
 
 **Sub-tasks:**
-- [ ] Create `tests/integration/dependencies.test.ts`
-- [ ] Test missing gh CLI scenario
-- [ ] Test unauthenticated gh scenario
-- [ ] Test old Node.js version scenario
-- [ ] Test all dependencies present scenario
-- [ ] Test skip flag scenario
-- [ ] Test caching behavior
-- [ ] Test parallel execution
+- [x] Create `tests/integration/dependencies.test.ts`
+- [x] Test missing gh CLI scenario
+- [x] Test unauthenticated gh scenario
+- [x] Test old Node.js version scenario
+- [x] Test all dependencies present scenario
+- [x] Test skip flag scenario
+- [x] Test caching behavior
+- [x] Test parallel execution
 
 **Validation for End-User Success:**
 ```bash
@@ -355,11 +356,11 @@ bun test tests/integration/dependencies.test.ts
 ```
 
 **Success Criteria:**
-- [ ] All integration tests pass
-- [ ] Tests cover all dependency scenarios
-- [ ] Tests verify error message quality
-- [ ] Tests check performance (< 1 second)
-- [ ] Tests validate user can fix issues
+- [x] All integration tests pass
+- [x] Tests cover all dependency scenarios
+- [x] Tests verify error message quality
+- [x] Tests check performance (< 1 second)
+- [x] Tests validate user can fix issues
 
 ---
 

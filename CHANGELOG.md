@@ -14,11 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Logger module with 4 levels (ERROR, WARN, INFO, DEBUG) and colored output (#5)
 - `--verbose` flag to enable debug logging for troubleshooting (#5)
 - Error message builder with ANSI colors and template interpolation (#5)
+- Dependency validation at startup: checks for gh CLI, gh auth, and Node.js >= 18 (#5)
+- Parallel dependency checks with session caching (< 1 second total) (#5)
+- `SKIP_DEPENDENCY_CHECK` environment variable for CI/CD pipelines (#5)
+- Platform-specific installation instructions for missing dependencies (#5)
 - Comprehensive unit tests for error handling (70 tests, 100% coverage) (#5)
+- Integration tests for dependency validation (8 tests) (#5)
 - TypeScript configuration (tsconfig.json) with strict mode enabled (#2)
 - Proper type checking for all flags and function parameters
 
-### Fixed
+## [1.0.6] - 2025-11-24
 
 ### Fixed
 
