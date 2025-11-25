@@ -9,9 +9,9 @@
 
 ---
 
-## Phase 1: Foundation (Days 1-2)
+## Phase 1: Foundation (Days 1-2.5)
 **Goal:** Create reusable error handling infrastructure  
-**Time Estimate:** 2 days  
+**Time Estimate:** 2.5 days  
 **Requirements:** TR-4, TR-5, NFR-3
 
 ### Task 1.1: Create Error Class Hierarchy
@@ -54,10 +54,13 @@ console.log(err.message);
 
 ### Task 1.2: Create Error Message Builder
 **Time:** 4 hours  
-**Requirements:** TR-5, FR-9  
+**Requirements:** TR-5, FR-9, FR-11  
 **Design Reference:** Component Design § 5
 
 **Sub-tasks:**
+- [ ] Load error catalog from src/messages/errors.json
+- [ ] Implement getMessage() to lookup by error code
+- [ ] Implement interpolate() for context placeholders
 - [ ] Create `src/utils/errorMessages.ts` file
 - [ ] Implement `buildErrorMessage()` function
 - [ ] Implement `formatDependencyError()` function
@@ -642,9 +645,9 @@ bun test tests/integration/timeout.test.ts
 
 ---
 
-## Phase 5: Integration & Polish (Days 9-10)
+## Phase 5: Integration & Polish (Days 9-11.5)
 **Goal:** Ensure all error handling works together  
-**Time Estimate:** 2 days  
+**Time Estimate:** 2.5 days  
 **Requirements:** All AC, NFR-2
 
 ### Task 5.1: End-to-End Testing
@@ -982,12 +985,12 @@ secrets-sync --invalid; echo $?  # Should be 1
 
 | Phase | Estimated | Actual | Notes |
 |-------|-----------|--------|-------|
-| Phase 1: Foundation | 2 days | | |
+| Phase 1: Foundation | 2.5 days | | |
 | Phase 2: Dependencies | 2 days | | |
 | Phase 3: File Safety | 2 days | | |
 | Phase 4: Timeouts | 2 days | | |
-| Phase 5: Integration | 2 days | | |
-| **Total** | **10 days** | | |
+| Phase 5: Integration | 2.5 days | | |
+| **Total** | **11 days** | | |
 
 ---
 
@@ -1023,3 +1026,239 @@ secrets-sync --invalid; echo $?  # Should be 1
 - [ ] Merged to develop branch
 - [ ] Issue #5 closed
 - [ ] Users report improved experience
+
+### Task 1.4: Create Error Message Catalog
+**Time:** 3 hours  
+**Requirements:** FR-11  
+**Design Reference:** Component Design § 6
+
+**Sub-tasks:**
+- [ ] Create `src/messages/` directory
+- [ ] Create `errors.json` file with structure
+- [ ] Define error codes for all error types (ERR_DEPENDENCY_MISSING, ERR_PERMISSION_DENIED, etc.)
+- [ ] Write message templates with context placeholders
+- [ ] Document error code naming convention (ERR_*)
+- [ ] Add validation function for catalog structure
+- [ ] Export catalog loader function
+
+**Validation for End-User Success:**
+```bash
+# Verify catalog structure
+node -e "
+const catalog = require('./src/messages/errors.json');
+Object.entries(catalog).forEach(([code, msg]) => {
+  if (!msg.what || !msg.why || !msg.howToFix) {
+    throw new Error(\`Invalid message: \${code}\`);
+  }
+  if (!code.startsWith('ERR_')) {
+    throw new Error(\`Invalid code: \${code}\`);
+  }
+});
+console.log('✓ Catalog valid -', Object.keys(catalog).length, 'error types');
+"
+
+# Test message interpolation
+node -e "
+const { getMessage } = require('./dist/utils/errorMessages.js');
+const msg = getMessage('ERR_DEPENDENCY_MISSING', {
+  dependency: 'gh',
+  installUrl: 'https://cli.github.com'
+});
+console.log(msg);
+// Should show interpolated message
+"
+```
+
+**Success Criteria:**
+- [ ] All error types have catalog entries
+- [ ] Messages follow what/why/how format
+- [ ] Context placeholders documented
+- [ ] Catalog validates successfully
+- [ ] No hardcoded error messages in code
+
+---
+
+
+### Task 1.5: Create Logger Module
+**Time:** 4 hours  
+**Requirements:** TR-9  
+**Design Reference:** Component Design § 7
+
+**Sub-tasks:**
+- [ ] Create `src/utils/logger.ts` file
+- [ ] Implement LogLevel enum (ERROR, WARN, INFO, DEBUG)
+- [ ] Implement Logger class with level support
+- [ ] Add timestamp formatting (ISO 8601)
+- [ ] Add color support for each level (red, yellow, cyan, gray)
+- [ ] Add context formatting (JSON.stringify)
+- [ ] Respect verbose flag for level filtering
+- [ ] Export logger instance and Logger class
+
+**Validation for End-User Success:**
+```bash
+# Test logger output at different levels
+node -e "
+const { Logger } = require('./dist/utils/logger.js');
+
+// Normal mode
+const logger = new Logger({ verbose: false });
+logger.error('Test error', { file: 'test.txt' });
+logger.info('Test info');
+logger.debug('Test debug'); // Should NOT show
+
+console.log('---');
+
+// Verbose mode
+const verboseLogger = new Logger({ verbose: true });
+verboseLogger.error('Test error');
+verboseLogger.info('Test info');
+verboseLogger.debug('Test debug'); // Should show
+"
+
+# Verify format matches spec
+# Should show: [TIMESTAMP] [LEVEL] message
+# Context: { ... }
+```
+
+**Success Criteria:**
+- [ ] Logger supports all 4 levels
+- [ ] Format is consistent with timestamps
+- [ ] Verbose mode shows DEBUG, normal mode doesn't
+- [ ] Colors are applied correctly
+- [ ] Context is formatted as JSON
+- [ ] User can see clear, colored output
+
+---
+
+
+### Task 1.6: Add Verbose Flag to CLI
+**Time:** 2 hours  
+**Requirements:** FR-12, US-5  
+**Design Reference:** Component Design § 8
+
+**Sub-tasks:**
+- [ ] Add `verbose?: boolean` to Flags interface
+- [ ] Add `--verbose` flag to CLI parser
+- [ ] Add `-v` short flag alias
+- [ ] Pass verbose flag to logger initialization
+- [ ] Update help text to document verbose flag
+- [ ] Test flag parsing
+
+**Validation for End-User Success:**
+```bash
+# Test verbose flag
+secrets-sync --verbose --help 2>&1 | head -20
+# Should show DEBUG level logs
+
+# Test short flag
+secrets-sync -v --help 2>&1 | head -20
+# Should show DEBUG level logs
+
+# Test normal mode (no flag)
+secrets-sync --help 2>&1 | head -20
+# Should NOT show DEBUG level logs
+
+# Verify help text
+secrets-sync --help | grep -i verbose
+# Should show: --verbose, -v  Show detailed debug output
+```
+
+**Success Criteria:**
+- [ ] `--verbose` flag is recognized
+- [ ] `-v` short flag works
+- [ ] Logger respects verbose setting
+- [ ] Help text documents the flag
+- [ ] No behavior changes except output verbosity
+- [ ] User can enable debugging without code changes
+
+---
+
+
+### Task 5.7: Add Code Quality Checks
+**Time:** 3 hours  
+**Requirements:** TR-10, NFR-3  
+**Design Reference:** Performance Considerations
+
+**Sub-tasks:**
+- [ ] Install jscpd for duplication checking
+- [ ] Install complexity-report for complexity analysis
+- [ ] Configure thresholds in package.json or config files
+- [ ] Add npm scripts: `quality:duplication`, `quality:complexity`, `quality`
+- [ ] Add quality checks to CI pipeline (.github/workflows)
+- [ ] Document quality checks in README
+- [ ] Run initial quality check and fix any violations
+
+**Validation for End-User Success:**
+```bash
+# Check duplication
+npm run quality:duplication
+# Should pass with < 5% duplication
+# Output: ✓ Duplication: 2.3% (threshold: 5%)
+
+# Check complexity
+npm run quality:complexity
+# Should pass with < 10 complexity per function
+# Output: ✓ Average complexity: 4.2 (threshold: 10)
+
+# Run all quality checks
+npm run quality
+# Should pass all checks
+# Output: ✓ All quality checks passed
+
+# Verify CI integration
+# Push code and check CI runs quality checks
+```
+
+**Success Criteria:**
+- [ ] Tools installed and configured
+- [ ] Thresholds set correctly (duplication < 5%, complexity < 10)
+- [ ] CI fails if thresholds exceeded
+- [ ] Documentation updated with quality commands
+- [ ] Developers can run checks locally
+- [ ] Code meets quality standards
+
+---
+
+
+---
+
+## Version History
+
+**v1.0** - 2025-11-25 - Initial task breakdown  
+**v1.1** - 2025-11-25 - Added Tasks 1.4-1.6, 5.7; updated Task 1.2; updated time estimates to 11 days
+
+---
+
+## Task Summary
+
+**Total Tasks:** 25 (was 21, +4 new)
+- Phase 1: 6 tasks (was 3, +3 new: catalog, logger, verbose flag)
+- Phase 2: 6 tasks (unchanged)
+- Phase 3: 3 tasks (unchanged)
+- Phase 4: 3 tasks (unchanged)
+- Phase 5: 7 tasks (was 6, +1 new: code quality)
+
+**New Tasks:**
+- Task 1.4: Create Error Message Catalog (3 hours)
+- Task 1.5: Create Logger Module (4 hours)
+- Task 1.6: Add Verbose Flag to CLI (2 hours)
+- Task 5.7: Add Code Quality Checks (3 hours)
+
+**Updated Tasks:**
+- Task 1.2: Now loads from catalog instead of building messages
+
+**Time Impact:**
+- Original: 10 days
+- New work: +12 hours (1.5 days, rounded to 1 day)
+- Total: 11 days
+
+**Scope Clarifications:**
+- Cross-platform: Node.js handles differences (no platform-specific code)
+- Error recovery: Show fix info, no auto-retry
+- Concurrent execution: Removed from scope
+- i18n: Out of scope (catalog enables future support)
+- Telemetry: Out of scope (create separate issue)
+
+**Implementation Ready:** ✅
+All tasks defined, all validation steps specified, ready to begin Phase 1.
+

@@ -67,6 +67,20 @@ Implement comprehensive error handling to provide clear, actionable feedback whe
 ### FR-1: Pre-flight Dependency Checks
 **Requirement:** The tool SHALL validate all required dependencies before executing operations.
 
+### US-5: Verbose Debugging
+**As a** developer troubleshooting issues  
+**I want** detailed debugging output when needed  
+**So that** I can diagnose complex problems
+
+**Acceptance Criteria:**
+- `--verbose` flag shows full stack traces
+- Verbose mode shows timing information
+- Verbose mode shows all context data
+- Debug logs are visible in verbose mode
+- Normal mode remains concise and user-friendly
+
+---
+
 **Details:**
 - Check for `gh` CLI availability
 - Validate Node.js version >= 18
@@ -169,9 +183,11 @@ Implement comprehensive error handling to provide clear, actionable feedback whe
 ---
 
 ### FR-9: Structured Error Format
-**Requirement:** The tool SHALL use a consistent error message format.
+**Requirement:** The tool SHALL use error messages from a centralized catalog with consistent format.
 
 **Details:**
+- All errors reference message catalog by error code
+- Messages loaded from `src/messages/errors.json`
 - Format: `[ERROR] <What failed>: <Why it failed>. <How to fix>`
 - Include relevant context (file paths, commands, etc.)
 - Use color coding: red for errors
@@ -265,15 +281,18 @@ class ValidationError extends Error
 ---
 
 ### TR-5: Error Message Builder
-**Requirement:** Create utility for building consistent error messages.
+**Requirement:** Create utility for loading and formatting error messages from catalog.
 
 **Implementation:**
 ```typescript
-function buildErrorMessage(
-  what: string,
-  why: string,
-  howToFix: string,
-  context?: Record<string, any>
+function getMessage(
+  errorCode: string,
+  contextValues?: Record<string, any>
+): string
+
+function formatError(
+  errorCode: string,
+  contextValues?: Record<string, any>
 ): string
 ```
 
@@ -525,3 +544,272 @@ function buildErrorMessage(
 - [ ] Documentation updated
 - [ ] No regression in existing functionality
 - [ ] Performance requirements met
+
+### US-5: Verbose Debugging
+**As a** developer troubleshooting issues  
+**I want** detailed debugging output when needed  
+**So that** I can diagnose complex problems
+
+**Acceptance Criteria:**
+- `--verbose` flag shows full stack traces
+- Verbose mode shows timing information
+- Verbose mode shows all context data
+- Debug logs are visible in verbose mode
+
+---
+
+
+### FR-11: Error Message Catalog
+**Requirement:** The tool SHALL load error messages from a centralized message catalog file.
+
+**Details:**
+- Messages stored in `src/messages/errors.json`
+- Format: `{ "ERR_CODE": { "what": "...", "why": "...", "howToFix": "...", "context": [] } }`
+- Messages loaded at startup and cached
+- All errors reference catalog by error code
+- Consistent format enforced by file structure
+- Enables future internationalization support
+
+**Verification:** 
+```bash
+# Verify message file loads
+node -e "const msgs = require('./src/messages/errors.json'); console.log(Object.keys(msgs).length)"
+
+# Verify no hardcoded error messages
+grep -r "console.error" src/ | grep -v "getMessage"
+```
+
+---
+
+### FR-12: Verbose Mode
+**Requirement:** The tool SHALL support a `--verbose` flag for detailed debugging output.
+
+**Details:**
+- CLI flag: `--verbose` or `-v`
+- Shows full stack traces on errors
+- Shows timing information for operations
+- Shows debug-level logs
+- Shows all context data in errors
+- Does not change exit codes or core behavior
+
+**Verification:**
+```bash
+# Test verbose output
+secrets-sync --verbose --help 2>&1 | grep -i "debug\|stack\|timing"
+
+# Test normal output (no verbose)
+secrets-sync --help 2>&1 | grep -v "debug\|stack\|timing"
+```
+
+---
+
+
+### TR-9: Logger Module
+**Requirement:** Create a centralized logger with consistent formatting and level support.
+
+**Implementation:**
+```typescript
+enum LogLevel {
+  ERROR = 0,
+  WARN = 1,
+  INFO = 2,
+  DEBUG = 3
+}
+
+interface LoggerOptions {
+  verbose: boolean;
+}
+
+class Logger {
+  constructor(options: LoggerOptions)
+  error(message: string, context?: Record<string, any>): void
+  warn(message: string, context?: Record<string, any>): void
+  info(message: string, context?: Record<string, any>): void
+  debug(message: string, context?: Record<string, any>): void
+}
+```
+
+**Format:** `[TIMESTAMP] [LEVEL] message {context}`
+
+**Level Filtering:**
+- Normal mode: ERROR, WARN, INFO
+- Verbose mode: ERROR, WARN, INFO, DEBUG
+
+**Verification:** Unit tests for logger format and level filtering
+
+---
+
+### TR-10: Code Quality Metrics
+**Requirement:** Maintain code quality metrics within acceptable thresholds.
+
+**Metrics:**
+- Code duplication: < 5% (measured by jscpd)
+- Cyclomatic complexity: < 10 per function
+- Max function length: < 50 lines
+- Test coverage: >= 90%
+
+**Verification:**
+```bash
+# Check duplication
+npx jscpd src/
+
+# Check complexity  
+npx complexity-report src/
+
+# Check coverage
+bun test --coverage
+```
+
+**Enforcement:** Add to CI pipeline, fail build if thresholds exceeded
+
+---
+
+
+### Test-8: Error Message Catalog
+**Scenario:** All errors use message catalog  
+**Expected:** No hardcoded error messages in code  
+**Type:** Unit test + static analysis
+
+---
+
+### Test-9: Verbose Mode
+**Scenario:** User runs with --verbose flag  
+**Expected:** Stack traces and debug info shown  
+**Type:** Integration test
+
+---
+
+### Test-10: Logger Format
+**Scenario:** Logger outputs at different levels  
+**Expected:** Consistent format with timestamps  
+**Type:** Unit test
+
+---
+
+### Test-11: Code Quality
+**Scenario:** Run quality metrics tools  
+**Expected:** All thresholds met  
+**Type:** CI check
+
+---
+
+
+## Scope Clarifications
+
+### Cross-Platform Support
+**Decision:** Node.js/Bun runtime handles platform differences
+
+**Details:**
+- Node.js `fs` module provides consistent APIs across Windows, macOS, Linux
+- `chmod` commands work through Node.js on all platforms
+- No platform-specific code needed
+- Test on multiple OSs but expect consistent behavior
+
+**Rationale:** Simplifies implementation, leverages Node.js cross-platform capabilities
+
+---
+
+### Error Recovery Strategy
+**Decision:** Show fix information, do NOT implement auto-retry
+
+**Details:**
+- Error messages include specific fix commands
+- User applies fix manually
+- User re-runs command after fixing
+- No automatic retry logic
+
+**Rationale:** User maintains control, avoids unexpected behavior, simpler implementation
+
+---
+
+### Concurrent Execution
+**Decision:** Out of scope
+
+**Details:**
+- Multiple CLI instances running simultaneously is rare
+- Adds complexity without significant value
+- Not included in test requirements
+
+**Rationale:** Unlikely scenario, can be addressed if issues arise
+
+---
+
+### Internationalization (i18n)
+**Decision:** Out of scope for this issue
+
+**Details:**
+- All messages in English for now
+- Error message catalog enables future i18n support
+- Can be added in future enhancement
+
+**Rationale:** Adds significant complexity, message catalog provides foundation for future work
+
+---
+
+### Error Telemetry
+**Decision:** Out of scope for this issue
+
+**Details:**
+- No error reporting to external services
+- Add GitHub issue link for users to report problems
+- Create separate enhancement issue for future telemetry
+
+**Rationale:** Privacy concerns, needs separate design and user consent
+
+**Future Enhancement:** Create GitHub issue for opt-in telemetry after this work completes
+
+---
+
+### Exit Code Strategy
+**Decision:** Keep exit code 1 for all errors
+
+**Details:**
+- Exit code 0: Success
+- Exit code 1: Any error
+- No differentiation by error type
+
+**Rationale:** Backward compatibility, simple for users, sufficient for most use cases
+
+---
+
+
+## Updated Traceability Matrix
+
+| Requirement | User Story | Acceptance Criteria | Test Case |
+|-------------|------------|---------------------|-----------|
+| FR-1 | US-1 | AC-1 | Test-1, Test-2 |
+| FR-2 | US-1 | AC-1 | Test-1, Test-6 |
+| FR-3 | US-1 | AC-1 | Test-2 |
+| FR-4 | US-2 | AC-2 | Test-3 |
+| FR-5 | US-2 | AC-2 | Test-4 |
+| FR-6 | US-2 | AC-2 | Test-4 |
+| FR-7 | US-3 | AC-3, AC-6 | Test-5, Test-7 |
+| FR-8 | US-3 | AC-3 | Test-5 |
+| FR-9 | US-4 | AC-4 | Test-8, Manual review |
+| FR-10 | US-4 | AC-5 | Unit tests |
+| FR-11 | US-4 | AC-4 | Test-8 |
+| FR-12 | US-5 | AC-5 | Test-9 |
+| TR-9 | US-5 | - | Test-10 |
+| TR-10 | - | - | Test-11 |
+
+---
+
+## Requirements Summary
+
+**Total Requirements:** 22
+- Functional Requirements: 12 (FR-1 through FR-12)
+- Technical Requirements: 10 (TR-1 through TR-10)
+- Non-Functional Requirements: 4 (NFR-1 through NFR-4)
+- User Stories: 5 (US-1 through US-5)
+- Acceptance Criteria: 7 (AC-1 through AC-7)
+- Test Cases: 11 (Test-1 through Test-11)
+
+**Coverage:** 100% - All requirements mapped to tests and validation methods
+
+---
+
+## Version History
+
+**v1.0** - 2025-11-25 - Initial requirements  
+**v1.1** - 2025-11-25 - Added FR-11, FR-12, TR-9, TR-10, US-5, scope clarifications
+

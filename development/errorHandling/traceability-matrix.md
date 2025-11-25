@@ -18,6 +18,7 @@ This document maps requirements → design → tasks → tests to ensure complet
 | US-2 | Permission Error Handling | Component Design § 2 | 3.1-3.2 | Test-3, Test-4 | Create unreadable file, verify error shows chmod command |
 | US-3 | Network Timeout Protection | Component Design § 3 | 4.1-4.2 | Test-5, Test-7 | Simulate slow network, verify timeout after 30s |
 | US-4 | Actionable Error Messages | Component Design § 5 | 1.2, 5.2 | Manual review | Review all errors, verify what/why/how format |
+| US-5 | Verbose Debugging | Component Design § 8 | 1.6, 5.1 | Test-9 | Run with --verbose, verify debug output shown |
 
 ---
 
@@ -33,8 +34,10 @@ This document maps requirements → design → tasks → tests to ensure complet
 | FR-6 | Directory Permission Handling | Component Design § 2 | 3.1, 3.2 | Test-4 | chmod 000 dir, verify error + chmod 755 fix |
 | FR-7 | Network Timeout Configuration | Component Design § 3 | 4.1, 4.2 | Test-5, Test-7 | Set SECRETS_SYNC_TIMEOUT, verify timeout respected |
 | FR-8 | Timeout Error Messages | Component Design § 3 | 4.1, 4.2 | Test-5 | Trigger timeout, verify error shows duration + suggestions |
-| FR-9 | Structured Error Format | Component Design § 5 | 1.2, 5.2 | Manual review | Review all errors, verify consistent format |
+| FR-9 | Structured Error Format | Component Design § 5, 6 | 1.2, 1.4, 5.2 | Test-8, Manual review | Review all errors, verify consistent format |
 | FR-10 | Error Context Preservation | Component Design § 4 | 1.1 | Unit tests | Wrap error, verify original message preserved |
+| FR-11 | Error Message Catalog | Component Design § 6 | 1.4 | Test-8 | Load catalog, verify all errors use it |
+| FR-12 | Verbose Mode | Component Design § 8 | 1.6 | Test-9 | Run with --verbose, verify additional output |
 
 ---
 
@@ -46,10 +49,12 @@ This document maps requirements → design → tasks → tests to ensure complet
 | TR-2 | File Operation Wrapper | Component Design § 2 | 3.1 | Unit tests | Call safeReadFile(), verify returns value or error |
 | TR-3 | Command Execution Wrapper | Component Design § 3 | 4.1 | Unit tests | Call execWithTimeout(), verify timeout works |
 | TR-4 | Error Class Hierarchy | Component Design § 4 | 1.1 | Unit tests | Create each error type, verify instanceof works |
-| TR-5 | Error Message Builder | Component Design § 5 | 1.2 | Unit tests | Call buildErrorMessage(), verify format |
+| TR-5 | Error Message Builder | Component Design § 5, 6 | 1.2, 1.4 | Unit tests | Call buildErrorMessage(), verify format |
 | TR-6 | Timeout Configuration | Component Design § 3 | 4.1 | Test-7 | Set env var, verify getTimeout() returns value |
 | TR-7 | Error Logging | Integration Points | 5.2 | Manual review | Check logs, verify [ERROR] prefix + context |
 | TR-8 | Backward Compatibility | Integration Points | 5.5 | Regression tests | Run existing tests, verify all pass |
+| TR-9 | Logger Module | Component Design § 7 | 1.5 | Test-10 | Unit tests for logger format |
+| TR-10 | Code Quality Metrics | Performance Considerations | 5.7 | Test-11 | Run quality tools, verify thresholds |
 
 ---
 
@@ -91,6 +96,10 @@ This document maps requirements → design → tasks → tests to ensure complet
 | Test-5 | Network Timeout | 4.2, 4.3 | Component Design § 3 | FR-7, FR-8, AC-3 | US-3 |
 | Test-6 | Unauthenticated gh CLI | 2.3, 2.6 | Component Design § 1 | FR-2, AC-1 | US-1 |
 | Test-7 | Custom Timeout | 4.1, 4.3 | Component Design § 3 | TR-6, AC-6 | US-3 |
+| Test-8 | Error Message Catalog | 1.4, 5.2 | Component Design § 6 | FR-9, FR-11 | US-4 |
+| Test-9 | Verbose Mode | 1.6, 5.1 | Component Design § 8 | FR-12 | US-5 |
+| Test-10 | Logger Format | 1.5 | Component Design § 7 | TR-9 | US-5 |
+| Test-11 | Code Quality | 5.7 | Performance Considerations | TR-10 | - |
 
 ---
 
@@ -101,6 +110,9 @@ This document maps requirements → design → tasks → tests to ensure complet
 | 1.1 | Create Error Class Hierarchy | Component Design § 4 | TR-4, FR-10 | Unit tests verify instanceof |
 | 1.2 | Create Error Message Builder | Component Design § 5 | TR-5, FR-9 | Unit tests verify format |
 | 1.3 | Write Unit Tests for Foundation | Testing Strategy | NFR-4 | Coverage report >= 100% |
+| 1.4 | Create Error Message Catalog | Component Design § 6 | FR-11 | Load catalog, verify structure |
+| 1.5 | Create Logger Module | Component Design § 7 | TR-9 | Unit tests verify format |
+| 1.6 | Add Verbose Flag to CLI | Component Design § 8 | FR-12 | Run with --verbose, verify output |
 | 2.1 | Create Dependency Validator Module | Component Design § 1 | TR-1, FR-1 | Time execution < 1 second |
 | 2.2 | Implement gh CLI Check | Component Design § 1 | FR-2 | Run without gh, verify error |
 | 2.3 | Implement gh Auth Check | Component Design § 1 | FR-2 | Run unauthenticated, verify error |
@@ -119,6 +131,7 @@ This document maps requirements → design → tasks → tests to ensure complet
 | 5.4 | Performance Validation | Performance Considerations | NFR-1 | Benchmark < 1 second |
 | 5.5 | Regression Testing | Backward Compatibility | TR-8, AC-7 | All existing tests pass |
 | 5.6 | User Acceptance Testing | Rollout Strategy | NFR-2 | Users resolve issues < 5 min |
+| 5.7 | Add Code Quality Checks | Performance Considerations | TR-10 | Run quality tools, verify thresholds |
 
 ---
 
@@ -126,12 +139,12 @@ This document maps requirements → design → tasks → tests to ensure complet
 
 ### Requirements Coverage
 
-**Functional Requirements:** 10/10 (100%)
-- All FR requirements mapped to design, tasks, and tests
+**Functional Requirements:** 12/12 (100%)
+- All 12 FR requirements mapped to design, tasks, and tests
 - All have concrete validation methods
 
-**Technical Requirements:** 8/8 (100%)
-- All TR requirements mapped to design, tasks, and tests
+**Technical Requirements:** 10/10 (100%)
+- All 10 TR requirements mapped to design, tasks, and tests
 - All have implementation and test coverage
 
 **Non-Functional Requirements:** 4/4 (100%)
@@ -142,8 +155,8 @@ This document maps requirements → design → tasks → tests to ensure complet
 - All AC mapped to design, tasks, and tests
 - All have validation methods
 
-**User Stories:** 4/4 (100%)
-- All US mapped to design, tasks, and tests
+**User Stories:** 5/5 (100%)
+- All 5 US mapped to design, tasks, and tests
 - All have end-user validation scenarios
 
 ---
@@ -254,3 +267,87 @@ This document maps requirements → design → tasks → tests to ensure complet
 4. Update affected tests
 5. Update this traceability matrix
 6. Re-verify traceability
+
+---
+
+## Version History
+
+**v1.0** - 2025-11-25 - Initial traceability matrix  
+**v1.1** - 2025-11-25 - Added FR-11, FR-12, TR-9, TR-10, US-5, Test-8 through Test-11, Tasks 1.4-1.6, 5.7; updated FR-9 and TR-5 mappings
+
+---
+
+## Updated Requirements Summary
+
+**Total Requirements:** 27 (was 22, +5 new)
+- Functional Requirements: 12 (was 10, +2: FR-11, FR-12)
+- Technical Requirements: 10 (was 8, +2: TR-9, TR-10)
+- Non-Functional Requirements: 4 (unchanged)
+- User Stories: 5 (was 4, +1: US-5)
+- Acceptance Criteria: 7 (unchanged)
+- Test Cases: 11 (was 7, +4: Test-8 through Test-11)
+
+**Coverage:** 100% - All requirements mapped to design, tasks, tests, and validation methods
+
+**New Mappings:**
+- FR-11 → Component Design § 6 → Task 1.4 → Test-8
+- FR-12 → Component Design § 8 → Task 1.6 → Test-9
+- TR-9 → Component Design § 7 → Task 1.5 → Test-10
+- TR-10 → Performance Considerations → Task 5.7 → Test-11
+- US-5 → Component Design § 8 → Tasks 1.6, 5.1 → Test-9
+
+**Updated Mappings:**
+- FR-9: Now references Component Design § 6 (catalog) and Task 1.4
+- TR-5: Now references Component Design § 6 (catalog) and Task 1.4
+
+**Traceability Verified:** ✅
+- Forward traceability: All requirements → design → tasks → tests
+- Reverse traceability: All tests → tasks → design → requirements
+- No orphaned requirements, tasks, or tests
+- All validation methods are concrete and testable
+
+
+---
+
+## Scope Clarifications
+
+### In Scope
+- ✅ Error message catalog with error codes
+- ✅ Logger module with level support
+- ✅ Verbose mode for debugging
+- ✅ Code quality metrics
+- ✅ Cross-platform support via Node.js APIs
+- ✅ Error recovery information (fix commands)
+
+### Out of Scope
+- ❌ Internationalization (i18n) - Future enhancement, catalog enables it
+- ❌ Error telemetry - Future enhancement, create separate issue
+- ❌ Auto-retry logic - User applies fixes manually
+- ❌ Concurrent execution testing - Rare scenario, unnecessary
+- ❌ Platform-specific code - Node.js handles differences
+- ❌ Different exit codes per error type - Keep exit 1 for all
+
+### Design Decisions Impact on Traceability
+
+**Error Message Catalog:**
+- Affects: FR-9, TR-5
+- New requirement: FR-11
+- New task: 1.4
+- New test: Test-8
+
+**Logger Module:**
+- New requirement: TR-9
+- New task: 1.5
+- New test: Test-10
+
+**Verbose Mode:**
+- New requirement: FR-12
+- New user story: US-5
+- New task: 1.6
+- New test: Test-9
+
+**Code Quality:**
+- New requirement: TR-10
+- New task: 5.7
+- New test: Test-11
+

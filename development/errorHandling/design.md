@@ -1340,3 +1340,689 @@ Suggestions:
 4. Increase timeout: SECRETS_SYNC_TIMEOUT=60000 secrets-sync ...
 ```
 
+
+---
+
+### 6. Error Message Catalog
+
+**Purpose:** Centralized storage of all error messages with error codes  
+**Enables User Success:** Consistent messaging, easier maintenance, future i18n support
+
+**Location:** `src/messages/errors.json`
+
+**Structure:**
+```json
+{
+  "ERR_DEPENDENCY_MISSING": {
+    "what": "Missing dependency: {dependency}",
+    "why": "The '{dependency}' command is required but not installed",
+    "howToFix": "Install from {installUrl}\nOr run: {installCommand}",
+    "context": ["dependency", "installUrl", "installCommand"]
+  },
+  "ERR_PERMISSION_DENIED": {
+    "what": "Permission denied: {operation} {path}",
+    "why": "Insufficient permissions to {operation} this file",
+    "howToFix": "Fix: {fixCommand}",
+    "context": ["operation", "path", "fixCommand"]
+  },
+  "ERR_TIMEOUT": {
+    "what": "Operation timed out after {duration}ms: {operation}",
+    "why": "The operation took too long to complete",
+    "howToFix": "Check your internet connection\nTry again in a few moments\nIncrease timeout: SECRETS_SYNC_TIMEOUT={suggestedTimeout} secrets-sync ...",
+    "context": ["duration", "operation", "suggestedTimeout"]
+  },
+  "ERR_NODE_VERSION": {
+    "what": "Node.js version {currentVersion} is too old",
+    "why": "This tool requires Node.js >= {requiredVersion}",
+    "howToFix": "Upgrade: https://nodejs.org\nOr use a version manager:\n  nvm: nvm install {requiredVersion}\n  fnm: fnm install {requiredVersion}",
+    "context": ["currentVersion", "requiredVersion"]
+  }
+}
+```
+
+**Loading:**
+```typescript
+// Load at startup
+const errorCatalog = JSON.parse(
+  fs.readFileSync('src/messages/errors.json', 'utf-8')
+);
+
+// Validate catalog
+function validateCatalog(catalog: Record<string, ErrorMessage>): void {
+  for (const [code, message] of Object.entries(catalog)) {
+    if (!code.startsWith('ERR_')) {
+      throw new Error(`Invalid error code: ${code}`);
+    }
+    if (!message.what || !message.why || !message.howToFix) {
+      throw new Error(`Invalid message structure: ${code}`);
+    }
+  }
+}
+```
+
+**Usage:**
+```typescript
+// Get message with context
+const message = getMessage('ERR_DEPENDENCY_MISSING', {
+  dependency: 'gh',
+  installUrl: 'https://cli.github.com',
+  installCommand: 'brew install gh'
+});
+
+// Format for display
+const formatted = formatError('ERR_DEPENDENCY_MISSING', context);
+console.error(formatted);
+```
+
+**Benefits:**
+- All messages in one place (easy to maintain)
+- Consistent format enforced by structure
+- Context interpolation prevents hardcoded values
+- Enables future internationalization
+- Easy to add new error types
+
+**User Experience:**
+```
+❌ Missing dependency: gh
+
+The 'gh' command is required but not installed.
+
+Install from https://cli.github.com
+Or run: brew install gh
+```
+
+---
+
+### 7. Logger Module
+
+**Purpose:** Centralized logging with consistent format and level support  
+**Enables User Success:** Clear, consistent output; verbose mode for debugging
+
+**Location:** `src/utils/logger.ts`
+
+**Interface:**
+```typescript
+enum LogLevel {
+  ERROR = 0,
+  WARN = 1,
+  INFO = 2,
+  DEBUG = 3
+}
+
+interface LoggerOptions {
+  verbose: boolean;
+}
+
+class Logger {
+  private level: LogLevel;
+  
+  constructor(options: LoggerOptions) {
+    this.level = options.verbose ? LogLevel.DEBUG : LogLevel.INFO;
+  }
+  
+  private log(level: LogLevel, message: string, context?: Record<string, any>): void {
+    if (level > this.level) return;
+    
+    const timestamp = new Date().toISOString();
+    const levelName = LogLevel[level];
+    const color = this.getColor(level);
+    
+    console.error(`${color}[${timestamp}] [${levelName}]${RESET} ${message}`);
+    
+    if (context && Object.keys(context).length > 0) {
+      console.error('Context:', JSON.stringify(context, null, 2));
+    }
+  }
+  
+  error(message: string, context?: Record<string, any>): void {
+    this.log(LogLevel.ERROR, message, context);
+  }
+  
+  warn(message: string, context?: Record<string, any>): void {
+    this.log(LogLevel.WARN, message, context);
+  }
+  
+  info(message: string, context?: Record<string, any>): void {
+    this.log(LogLevel.INFO, message, context);
+  }
+  
+  debug(message: string, context?: Record<string, any>): void {
+    this.log(LogLevel.DEBUG, message, context);
+  }
+  
+  private getColor(level: LogLevel): string {
+    switch (level) {
+      case LogLevel.ERROR: return '\x1b[31m'; // Red
+      case LogLevel.WARN: return '\x1b[33m';  // Yellow
+      case LogLevel.INFO: return '\x1b[36m';  // Cyan
+      case LogLevel.DEBUG: return '\x1b[90m'; // Gray
+    }
+  }
+}
+
+const RESET = '\x1b[0m';
+```
+
+**Format:**
+```
+[2025-11-25T12:00:00.000Z] [ERROR] message
+Context: { key: value }
+```
+
+**Level Filtering:**
+- Normal mode: ERROR, WARN, INFO
+- Verbose mode: ERROR, WARN, INFO, DEBUG
+
+**Usage:**
+```typescript
+const logger = new Logger({ verbose: flags.verbose });
+
+logger.info('Starting dependency checks...');
+logger.debug('Checking gh CLI...', { command: 'gh --version' });
+logger.error('Dependency missing', { dependency: 'gh' });
+```
+
+**Benefits:**
+- Consistent format across all output
+- Level-based filtering
+- Verbose mode for debugging
+- Context data structured
+- Colors for readability
+
+---
+
+### 8. Verbose Mode Handler
+
+**Purpose:** Control debug output level based on CLI flag  
+**Enables User Success:** Developers can troubleshoot without code changes
+
+**CLI Flag:** `--verbose` or `-v`
+
+**Integration:**
+```typescript
+// Add to Flags interface
+interface Flags {
+  // ... existing flags
+  verbose?: boolean;
+}
+
+// Parse flag
+const flags = parseArgs();
+if (flags.verbose || flags.v) {
+  flags.verbose = true;
+}
+
+// Create logger with verbose setting
+const logger = new Logger({ verbose: flags.verbose ?? false });
+
+// Use throughout application
+try {
+  logger.debug('Starting operation...', { operation: 'syncSecrets' });
+  await operation();
+  logger.info('Operation completed');
+} catch (error) {
+  logger.error(formatError(error));
+  
+  if (flags.verbose) {
+    logger.debug('Stack trace:', { stack: error.stack });
+    logger.debug('Error details:', { 
+      name: error.name,
+      message: error.message,
+      context: error.context
+    });
+  }
+  
+  process.exit(1);
+}
+```
+
+**Behavior:**
+- **Normal mode:** Shows ERROR, WARN, INFO (concise, user-friendly)
+- **Verbose mode:** Shows ERROR, WARN, INFO, DEBUG (detailed, for troubleshooting)
+- **Stack traces:** Only shown in verbose mode
+- **Timing info:** Only shown in verbose mode
+- **Context data:** Full details in verbose mode
+
+**User Experience:**
+
+Normal mode:
+```
+[INFO] Starting dependency checks...
+[INFO] All dependencies present
+[INFO] Syncing secrets...
+✓ Success
+```
+
+Verbose mode:
+```
+[INFO] Starting dependency checks...
+[DEBUG] Checking gh CLI...
+Context: { command: "gh --version" }
+[DEBUG] gh version 2.40.0
+[DEBUG] Checking Node.js version...
+Context: { version: "v20.0.0", required: "18.0.0" }
+[INFO] All dependencies present
+[DEBUG] Loading .env files from config/env
+[INFO] Syncing secrets...
+[DEBUG] Processing .env.production (5 keys)
+[DEBUG] Processing .env.staging (5 keys)
+✓ Success
+```
+
+**Benefits:**
+- No code changes needed for debugging
+- Developers can see what's happening
+- Production users get clean output
+- Easy to diagnose issues remotely
+
+
+---
+
+## Component Updates
+
+### Component 5: Error Message Builder (Updated)
+
+**Purpose:** Load and format error messages from catalog  
+**Change:** Now loads from catalog instead of building messages
+
+**Updated Interface:**
+```typescript
+interface ErrorMessage {
+  what: string;
+  why: string;
+  howToFix: string;
+  context?: string[];
+}
+
+// Load message from catalog
+function getMessage(
+  errorCode: string,
+  contextValues?: Record<string, any>
+): ErrorMessage
+
+// Format message for display
+function formatError(
+  errorCode: string,
+  contextValues?: Record<string, any>
+): string {
+  const message = getMessage(errorCode, contextValues);
+  
+  // Interpolate context values
+  const what = interpolate(message.what, contextValues);
+  const why = interpolate(message.why, contextValues);
+  const howToFix = interpolate(message.howToFix, contextValues);
+  
+  // Format with colors
+  return `❌ ${what}\n\n${why}\n\n${howToFix}`;
+}
+
+// Interpolate {placeholder} with values
+function interpolate(template: string, values?: Record<string, any>): string {
+  if (!values) return template;
+  
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    return values[key]?.toString() ?? match;
+  });
+}
+```
+
+**Usage:**
+```typescript
+// Before (hardcoded)
+const message = buildErrorMessage({
+  what: 'Failed to read file',
+  why: 'Permission denied',
+  howToFix: 'chmod 644 file.txt'
+});
+
+// After (from catalog)
+const message = formatError('ERR_PERMISSION_DENIED', {
+  operation: 'read',
+  path: '/path/to/file',
+  fixCommand: 'chmod 644 /path/to/file'
+});
+```
+
+**Benefits:**
+- Messages centralized in catalog
+- No hardcoded strings in code
+- Consistent format guaranteed
+- Easy to update messages
+- Supports future i18n
+
+
+---
+
+## Design Decisions and Scope
+
+### Cross-Platform Compatibility
+
+**Decision:** Rely on Node.js/Bun runtime for cross-platform support
+
+**Rationale:**
+- Node.js `fs` module provides consistent APIs across Windows, macOS, Linux
+- `chmod` operations work through Node.js on all platforms
+- No need for platform-specific code paths
+- Simpler implementation and maintenance
+
+**Implementation:**
+- Use Node.js `fs` module for all file operations
+- Use Node.js `child_process` for command execution
+- Test on multiple platforms but expect consistent behavior
+- No platform detection or conditional logic needed
+
+**User Impact:**
+- Same commands work on all platforms
+- Same error messages on all platforms
+- Consistent user experience
+
+---
+
+### Error Recovery Strategy
+
+**Decision:** Show fix information, do NOT implement auto-retry
+
+**Rationale:**
+- User maintains control over when to retry
+- Avoids unexpected behavior (e.g., infinite loops)
+- Simpler implementation
+- Clear user intent (manual retry)
+
+**Implementation:**
+- Error messages include specific fix commands
+- User applies fix manually
+- User re-runs command after fixing
+- No automatic retry logic in code
+
+**User Impact:**
+- User sees what went wrong
+- User sees how to fix it
+- User decides when to retry
+- Predictable behavior
+
+---
+
+### Internationalization (i18n)
+
+**Decision:** Out of scope for this issue
+
+**Rationale:**
+- Adds significant complexity
+- Error message catalog provides foundation for future i18n
+- Can be added later without major refactoring
+
+**Future Path:**
+- Message catalog already structured for i18n
+- Add locale detection
+- Add message files per locale
+- Load appropriate catalog based on locale
+
+**Current Implementation:**
+- All messages in English
+- Catalog structure supports future i18n
+- Document as future enhancement
+
+---
+
+### Error Telemetry
+
+**Decision:** Out of scope for this issue
+
+**Rationale:**
+- Privacy concerns require careful design
+- Needs user consent mechanism
+- Separate feature deserving its own design
+
+**Alternative:**
+- Add GitHub issue link in error messages
+- Users can manually report issues
+- Create separate enhancement issue for telemetry
+
+**Implementation:**
+- Add to error message footer: "Report issues: https://github.com/..."
+- Create GitHub issue for future telemetry feature
+- Document privacy considerations
+
+---
+
+### Exit Code Strategy
+
+**Decision:** Keep exit code 1 for all errors
+
+**Rationale:**
+- Backward compatibility
+- Simple for users
+- Sufficient for most use cases
+- CI/CD scripts typically only check success (0) vs failure (non-zero)
+
+**Implementation:**
+- Exit code 0: Success
+- Exit code 1: Any error
+- No differentiation by error type
+
+**User Impact:**
+- Consistent with existing behavior
+- No breaking changes
+- Simple to understand
+
+
+---
+
+## Updated Implementation Phases
+
+### Phase 1: Foundation (Days 1-2.5)
+
+**Goal:** Create reusable error handling infrastructure
+
+**Tasks:**
+1. Create error class hierarchy (`src/utils/errors.ts`)
+2. Create error message catalog (`src/messages/errors.json`)
+3. Create error message builder with catalog loading (`src/utils/errorMessages.ts`)
+4. Create logger module (`src/utils/logger.ts`)
+5. Add verbose flag to CLI
+6. Write unit tests for all utilities
+
+**Deliverables:**
+- Error classes with proper inheritance
+- Message catalog with all error types
+- Message builder loads from catalog
+- Logger with level support
+- Verbose flag integrated
+- 100% test coverage for utilities
+
+**Validation:**
+- Developers can create typed errors
+- All errors use catalog (no hardcoded messages)
+- Logger respects verbose flag
+- All tests pass
+
+**Time:** 2.5 days (was 2 days, +0.5 for catalog and logger)
+
+---
+
+### Phase 2: Dependency Validation (Days 3-4)
+
+**Goal:** Catch missing dependencies before operations
+
+**Tasks:**
+1. Create dependency validator module
+2. Implement gh CLI check
+3. Implement gh auth check
+4. Implement Node.js version check
+5. Integrate into main() function
+6. Add error messages to catalog
+7. Write integration tests
+
+**Deliverables:**
+- Dependency checks run at startup
+- Clear error messages from catalog
+- Tests for each dependency check
+- Verbose mode shows check details
+
+**Validation:**
+- Users see missing dependencies immediately
+- Installation instructions are accurate
+- Verbose mode shows debug info
+- Tests cover all dependency scenarios
+
+**User Success Metric:**
+- Users can install missing tools without reading docs
+
+**Time:** 2 days (unchanged)
+
+---
+
+### Phase 3: File Operation Safety (Days 5-6)
+
+**Goal:** Handle permission errors gracefully
+
+**Tasks:**
+1. Create safe file operations module
+2. Implement safeReadFile with error handling
+3. Implement safeWriteFile with error handling
+4. Implement safeReadDir with error handling
+5. Replace all fs calls in codebase
+6. Add error messages to catalog
+7. Write integration tests with permission-denied files
+
+**Deliverables:**
+- All file operations use safe wrappers
+- Permission errors show file paths and fix commands from catalog
+- Tests for read/write/list permission errors
+- Verbose mode shows file operation details
+
+**Validation:**
+- Users see exact files with permission issues
+- chmod commands are correct and copy-pasteable
+- Tests verify error messages
+- Verbose mode aids debugging
+
+**User Success Metric:**
+- Users can fix permission errors without trial-and-error
+
+**Time:** 2 days (unchanged)
+
+---
+
+### Phase 4: Network Timeout Protection (Days 7-8)
+
+**Goal:** Prevent infinite hangs on network operations
+
+**Tasks:**
+1. Create timeout wrapper module
+2. Implement withTimeout utility
+3. Implement execWithTimeout wrapper
+4. Add timeout configuration via env var
+5. Replace all exec() calls with execWithTimeout
+6. Add error messages to catalog
+7. Write integration tests with simulated delays
+
+**Deliverables:**
+- All network operations have timeouts
+- Timeout errors are clear and actionable from catalog
+- Timeout is configurable
+- Tests verify timeout behavior
+- Verbose mode shows timing information
+
+**Validation:**
+- Operations timeout after configured duration
+- Users see what operation timed out
+- Tests verify timeout and error messages
+- Verbose mode shows debug timing
+
+**User Success Metric:**
+- Users never experience infinite hangs
+- Users can adjust timeout for slow networks
+
+**Time:** 2 days (unchanged)
+
+---
+
+### Phase 5: Integration & Polish (Days 9-11.5)
+
+**Goal:** Ensure all error handling works together
+
+**Tasks:**
+1. End-to-end testing with verbose mode
+2. Error message consistency review (catalog validation)
+3. Documentation updates
+4. Add code quality metrics (jscpd, complexity-report)
+5. Run full regression test suite
+6. Performance test dependency checks (< 1 second)
+7. User acceptance testing with verbose mode
+
+**Deliverables:**
+- All error messages in catalog follow consistent format
+- Documentation includes verbose mode usage
+- Code quality metrics configured and passing
+- All tests pass
+- Performance requirements met
+- Verbose mode documented
+
+**Validation:**
+- Manual review of catalog messages
+- Documentation is complete and accurate
+- Code quality thresholds met
+- No regressions in existing functionality
+- Verbose mode helps debugging
+
+**User Success Metric:**
+- Users can resolve 90% of errors without external help
+- Developers can debug issues with verbose mode
+
+**Time:** 2.5 days (was 2 days, +0.5 for quality metrics)
+
+---
+
+## Updated Time Estimate
+
+**Original:** 10 days  
+**New Components:** +1 day (catalog, logger, verbose mode, quality metrics)  
+**Total:** 11 days
+
+**Breakdown:**
+- Phase 1: 2.5 days (Foundation + new components)
+- Phase 2: 2 days (Dependency validation)
+- Phase 3: 2 days (File operation safety)
+- Phase 4: 2 days (Network timeout protection)
+- Phase 5: 2.5 days (Integration + quality metrics)
+
+
+---
+
+## Version History
+
+**v1.0** - 2025-11-25 - Initial design  
+**v1.1** - 2025-11-25 - Added Components 6-8 (catalog, logger, verbose mode), updated Component 5, added scope clarifications, updated phases
+
+---
+
+## Design Summary
+
+### Components: 8
+1. Dependency Validator Module
+2. Safe File Operations Module
+3. Timeout Wrapper Module
+4. Error Class Hierarchy
+5. Error Message Builder (updated to use catalog)
+6. Error Message Catalog (new)
+7. Logger Module (new)
+8. Verbose Mode Handler (new)
+
+### Key Architectural Decisions:
+- Error messages centralized in JSON catalog
+- Logger with level-based filtering
+- Verbose mode for debugging
+- Cross-platform via Node.js APIs
+- No auto-retry (user control)
+- Exit code 1 for all errors
+
+### Out of Scope:
+- Internationalization (future enhancement)
+- Error telemetry (future enhancement)
+- Concurrent execution testing
+- Platform-specific code
+
+### Implementation Ready: ✅
+All components designed, all decisions made, ready for Phase 1 implementation.
+
