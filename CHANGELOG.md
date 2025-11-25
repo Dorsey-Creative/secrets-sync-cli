@@ -18,10 +18,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parallel dependency checks with session caching (< 1 second total) (#5)
 - `SKIP_DEPENDENCY_CHECK` environment variable for CI/CD pipelines (#5)
 - Platform-specific installation instructions for missing dependencies (#5)
-- Comprehensive unit tests for error handling (70 tests, 100% coverage) (#5)
+- Safe file operations module with permission error handling (#5)
+- Automatic fix commands for permission errors (chmod suggestions) (#5)
+- Graceful handling of unreadable/unwritable files and directories (#5)
+- Comprehensive unit tests for error handling (80 tests, 100% coverage) (#5)
 - Integration tests for dependency validation (8 tests) (#5)
+- Integration tests for file permissions (7 tests) (#5)
 - TypeScript configuration (tsconfig.json) with strict mode enabled (#2)
 - Proper type checking for all flags and function parameters
+
+### Changed
+
+- All file operations now use safe wrappers with error handling (#5)
+- File permission errors now show exact paths and fix commands (#5)
+- Error messages include context for easier debugging (#5)
 
 ## [1.0.6] - 2025-11-24
 

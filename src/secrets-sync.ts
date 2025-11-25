@@ -9,13 +9,15 @@
  *  - Drift detection: warn when non-production has keys missing from production
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, cpSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, cpSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createHash } from 'node:crypto';
 import { Logger } from './utils/logger';
 import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck } from './utils/dependencies';
+import { safeReadFile, safeWriteFile, safeReadDir, safeExists } from './utils/safeFs';
+import { buildErrorMessage } from './utils/errorMessages';
 
 // Avoid extra dependencies; simple argv parsing
 interface Flags {
@@ -70,20 +72,29 @@ type RequiredSecretConfig = {
 function loadRequiredSecrets(configDir: string): RequiredSecretConfig {
   const configPath = join(configDir, 'required-secrets.json');
   
-  // Check if file exists
-  if (!existsSync(configPath)) {
+  const existsResult = safeExists(configPath);
+  if (!existsResult.success || !existsResult.data) {
     logWarn('[CONFIG] No required-secrets.json found, skipping validation');
     return { production: [], shared: [], staging: [] };
   }
   
-  // Attempt to read and parse
+  const readResult = safeReadFile(configPath);
+  if (!readResult.success) {
+    const error = readResult.error;
+    logErr(buildErrorMessage({
+      what: `Failed to read ${configPath}`,
+      why: error.error.message,
+      howToFix: error.fixCommand || 'Check file permissions',
+    }));
+    return { production: [], shared: [], staging: [] };
+  }
+  
   try {
-    const raw = readFileSync(configPath, 'utf8');
-    const config = JSON.parse(raw) as RequiredSecretConfig;
+    const config = JSON.parse(readResult.data) as RequiredSecretConfig;
     logInfo(`[CONFIG] Loaded required secrets from ${configPath}`);
     return config;
   } catch (e) {
-    logWarn(`[CONFIG] Failed to load required-secrets.json: ${(e as Error).message}`);
+    logWarn(`[CONFIG] Failed to parse required-secrets.json: ${(e as Error).message}`);
     return { production: [], shared: [], staging: [] };
   }
 }
@@ -96,13 +107,15 @@ function loadEnvConfig(initialDir: string): EnvConfig {
     if (!dir) continue;
     for (const name of candidates) {
       const path = join(dir, name);
-      if (!existsSync(path)) continue;
-      try {
-        const raw = readFileSync(path, 'utf8');
-        return parseEnvConfig(raw);
-      } catch (e) {
-        logWarn(`Failed to read ${path}: ${(e as Error).message}`);
+      const existsResult = safeExists(path);
+      if (!existsResult.success || !existsResult.data) continue;
+      
+      const readResult = safeReadFile(path);
+      if (!readResult.success) {
+        logWarn(`Failed to read ${path}: ${readResult.error.error.message}`);
+        continue;
       }
+      return parseEnvConfig(readResult.data);
     }
   }
 
@@ -381,7 +394,8 @@ function printVersion() {
 }
 
 function ensureDir(dir: string) {
-  if (!existsSync(dir)) {
+  const existsResult = safeExists(dir);
+  if (!existsResult.success || !existsResult.data) {
     mkdirSync(dir, { recursive: true });
     console.log(`Created directory: ${dir}`);
   }
@@ -389,28 +403,42 @@ function ensureDir(dir: string) {
 
 function scanEnvDirectory(dir: string): EnvFile[] {
   ensureDir(dir);
-  const entries = readdirSync(dir, { withFileTypes: true });
+  const readResult = safeReadDir(dir);
+  if (!readResult.success) {
+    logErr(buildErrorMessage({
+      what: `Failed to read directory ${dir}`,
+      why: readResult.error.error.message,
+      howToFix: readResult.error.fixCommand || 'Check directory permissions',
+    }));
+    return [];
+  }
+  
   const files: EnvFile[] = [];
+  for (const name of readResult.data) {
+    const fullPath = join(dir, name);
+    try {
+      const stat = statSync(fullPath);
+      if (stat.isDirectory()) {
+        if (IGNORE_DIRS.has(name)) continue;
+        // skip nested directories (no recursion needed for current design)
+        continue;
+      }
+      if (!stat.isFile()) continue;
+      if (!name.startsWith('.env')) continue;
+      if (IGNORE_SUFFIXES.some((suffix) => name.endsWith(suffix))) continue;
 
-  for (const e of entries) {
-    if (e.isDirectory()) {
-      if (IGNORE_DIRS.has(e.name)) continue;
-  // skip nested directories (no recursion needed for current design)
+      const isProductionVariant = PROD_NAMES.has(name);
+      let token = 'production';
+      if (!isProductionVariant) {
+        // .env.staging => staging; .env.si => si; .env.local => local
+        token = name.replace(/^\.env\.?/, '').toLowerCase() || 'production';
+      }
+
+      files.push({ path: fullPath, name, isProductionVariant, token });
+    } catch (e) {
+      logWarn(`Failed to stat ${fullPath}: ${(e as Error).message}`);
       continue;
     }
-    if (!e.isFile()) continue;
-    const name = e.name;
-    if (!name.startsWith('.env')) continue;
-    if (IGNORE_SUFFIXES.some((suffix) => name.endsWith(suffix))) continue;
-
-    const isProductionVariant = PROD_NAMES.has(name);
-    let token = 'production';
-    if (!isProductionVariant) {
-      // .env.staging => staging; .env.si => si; .env.local => local
-      token = name.replace(/^\.env\.?/, '').toLowerCase() || 'production';
-    }
-
-    files.push({ path: join(dir, name), name, isProductionVariant, token });
   }
 
   // deterministic ordering: production variants first (.env first), then others alphabetical by name
@@ -460,7 +488,17 @@ function resolveProduction(files: EnvFile[], force: boolean) {
 }
 
 function parseDotenvFile(path: string): Record<string, string> {
-  const txt = readFileSync(path, 'utf8');
+  const readResult = safeReadFile(path);
+  if (!readResult.success) {
+    logErr(buildErrorMessage({
+      what: `Failed to read ${path}`,
+      why: readResult.error.error.message,
+      howToFix: readResult.error.fixCommand || 'Check file permissions',
+    }));
+    return {};
+  }
+  
+  const txt = readResult.data;
   const out: Record<string, string> = {};
   const lines = txt.split(/\r?\n/);
   for (let raw of lines) {
@@ -643,17 +681,25 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
 
 function loadMockSecrets(dir: string): Map<string, string> {
   // Reads optional mock payload from `${dir}/.secrets-mock.json` with shape { "NAME": "value" }
-  try {
-    const p = join(dir, '.secrets-mock.json');
-    if (existsSync(p)) {
-      const raw = readFileSync(p, 'utf8');
-      const obj = JSON.parse(raw) as Record<string, string>;
-      return new Map(Object.entries(obj));
-    }
-  } catch (e) {
-    console.warn('[WARN] Failed to read mock secrets file:', (e as Error).message);
+  const p = join(dir, '.secrets-mock.json');
+  const existsResult = safeExists(p);
+  if (!existsResult.success || !existsResult.data) {
+    return new Map();
   }
-  return new Map();
+  
+  const readResult = safeReadFile(p);
+  if (!readResult.success) {
+    console.warn('[WARN] Failed to read mock secrets file:', readResult.error.error.message);
+    return new Map();
+  }
+  
+  try {
+    const obj = JSON.parse(readResult.data) as Record<string, string>;
+    return new Map(Object.entries(obj));
+  } catch (e) {
+    console.warn('[WARN] Failed to parse mock secrets file:', (e as Error).message);
+    return new Map();
+  }
 }
 
 type EnvSummary = {
@@ -681,28 +727,44 @@ function computeHash(value: string): string {
 }
 
 function loadManifest(dir: string): SecretManifest {
-  try {
-    const manifestPath = join(dir, 'bak', 'secrets-sync-state.json');
-    if (existsSync(manifestPath)) {
-      const raw = readFileSync(manifestPath, 'utf8');
-      return JSON.parse(raw) as SecretManifest;
-    }
-  } catch (e) {
-    logWarn(`Failed to load manifest: ${(e as Error).message}`);
+  const manifestPath = join(dir, 'bak', 'secrets-sync-state.json');
+  const existsResult = safeExists(manifestPath);
+  if (!existsResult.success || !existsResult.data) {
+    return {};
   }
-  return {};
+  
+  const readResult = safeReadFile(manifestPath);
+  if (!readResult.success) {
+    logWarn(`Failed to load manifest: ${readResult.error.error.message}`);
+    return {};
+  }
+  
+  try {
+    return JSON.parse(readResult.data) as SecretManifest;
+  } catch (e) {
+    logWarn(`Failed to parse manifest: ${(e as Error).message}`);
+    return {};
+  }
 }
 
 function saveManifest(dir: string, manifest: SecretManifest): void {
-  try {
-    const bakDir = join(dir, 'bak');
-    if (!existsSync(bakDir)) mkdirSync(bakDir, { recursive: true });
-    const manifestPath = join(bakDir, 'secrets-sync-state.json');
-    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
-    logInfo(`Manifest saved to ${manifestPath}`);
-  } catch (e) {
-    logErr(`Failed to save manifest: ${(e as Error).message}`);
+  const bakDir = join(dir, 'bak');
+  const existsResult = safeExists(bakDir);
+  if (!existsResult.success || !existsResult.data) {
+    mkdirSync(bakDir, { recursive: true });
   }
+  
+  const manifestPath = join(bakDir, 'secrets-sync-state.json');
+  const writeResult = safeWriteFile(manifestPath, JSON.stringify(manifest, null, 2));
+  if (!writeResult.success) {
+    logErr(buildErrorMessage({
+      what: `Failed to save manifest to ${manifestPath}`,
+      why: writeResult.error.error.message,
+      howToFix: writeResult.error.fixCommand || 'Check directory permissions',
+    }));
+    return;
+  }
+  logInfo(`Manifest saved to ${manifestPath}`);
 }
 
 function buildDesiredWithSources(summaries: EnvSummary[]): { desired: Map<string, string>; sourceBySecret: Map<string, string> } {
@@ -901,9 +963,15 @@ function writeBackup(dir: string, fileName: string, sourcePath: string, dryRun: 
 }
 
 function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) {
+  const readResult = safeReadDir(bakDir);
+  if (!readResult.success) {
+    logWarn(`Failed to cleanup old backups: ${readResult.error.error.message}`);
+    return;
+  }
+  
   try {
     const pattern = `${fileName}-`;
-    const backups = readdirSync(bakDir)
+    const backups = readResult.data
       .filter(f => f.startsWith(pattern) && f.endsWith('.bak'))
       .map(f => ({ name: f, path: join(bakDir, f), stat: statSync(join(bakDir, f)) }))
       .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs); // newest first

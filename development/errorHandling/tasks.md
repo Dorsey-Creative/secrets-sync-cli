@@ -375,15 +375,15 @@ bun test tests/integration/dependencies.test.ts
 **Design Reference:** Component Design § 2
 
 **Sub-tasks:**
-- [ ] Create `src/utils/safeFs.ts` file
-- [ ] Define `FileError` interface
-- [ ] Implement `safeReadFile()` function
-- [ ] Implement `safeWriteFile()` function
-- [ ] Implement `safeReadDir()` function
-- [ ] Implement `safeExists()` function
-- [ ] Add error type detection (EACCES, EPERM, ENOENT)
-- [ ] Generate appropriate chmod commands
-- [ ] Export all functions
+- [x] Create `src/utils/safeFs.ts` file
+- [x] Define `FileError` interface
+- [x] Implement `safeReadFile()` function
+- [x] Implement `safeWriteFile()` function
+- [x] Implement `safeReadDir()` function
+- [x] Implement `safeExists()` function
+- [x] Add error type detection (EACCES, EPERM, ENOENT)
+- [x] Generate appropriate chmod commands
+- [x] Export all functions
 
 **Validation for End-User Success:**
 ```bash
@@ -425,16 +425,16 @@ console.log(result); // Should show file content
 **Design Reference:** Integration Points
 
 **Sub-tasks:**
-- [ ] Find all `fs.readFileSync` calls
-- [ ] Replace with `safeReadFile`
-- [ ] Add error handling for FileError
-- [ ] Find all `fs.writeFileSync` calls
-- [ ] Replace with `safeWriteFile`
-- [ ] Add error handling for FileError
-- [ ] Find all `fs.readdirSync` calls
-- [ ] Replace with `safeReadDir`
-- [ ] Add error handling for FileError
-- [ ] Test each replacement
+- [x] Find all `fs.readFileSync` calls
+- [x] Replace with `safeReadFile`
+- [x] Add error handling for FileError
+- [x] Find all `fs.writeFileSync` calls
+- [x] Replace with `safeWriteFile`
+- [x] Add error handling for FileError
+- [x] Find all `fs.readdirSync` calls
+- [x] Replace with `safeReadDir`
+- [x] Add error handling for FileError
+- [x] Test each replacement
 
 **Validation for End-User Success:**
 ```bash
@@ -480,14 +480,14 @@ secrets-sync --env staging
 **Design Reference:** Testing Strategy § Integration Tests
 
 **Sub-tasks:**
-- [ ] Create `tests/integration/filePermissions.test.ts`
-- [ ] Test unreadable file scenario
-- [ ] Test unwritable file scenario
-- [ ] Test unreadable directory scenario
-- [ ] Test unwritable directory scenario
-- [ ] Test file not found scenario
-- [ ] Test successful operations
-- [ ] Verify fix commands are correct
+- [x] Create `tests/integration/filePermissions.test.ts`
+- [x] Test unreadable file scenario
+- [x] Test unwritable file scenario
+- [x] Test unreadable directory scenario
+- [x] Test unwritable directory scenario
+- [x] Test file not found scenario
+- [x] Test successful operations
+- [x] Verify fix commands are correct
 
 **Validation for End-User Success:**
 ```bash
