@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuration now loads at runtime instead of compile-time
 - Tool works without required-secrets.json (validation is optional)
 - Workflows now only trigger manually or on schedule (not on every push)
+- Fixed develop-build workflow permissions for automated version bumps
 
 ### Changed
 - Required secrets configuration is now optional
