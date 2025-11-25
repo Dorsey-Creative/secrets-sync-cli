@@ -1,4 +1,4 @@
-# @dorsey-creative/secrets-sync
+# secrets-sync-cli
 
 CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration.
 
@@ -16,13 +16,13 @@ CLI tool for syncing environment secrets across environments with drift detectio
 
 ```bash
 # Using bun
-bun add @dorsey-creative/secrets-sync
+bun add secrets-sync-cli
 
 # Using npm
-npm install @dorsey-creative/secrets-sync
+npm install secrets-sync-cli
 
 # Using yarn
-yarn add @dorsey-creative/secrets-sync
+yarn add secrets-sync-cli
 ```
 
 ## Usage
@@ -146,7 +146,7 @@ cat config/env/required-secrets.json | jq .
 ### Build fails with "Could not resolve"
 This was fixed in version 1.0.1. Update to latest version:
 ```bash
-npm install @dorsey-creative/secrets-sync@latest
+npm install secrets-sync-cli@latest
 ```
 
 ## Development
