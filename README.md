@@ -48,6 +48,20 @@ secrets-sync --help
 
 ### Configuration
 
+Create `config/env/required-secrets.json` to validate required secrets:
+
+```json
+{
+  "shared": ["API_KEY", "DATABASE_URL"],
+  "production": ["PROD_SECRET"],
+  "staging": ["STAGING_SECRET"]
+}
+```
+
+**Optional:** The tool works without this file. Add it when you need validation.
+
+**Location:** Place in `config/env/` relative to your project root, or specify with `--dir` flag.
+
 Create `env-config.yml` in your project root:
 
 ```yaml
@@ -58,16 +72,6 @@ flags:
 skipSecrets:
   - DEBUG
   - LOCAL_ONLY_VAR
-```
-
-Create `config/env/required-secrets.json`:
-
-```json
-{
-  "shared": ["API_KEY", "DATABASE_URL"],
-  "production": ["PROD_SECRET"],
-  "staging": ["STAGING_SECRET"]
-}
 ```
 
 ### Directory Structure
@@ -127,6 +131,23 @@ secrets-sync --dir ./environments
 4. **Validation** - Checks for required secrets
 5. **Sync** - Updates target environments with missing keys
 6. **Backup** - Creates timestamped backups before changes
+
+## Troubleshooting
+
+### "[CONFIG] No required-secrets.json found"
+This is a warning, not an error. The tool works without this file. Create it only if you need validation.
+
+### "[CONFIG] Failed to load required-secrets.json"
+Check that your JSON is valid:
+```bash
+cat config/env/required-secrets.json | jq .
+```
+
+### Build fails with "Could not resolve"
+This was fixed in version 1.0.1. Update to latest version:
+```bash
+npm install @dorsey-creative/secrets-sync@latest
+```
 
 ## Development
 
