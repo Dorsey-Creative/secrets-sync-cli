@@ -11,12 +11,11 @@ on:
           - patch
           - minor
           - major
-    branches:
-      - release
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/release'
     
     permissions:
       contents: write
