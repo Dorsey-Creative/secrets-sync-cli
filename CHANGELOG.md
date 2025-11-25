@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - TypeScript configuration (tsconfig.json) with strict mode enabled (#2)
 - Proper type checking for all flags and function parameters
+- Plan for error handling and logging
 
 
 ## [1.0.6] - 2025-11-24
