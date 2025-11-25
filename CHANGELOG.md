@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cross-platform support for test fixtures
 - CI-only publishing enforcement
 - Changelog update checks in pre-push hook and GitHub Actions
-- npm provenance and trusted publishing support
+- npm provenance and trusted publishing (no tokens required)
 
 ## [1.0.0] - 2025-11-23
 
