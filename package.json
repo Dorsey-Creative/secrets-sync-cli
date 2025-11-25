@@ -1,6 +1,6 @@
 {
-  "name": "@dorsey-creative/secrets-sync",
-  "version": "1.0.0",
+  "name": "secrets-sync-cli",
+  "version": "1.0.1",
   "description": "CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration",
   "type": "module",
   "bin": {
@@ -9,10 +9,13 @@
   "scripts": {
     "build": "bun build src/secrets-sync.ts --outdir dist --target node",
     "dev": "bun run src/secrets-sync.ts",
-    "test": "bun test",
+    "test": "bun run build && bun test",
     "test:watch": "bun test --watch",
     "lint": "echo 'Linting not configured yet'",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build && node -e \"if (!process.env.CI) { console.error('❌ Use CI/CD to publish. Push a version tag instead.'); process.exit(1); }\"",
+    "release": "./scripts/release.sh",
+    "version:build": "./scripts/bump-build.sh",
+    "version:release": "./scripts/bump-release.sh"
   },
   "keywords": [
     "secrets",

@@ -1,19 +1,30 @@
 name: Publish to npm
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/release'
     
     permissions:
-      contents: read
+      contents: write
       id-token: write
     
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -29,6 +40,17 @@ jobs:
       - name: Build
         run: bun run build
       
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Bump version
+        run: npm version ${{ inputs.version }} -m "chore: release v%s [skip ci]"
+      
+      - name: Push changes
+        run: git push origin release --follow-tags
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,6 +58,4 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       
       - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

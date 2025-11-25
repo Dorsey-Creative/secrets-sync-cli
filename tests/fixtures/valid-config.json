@@ -1,0 +1,5 @@
+{
+  "production": ["PROD_SECRET"],
+  "shared": ["SHARED_SECRET"],
+  "staging": ["STAGING_SECRET"]
+}

@@ -14,7 +14,6 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createHash } from 'node:crypto';
-import requiredSecretsRaw from '../config/env/required-secrets.json' assert { type: 'json' };
 
 // Avoid extra dependencies; simple argv parsing
 interface Flags {
@@ -60,7 +59,31 @@ type RequiredSecretConfig = {
   staging?: string[];
 };
 
-const REQUIRED_SECRETS = requiredSecretsRaw as RequiredSecretConfig;
+/**
+ * Load required secrets configuration from user's project
+ * @param configDir - Directory containing required-secrets.json
+ * @returns Parsed configuration or default empty config
+ */
+function loadRequiredSecrets(configDir: string): RequiredSecretConfig {
+  const configPath = join(configDir, 'required-secrets.json');
+  
+  // Check if file exists
+  if (!existsSync(configPath)) {
+    logWarn('[CONFIG] No required-secrets.json found, skipping validation');
+    return { production: [], shared: [], staging: [] };
+  }
+  
+  // Attempt to read and parse
+  try {
+    const raw = readFileSync(configPath, 'utf8');
+    const config = JSON.parse(raw) as RequiredSecretConfig;
+    logInfo(`[CONFIG] Loaded required secrets from ${configPath}`);
+    return config;
+  } catch (e) {
+    logWarn(`[CONFIG] Failed to load required-secrets.json: ${(e as Error).message}`);
+    return { production: [], shared: [], staging: [] };
+  }
+}
 
 function loadEnvConfig(initialDir: string): EnvConfig {
   const candidates = ['env-config.yml', 'env-config.yaml'];
@@ -477,17 +500,14 @@ function optionalMissingWarnings(
   }
 }
 
-// Required production keys validation
-const REQUIRED_PROD_KEYS: string[] = Array.isArray(REQUIRED_SECRETS.production) ? [...REQUIRED_SECRETS.production] : [];
-
 // Deprecated keys – these no longer required but may still exist in GitHub secrets
 const DEPRECATED_KEYS: string[] = [
   'MAGIC_LINK_BASE_URL',  // Now derived from BACKEND_BASE_URL
   'STAGING_MAGIC_LINK_BASE_URL',  // Now derived from STAGING_BACKEND_BASE_URL
 ];
-function validateRequiredProductionKeys(prodFileName: string, productionKeys: Set<string> | undefined): boolean {
+function validateRequiredProductionKeys(prodFileName: string, productionKeys: Set<string> | undefined, requiredProdKeys: string[]): boolean {
   if (!productionKeys) return true; // nothing to validate if no production file
-  const missing = REQUIRED_PROD_KEYS.filter((k) => !productionKeys.has(k));
+  const missing = requiredProdKeys.filter((k) => !productionKeys.has(k));
   if (missing.length > 0) {
     logErr(`Missing required production keys in ${prodFileName}:`);
     for (const k of missing) console.error(` - ${k}`);
@@ -893,6 +913,13 @@ async function main() {
   const envConfig = loadEnvConfig(initialDir);
   applyConfigFlags(flags, envConfig.flags);
   const dir = flags.dir ?? DEFAULTS.dir;
+  
+  // Load required secrets configuration at runtime
+  const REQUIRED_SECRETS = loadRequiredSecrets(dir);
+  const REQUIRED_PROD_KEYS: string[] = Array.isArray(REQUIRED_SECRETS.production) 
+    ? [...REQUIRED_SECRETS.production] 
+    : [];
+  
   const skipSecrets = new Set<string>((envConfig.skipSecrets ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean));
   const backupRetention = envConfig.backupRetention ?? 3;
 
@@ -1017,7 +1044,7 @@ async function main() {
   }
 
   // Validate required production keys (Phase 4)
-  if (canonical && !validateRequiredProductionKeys(canonical.name, prodKeys)) {
+  if (canonical && !validateRequiredProductionKeys(canonical.name, prodKeys, REQUIRED_PROD_KEYS)) {
     // Abort further processing on validation failure per TR5
     return;
   }
