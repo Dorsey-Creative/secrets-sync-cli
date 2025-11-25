@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-# Check if on main branch
+# Check if on release branch
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [ "$BRANCH" != "main" ]; then
-  echo "❌ Error: Must be on main branch to release"
+if [ "$BRANCH" != "release" ]; then
+  echo "❌ Error: Must be on release branch to release"
   exit 1
 fi
 
@@ -25,7 +25,7 @@ fi
 echo "🚀 Preparing $VERSION_TYPE release..."
 
 # Pull latest
-git pull origin main
+git pull origin release
 
 # Run tests
 echo "🧪 Running tests..."
@@ -37,6 +37,6 @@ npm version $VERSION_TYPE -m "chore: release v%s [skip ci]"
 
 # Push changes and tags
 echo "⬆️  Pushing to GitHub..."
-git push origin main --follow-tags
+git push origin release --follow-tags
 
 echo "✅ Release prepared! GitHub Actions will publish to npm."
