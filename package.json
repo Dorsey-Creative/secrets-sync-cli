@@ -1,6 +1,6 @@
 {
   "name": "secrets-sync-cli",
-  "version": "1.0.6-20251126.9",
+  "version": "1.0.6-20251126.10",
   "description": "CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration",
   "type": "module",
   "bin": {
