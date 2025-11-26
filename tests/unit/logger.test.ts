@@ -163,19 +163,19 @@ describe('Logger', () => {
 
     test('formats single value context', () => {
       const logger = new Logger();
-      logger.info('Test', { key: 'value' });
+      logger.info('Test', { port: 3000 });
       
-      expect(logOutput[1]).toContain('key');
-      expect(logOutput[1]).toContain('value');
+      expect(logOutput[1]).toContain('port');
+      expect(logOutput[1]).toContain('3000');
     });
 
     test('formats nested context', () => {
       const logger = new Logger();
-      logger.info('Test', { nested: { key: 'value' } });
+      logger.info('Test', { config: { port: 3000 } });
       
-      expect(logOutput[1]).toContain('nested');
-      expect(logOutput[1]).toContain('key');
-      expect(logOutput[1]).toContain('value');
+      expect(logOutput[1]).toContain('config');
+      expect(logOutput[1]).toContain('port');
+      expect(logOutput[1]).toContain('3000');
     });
 
     test('indents context lines', () => {

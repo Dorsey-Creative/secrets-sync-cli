@@ -454,16 +454,16 @@ bun run scripts/benchmark-scrubbing.ts
 
 **Sub-tasks:**
 
-- [ ] Import scrubber in `src/utils/logger.ts`
-- [ ] Add scrubbing to `formatMessage()` method
-- [ ] Scrub message text before formatting
-- [ ] Scrub context objects before formatting
-- [ ] Add special handling for Error objects with stack traces
-- [ ] Scrub error.stack property via context
-- [ ] Add logError() method for Error objects
-- [ ] Ensure file operation messages are scrubbed
-- [ ] Maintain existing logger API (no breaking changes)
-- [ ] Test that existing logger tests still pass
+- [x] Import scrubber in `src/utils/logger.ts`
+- [x] Add scrubbing to `formatMessage()` method
+- [x] Scrub message text before formatting
+- [x] Scrub context objects before formatting
+- [x] Add special handling for Error objects with stack traces
+- [x] Scrub error.stack property via context
+- [x] Add logError() method for Error objects
+- [x] Ensure file operation messages are scrubbed
+- [x] Maintain existing logger API (no breaking changes)
+- [x] Test that existing logger tests still pass
 
 **Validation for End-User Success:**
 
@@ -498,14 +498,14 @@ bun test tests/unit/logger.test.ts
 
 **Success Criteria:**
 
-- [ ] Logger scrubs message text
-- [ ] Logger scrubs context objects
-- [ ] Logger scrubs stack traces
-- [ ] Logger scrubs file operation messages
-- [ ] logError() method added
-- [ ] Existing logger API unchanged
-- [ ] All existing logger tests pass
-- [ ] No breaking changes
+- [x] Logger scrubs message text
+- [x] Logger scrubs context objects
+- [x] Logger scrubs stack traces
+- [x] Logger scrubs file operation messages
+- [x] logError() method added
+- [x] Existing logger API unchanged
+- [x] All existing logger tests pass
+- [x] No breaking changes
 
 ---
 
@@ -517,17 +517,17 @@ bun test tests/unit/logger.test.ts
 
 **Sub-tasks:**
 
-- [ ] Create `tests/integration/logger-scrubbing.test.ts`
-- [ ] Test logger.error() scrubs secrets (2 tests)
-- [ ] Test logger.warn() scrubs secrets (2 tests)
-- [ ] Test logger.info() scrubs secrets (2 tests)
-- [ ] Test logger.debug() scrubs secrets (2 tests)
-- [ ] Test context object scrubbing (2 tests)
-- [ ] Test nested context scrubbing (1 test)
-- [ ] Test stack trace scrubbing (2 tests)
-- [ ] Test file operation message scrubbing (2 tests)
-- [ ] Test logError() method (1 test)
-- [ ] Verify all existing logger tests pass (1 test)
+- [x] Create `tests/integration/logger-scrubbing.test.ts`
+- [x] Test logger.error() scrubs secrets (2 tests)
+- [x] Test logger.warn() scrubs secrets (2 tests)
+- [x] Test logger.info() scrubs secrets (2 tests)
+- [x] Test logger.debug() scrubs secrets (2 tests)
+- [x] Test context object scrubbing (2 tests)
+- [x] Test nested context scrubbing (1 test)
+- [x] Test stack trace scrubbing (2 tests)
+- [x] Test file operation message scrubbing (2 tests)
+- [x] Test logError() method (1 test)
+- [x] Verify all existing logger tests pass (1 test)
 
 **Validation for End-User Success:**
 
@@ -562,14 +562,14 @@ try {
 
 **Success Criteria:**
 
-- [ ] All 17+ integration tests pass
-- [ ] All log levels scrub secrets
-- [ ] Context objects are scrubbed
-- [ ] Nested context is scrubbed
-- [ ] Stack traces are scrubbed
-- [ ] File operations are scrubbed
-- [ ] logError() works correctly
-- [ ] Real-world scenarios work
+- [x] All 17+ integration tests pass
+- [x] All log levels scrub secrets
+- [x] Context objects are scrubbed
+- [x] Nested context is scrubbed
+- [x] Stack traces are scrubbed
+- [x] File operations are scrubbed
+- [x] logError() works correctly
+- [x] Real-world scenarios work
 
 # Should see: 12 pass, 0 fail
 
@@ -607,10 +607,10 @@ logger.error('Database connection failed', {
 
 **Sub-tasks:**
 
-- [ ] Add JSDoc comment about automatic scrubbing
-- [ ] Update logger examples in code comments
-- [ ] Document that scrubbing is always enabled
-- [ ] Add note about performance (< 1ms overhead)
+- [x] Add JSDoc comment about automatic scrubbing
+- [x] Update logger examples in code comments
+- [x] Document that scrubbing is always enabled
+- [x] Add note about performance (< 1ms overhead)
 
 **Validation for End-User Success:**
 
@@ -626,10 +626,10 @@ grep -A 10 "@example" src/utils/logger.ts
 
 **Success Criteria:**
 
-- [ ] JSDoc comments updated
-- [ ] Examples show scrubbed output
-- [ ] Documentation is clear
-- [ ] No ambiguity about scrubbing behavior
+- [x] JSDoc comments updated
+- [x] Examples show scrubbed output
+- [x] Documentation is clear
+- [x] No ambiguity about scrubbing behavior
 
 ---
 
