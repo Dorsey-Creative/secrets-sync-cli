@@ -1,0 +1,14 @@
+{
+  "threshold": 5,
+  "reporters": ["console"],
+  "ignore": [
+    "**/*.test.ts",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/tests/fixtures/**"
+  ],
+  "format": ["typescript"],
+  "minLines": 5,
+  "minTokens": 50,
+  "exitCode": 1
+}

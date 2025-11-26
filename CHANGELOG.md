@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.1] - 2025-11-24
+## [Unreleased]
+
+## [1.1.0] - 2025-11-25
+
+### Added
+
+- Comprehensive error handling with structured error classes and centralized message catalog (#5)
+- Logger module with 4 levels (ERROR, WARN, INFO, DEBUG) and `--verbose` flag (#5, #7)
+- Dependency validation at startup (gh CLI, gh auth, Node.js >= 18) with parallel checks < 1s (#5)
+- Safe file operations with automatic fix commands for permission errors (#5)
+- Network timeout protection (default 30s) with AbortController cleanup (#5)
+- Environment variables: `SKIP_DEPENDENCY_CHECK` for CI/CD, `SECRETS_SYNC_TIMEOUT` for slow networks (#5)
+- 116 new tests: 89 unit, 22 integration, 5 E2E (100% coverage for error modules) (#5)
+- Documentation: error patterns, troubleshooting guide, UAT plan, performance benchmarks (#5, #16)
+- Code quality checks with jscpd (0% duplication) (#5)
+- TypeScript strict mode configuration (#2)
+
+### Changed
+
+- All file operations use safe wrappers with error handling and context (#5)
+- All command executions have timeout protection to prevent infinite hangs (#5)
+- Error messages show exact paths, reasons, and copy-pasteable fix commands (#5)
+
+## [1.0.6] - 2025-11-24
 
 ### Fixed
 

@@ -69,7 +69,7 @@ describe("loadRequiredSecrets", () => {
     ]);
     
     const output = new TextDecoder().decode(proc.stderr);
-    expect(output).toContain("[CONFIG] Failed to load required-secrets.json");
+    expect(output).toContain("[CONFIG] Failed to parse required-secrets.json");
     expect(proc.exitCode).toBe(0);
   });
   
