@@ -54,6 +54,7 @@ jobs:
           if [[ -n $(git status --porcelain bun.lock) ]]; then
             git add bun.lock
             git commit -m "chore: update lockfile [skip ci]"
+            git push origin release
           fi
       
       - name: Bump version
