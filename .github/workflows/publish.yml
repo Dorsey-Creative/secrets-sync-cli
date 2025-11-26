@@ -25,6 +25,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
       
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -46,6 +48,45 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Pre-flight checks
+        run: |
+          echo "🔍 Running pre-flight checks..."
+          
+          # Check git status (excluding lockfile which will be committed separately)
+          CHANGES=$(git status --porcelain | grep -v "bun.lockb" || true)
+          if [[ -n "$CHANGES" ]]; then
+            echo "❌ Error: Git working directory is not clean"
+            echo "Uncommitted changes:"
+            echo "$CHANGES"
+            echo ""
+            echo "Please commit or stash changes before publishing:"
+            echo "  git add ."
+            echo "  git commit -m 'your message'"
+            exit 1
+          fi
+          
+          # Check we're on release branch
+          BRANCH=$(git branch --show-current)
+          if [[ "$BRANCH" != "release" ]]; then
+            echo "❌ Error: Must be on release branch (currently on: $BRANCH)"
+            exit 1
+          fi
+          
+          # Check CHANGELOG has been updated
+          if ! grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            echo "⚠️  Warning: No [Unreleased] section in CHANGELOG.md"
+            echo "Consider adding release notes before publishing"
+          fi
+          
+          echo "✅ All pre-flight checks passed"
+      
+      - name: Commit lockfile if changed
+        run: |
+          if [[ -n $(git status --porcelain bun.lockb) ]]; then
+            git add bun.lockb
+            git commit -m "chore: update lockfile [skip ci]"
+          fi
       
       - name: Bump version
         run: |
