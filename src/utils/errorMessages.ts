@@ -3,10 +3,13 @@
  * 
  * Provides consistent, actionable error messages using a centralized catalog.
  * All messages follow the "what, why, how to fix" format.
+ * 
+ * Security: All error messages are automatically scrubbed to prevent secret leakage.
  */
 
 import errorCatalog from '../messages/errors.json';
 import { DependencyError, PermissionError, TimeoutError } from './errors';
+import { scrubSecrets, scrubObject } from './scrubber';
 
 // ANSI color codes
 const colors = {
@@ -63,12 +66,13 @@ export function getMessage(code: ErrorCode, context: Record<string, unknown> = {
 
 /**
  * Build a formatted error message with colors.
+ * All message fields are automatically scrubbed to prevent secret leakage.
  */
 export function buildErrorMessage(msg: ErrorMessage): string {
   const lines = [
-    `${colors.red}❌ ${msg.what}${colors.reset}`,
-    `   ${msg.why}`,
-    `   ${colors.cyan}${msg.howToFix}${colors.reset}`,
+    `${colors.red}❌ ${scrubSecrets(msg.what)}${colors.reset}`,
+    `   ${scrubSecrets(msg.why)}`,
+    `   ${colors.cyan}${scrubSecrets(msg.howToFix)}${colors.reset}`,
   ];
   
   return lines.join('\n');
@@ -76,11 +80,13 @@ export function buildErrorMessage(msg: ErrorMessage): string {
 
 /**
  * Format context object for display.
+ * Context is automatically scrubbed to prevent secret leakage.
  */
 export function formatContext(context: Record<string, unknown>): string {
   if (Object.keys(context).length === 0) return '';
   
-  return `\n   ${colors.yellow}Context:${colors.reset} ${JSON.stringify(context, null, 2)
+  const scrubbedContext = scrubObject(context);
+  return `\n   ${colors.yellow}Context:${colors.reset} ${JSON.stringify(scrubbedContext, null, 2)
     .split('\n')
     .join('\n   ')}`;
 }

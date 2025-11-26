@@ -11,6 +11,8 @@ CLI tool for syncing environment secrets across environments with drift detectio
 - 🛡️ **Safe by Default** - Dry-run mode, confirmations, backups
 - 📋 **Required Secrets** - Validate against required secrets config
 - 🚫 **Smart Ignoring** - Skips `.example`, `.template`, `.local`, `.test` files
+- 🔒 **Secret Scrubbing** - Automatically redacts secrets from all output
+- ✅ **.gitignore Protection** - Validates and auto-fixes .gitignore patterns
 
 ## Installation
 
@@ -99,6 +101,7 @@ your-project/
 | `--force` | Skip all confirmations |
 | `--no-confirm` | Skip confirmation prompts |
 | `--skip-unchanged` | Skip files with no changes |
+| `--fix-gitignore` | Add missing patterns to .gitignore |
 | `--verbose` | Show detailed debug output |
 | `--help` | Show help message |
 | `--version` | Show version |
@@ -110,7 +113,23 @@ your-project/
 | `SECRETS_SYNC_TIMEOUT` | Timeout for network operations (ms) | `30000` (30s) |
 | `SKIP_DEPENDENCY_CHECK` | Skip dependency validation (for CI/CD) | `false` |
 
-### Examples
+## Examples
+
+### Basic Usage
+
+```bash
+# Sync staging environment
+secrets-sync --env staging --dry-run
+secrets-sync --env staging
+
+# Sync all environments with overwrite
+secrets-sync --overwrite --no-confirm
+
+# Custom directory
+secrets-sync --dir ./environments
+```
+
+### Environment Variables
 
 ```bash
 # Increase timeout for slow networks
@@ -120,26 +139,46 @@ SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
 SKIP_DEPENDENCY_CHECK=1 secrets-sync --dry-run
 ```
 
-## Examples
+## Security
 
-### Sync staging environment
+### Automatic Secret Scrubbing
 
+All CLI output is automatically scrubbed to prevent accidental secret exposure:
+
+- **Always Active** - Scrubbing cannot be disabled
+- **All Output Channels** - Covers console, logs, errors, and stack traces
+- **Pattern Detection** - Recognizes KEY=value, URLs with credentials, JWT tokens, and private keys
+- **Safe Sharing** - Copy-paste any output without security review
+
+Example output:
 ```bash
-secrets-sync --env staging --dry-run
-secrets-sync --env staging
+# Before scrubbing (internal)
+API_KEY=sk_live_abc123
+DATABASE_URL=postgres://admin:password@localhost/db
+
+# After scrubbing (displayed)
+API_KEY=[REDACTED]
+DATABASE_URL=postgres://admin:[REDACTED]@localhost/db
 ```
 
-### Sync all environments with overwrite
+### .gitignore Protection
+
+The CLI validates your `.gitignore` to ensure secret files won't be committed:
 
 ```bash
-secrets-sync --overwrite --no-confirm
+# Check .gitignore (automatic on startup)
+secrets-sync --dry-run
+
+# Auto-fix missing patterns
+secrets-sync --fix-gitignore
 ```
 
-### Custom directory
-
-```bash
-secrets-sync --dir ./environments
-```
+Required patterns:
+- `.env` - Production secrets
+- `.env.*` - Environment-specific secrets
+- `!.env.example` - Allow example files
+- `**/bak/` - Backup directories
+- `*.bak` - Backup files
 
 ## How It Works
 
@@ -152,83 +191,38 @@ secrets-sync --dir ./environments
 
 ## Troubleshooting
 
-### "[CONFIG] No required-secrets.json found"
-This is a warning, not an error. The tool works without this file. Create it only if you need validation.
+### Common Issues
 
-### "[CONFIG] Failed to load required-secrets.json"
-Check that your JSON is valid:
+**"GitHub CLI (gh) not found"**
 ```bash
-cat config/env/required-secrets.json | jq .
+brew install gh  # macOS
+# See https://cli.github.com for other platforms
 ```
 
-### "GitHub CLI (gh) not found"
-Install the GitHub CLI:
-```bash
-# macOS
-brew install gh
-
-# Linux
-# See https://cli.github.com for installation instructions
-```
-
-### "GitHub CLI not authenticated"
-Authenticate with GitHub:
+**"GitHub CLI not authenticated"**
 ```bash
 gh auth login
 ```
 
-### "Permission denied" errors
-Fix file permissions:
+**"Permission denied" errors**
 ```bash
-# For read errors
-chmod 644 /path/to/file
-
-# For directory errors
-chmod 755 /path/to/directory
+chmod 644 /path/to/file      # For files
+chmod 755 /path/to/directory # For directories
 ```
 
-### "Operation timed out"
-Increase the timeout for slow networks:
+**"Operation timed out"**
 ```bash
 SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
 ```
 
-### Build fails with "Could not resolve"
-This was fixed in version 1.0.1. Update to latest version:
-```bash
-npm install secrets-sync-cli@latest
-```
+For more troubleshooting help, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
-## Development
+## Documentation
 
-```bash
-# Clone the repo
-git clone https://github.com/Dorsey-Creative/secrets-sync-cli.git
-cd secrets-sync-cli
-
-# Install dependencies
-bun install
-
-# Run in dev mode
-bun run dev -- --help
-
-# Run tests
-bun test
-
-# Run quality checks
-bun run quality
-
-# Build
-bun run build
-```
-
-### Quality Standards
-
-- **Code Duplication:** < 5% (checked with jscpd)
-- **Test Coverage:** >= 90% (148 tests, 269 assertions)
-- **Performance:** Dependency checks < 1s, CLI startup < 0.5s
-
-Run `bun run quality` before committing to ensure code quality standards are met.
+- [Contributing Guidelines](CONTRIBUTING.md) - Development setup and contribution process
+- [Changelog](CHANGELOG.md) - Release history and version notes
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - Detailed troubleshooting guide
+- [Error Message Patterns](docs/ERROR_MESSAGES.md) - Error handling standards
 
 ## License
 
@@ -236,13 +230,9 @@ MIT © Dorsey Creative
 
 ## Contributing
 
-Issues and PRs welcome! Please read the contributing guidelines first.
+Issues and PRs welcome! Please read the [contributing guidelines](CONTRIBUTING.md) first.
 
 ## Related Projects
 
 - [dotenv](https://github.com/motdotla/dotenv) - Load environment variables
 - [env-cmd](https://github.com/toddbluhm/env-cmd) - Run commands with environment variables
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release history.
