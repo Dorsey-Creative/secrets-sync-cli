@@ -1,4 +1,5 @@
 # Comprehensive Project Review
+
 **Date:** 2025-11-23  
 **Project:** @joedorsey/secrets-sync v1.0.0
 
@@ -7,6 +8,7 @@
 **@joedorsey/secrets-sync** is a TypeScript CLI tool for managing environment secrets across multiple environments with drift detection and GitHub Secrets integration.
 
 ### Key Features
+
 - Production-first approach (`.env` as canonical source)
 - Automatic drift detection between environments
 - GitHub Secrets sync via `gh` CLI
@@ -33,21 +35,26 @@
 ### Critical Issues
 
 #### 1. Hardcoded import path (Line 13)
+
 ```typescript
 import requiredSecretsRaw from '../config/env/required-secrets.json' assert { type: 'json' };
 ```
+
 **Problem:** Breaks when installed as a package  
 **Fix:** Load dynamically from project root
 
 #### 2. Missing TypeScript configuration
+
 **Problem:** No `tsconfig.json` found  
 **Fix:** Add proper TypeScript configuration
 
 #### 3. No actual tests
+
 **Problem:** Test file only has placeholder  
 **Fix:** Implement comprehensive test suite
 
 #### 4. Build configuration incomplete
+
 **Problem:** `bun build` doesn't handle shebang or make output executable  
 **Fix:** Update build script to properly configure binary
 
@@ -56,19 +63,23 @@ import requiredSecretsRaw from '../config/env/required-secrets.json' assert { ty
 ### Major Issues
 
 #### 5. Error handling gaps
+
 - No validation that `gh` CLI is installed before operations
 - Missing error handling for file permission issues
 - No timeout handling for GitHub API calls
 
 #### 6. Manifest race conditions
+
 **Problem:** Multiple concurrent runs could corrupt manifest file  
 **Fix:** Implement file locking or atomic writes
 
 #### 7. No logging levels
+
 **Problem:** All output to console; no verbosity control  
 **Fix:** Add configurable logging (debug, info, warn, error)
 
 #### 8. Incomplete validation
+
 - No validation of secret name format (GitHub has restrictions)
 - No size limits enforced (GitHub has 64KB limit per secret)
 - No validation of YAML config structure
@@ -78,8 +89,10 @@ import requiredSecretsRaw from '../config/env/required-secrets.json' assert { ty
 ### Minor Issues
 
 #### 9. Code organization
+
 **Problem:** 1,400+ line single file  
 **Fix:** Split into modules:
+
 - `scanner.ts` - File discovery
 - `parser.ts` - Dotenv parsing
 - `differ.ts` - Diff computation
@@ -87,22 +100,27 @@ import requiredSecretsRaw from '../config/env/required-secrets.json' assert { ty
 - `manifest.ts` - State management
 
 #### 10. Inconsistent naming
+
 **Problem:** Mix of camelCase and kebab-case in flags  
 **Fix:** Standardize on kebab-case for CLI flags
 
 #### 11. No progress indicators
+
 **Problem:** Long operations have no feedback  
 **Fix:** Add progress bars or status updates
 
 #### 12. Backup cleanup timing
+
 **Problem:** Runs after every file parse  
 **Fix:** Run once at end of operation
 
 #### 13. Mock mode confusion
+
 **Problem:** `.secrets-mock.json` doesn't enable mock mode (requires env var)  
 **Fix:** Document clearly or auto-detect
 
 #### 14. No CI/CD validation
+
 **Problem:** GitHub Actions workflows minimal  
 **Fix:** Add comprehensive CI pipeline
 
@@ -111,17 +129,21 @@ import requiredSecretsRaw from '../config/env/required-secrets.json' assert { ty
 ### Code Quality Issues
 
 #### 15. Type safety issues
+
 ```typescript
 config.flags[normalized] = value as any; // Line 127 - unsafe cast
 ```
 
 #### 16. Unused variables
+
 `CONFIRM_INPUT` defined but only used once
 
 #### 17. Magic numbers
+
 Hardcoded values like `3` for backup retention should be constants
 
 #### 18. Complex conditionals
+
 Diff logic (lines 700-750) needs refactoring for clarity
 
 ---
@@ -158,6 +180,7 @@ Diff logic (lines 700-750) needs refactoring for clarity
 ## Recommendations Priority
 
 ### High Priority
+
 1. Fix hardcoded import path
 2. Add `tsconfig.json`
 3. Validate `gh` CLI availability
@@ -166,6 +189,7 @@ Diff logic (lines 700-750) needs refactoring for clarity
 6. Add secret value scrubbing in errors
 
 ### Medium Priority
+
 7. Add progress indicators
 8. Implement proper logging levels
 9. Add JSON output mode
@@ -174,6 +198,7 @@ Diff logic (lines 700-750) needs refactoring for clarity
 12. Document architecture
 
 ### Low Priority
+
 13. Add rollback capability
 14. Add environment templates
 15. Improve backup strategy
@@ -196,14 +221,17 @@ Diff logic (lines 700-750) needs refactoring for clarity
 This is a **solid foundation** for a secrets management tool with thoughtful design decisions around safety and drift detection. 
 
 ### Main Issues
+
 - Needs modularization for maintainability
 - Missing production-readiness features (proper error handling, logging, tests)
 - Hardcoded paths prevent it from working as an installed package
 
 ### Estimated Effort
+
 **2-3 weeks** of focused development to reach production-ready state.
 
 ### Next Steps
+
 1. Address critical issues (1-6)
 2. Implement comprehensive test suite
 3. Refactor into modular architecture

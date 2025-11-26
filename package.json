@@ -7,11 +7,13 @@
     "secrets-sync": "./dist/secrets-sync.js"
   },
   "scripts": {
-    "build": "bun build src/secrets-sync.ts --outdir dist --target node",
+    "build": "bun build src/secrets-sync.ts --outdir dist --target node && chmod +x dist/secrets-sync.js",
     "dev": "bun run src/secrets-sync.ts",
     "test": "bun run build && bun test",
     "test:watch": "bun test --watch",
     "lint": "echo 'Linting not configured yet'",
+    "quality:duplication": "jscpd src/",
+    "quality": "bun run quality:duplication",
     "prepublishOnly": "bun run build && node -e \"if (!process.env.CI) { console.error('❌ Use CI/CD to publish. Push a version tag instead.'); process.exit(1); }\"",
     "release": "./scripts/release.sh",
     "version:build": "./scripts/bump-build.sh",
@@ -46,7 +48,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "jscpd": "^4.0.5"
   },
   "dependencies": {}
 }
