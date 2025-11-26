@@ -110,7 +110,23 @@ your-project/
 | `SECRETS_SYNC_TIMEOUT` | Timeout for network operations (ms) | `30000` (30s) |
 | `SKIP_DEPENDENCY_CHECK` | Skip dependency validation (for CI/CD) | `false` |
 
-### Examples
+## Examples
+
+### Basic Usage
+
+```bash
+# Sync staging environment
+secrets-sync --env staging --dry-run
+secrets-sync --env staging
+
+# Sync all environments with overwrite
+secrets-sync --overwrite --no-confirm
+
+# Custom directory
+secrets-sync --dir ./environments
+```
+
+### Environment Variables
 
 ```bash
 # Increase timeout for slow networks
@@ -118,27 +134,6 @@ SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
 
 # Skip dependency checks in CI
 SKIP_DEPENDENCY_CHECK=1 secrets-sync --dry-run
-```
-
-## Examples
-
-### Sync staging environment
-
-```bash
-secrets-sync --env staging --dry-run
-secrets-sync --env staging
-```
-
-### Sync all environments with overwrite
-
-```bash
-secrets-sync --overwrite --no-confirm
-```
-
-### Custom directory
-
-```bash
-secrets-sync --dir ./environments
 ```
 
 ## How It Works
@@ -152,83 +147,38 @@ secrets-sync --dir ./environments
 
 ## Troubleshooting
 
-### "[CONFIG] No required-secrets.json found"
-This is a warning, not an error. The tool works without this file. Create it only if you need validation.
+### Common Issues
 
-### "[CONFIG] Failed to load required-secrets.json"
-Check that your JSON is valid:
+**"GitHub CLI (gh) not found"**
 ```bash
-cat config/env/required-secrets.json | jq .
+brew install gh  # macOS
+# See https://cli.github.com for other platforms
 ```
 
-### "GitHub CLI (gh) not found"
-Install the GitHub CLI:
-```bash
-# macOS
-brew install gh
-
-# Linux
-# See https://cli.github.com for installation instructions
-```
-
-### "GitHub CLI not authenticated"
-Authenticate with GitHub:
+**"GitHub CLI not authenticated"**
 ```bash
 gh auth login
 ```
 
-### "Permission denied" errors
-Fix file permissions:
+**"Permission denied" errors**
 ```bash
-# For read errors
-chmod 644 /path/to/file
-
-# For directory errors
-chmod 755 /path/to/directory
+chmod 644 /path/to/file      # For files
+chmod 755 /path/to/directory # For directories
 ```
 
-### "Operation timed out"
-Increase the timeout for slow networks:
+**"Operation timed out"**
 ```bash
 SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
 ```
 
-### Build fails with "Could not resolve"
-This was fixed in version 1.0.1. Update to latest version:
-```bash
-npm install secrets-sync-cli@latest
-```
+For more troubleshooting help, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
-## Development
+## Documentation
 
-```bash
-# Clone the repo
-git clone https://github.com/Dorsey-Creative/secrets-sync-cli.git
-cd secrets-sync-cli
-
-# Install dependencies
-bun install
-
-# Run in dev mode
-bun run dev -- --help
-
-# Run tests
-bun test
-
-# Run quality checks
-bun run quality
-
-# Build
-bun run build
-```
-
-### Quality Standards
-
-- **Code Duplication:** < 5% (checked with jscpd)
-- **Test Coverage:** >= 90% (148 tests, 269 assertions)
-- **Performance:** Dependency checks < 1s, CLI startup < 0.5s
-
-Run `bun run quality` before committing to ensure code quality standards are met.
+- [Contributing Guidelines](CONTRIBUTING.md) - Development setup and contribution process
+- [Changelog](CHANGELOG.md) - Release history and version notes
+- [Troubleshooting](docs/TROUBLESHOOTING.md) - Detailed troubleshooting guide
+- [Error Message Patterns](docs/ERROR_MESSAGES.md) - Error handling standards
 
 ## License
 
@@ -236,13 +186,9 @@ MIT © Dorsey Creative
 
 ## Contributing
 
-Issues and PRs welcome! Please read the contributing guidelines first.
+Issues and PRs welcome! Please read the [contributing guidelines](CONTRIBUTING.md) first.
 
 ## Related Projects
 
 - [dotenv](https://github.com/motdotla/dotenv) - Load environment variables
 - [env-cmd](https://github.com/toddbluhm/env-cmd) - Run commands with environment variables
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for release history.
