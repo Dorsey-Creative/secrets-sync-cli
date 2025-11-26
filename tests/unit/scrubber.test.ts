@@ -203,14 +203,16 @@ describe('Whitelist filtering', () => {
     expect(scrubSecrets('DEBUG=true')).toBe('DEBUG=true');
     expect(scrubSecrets('PORT=3000')).toBe('PORT=3000');
     expect(scrubSecrets('NODE_ENV=production')).toBe('NODE_ENV=production');
+    expect(scrubSecrets('SECRETS_SYNC_TIMEOUT=60000')).toBe('SECRETS_SYNC_TIMEOUT=60000');
   });
 
   test('does not scrub whitelisted object properties', () => {
-    const obj = { debug: true, port: 3000, verbose: false };
+    const obj = { debug: true, port: 3000, verbose: false, secrets_sync_timeout: 60000 };
     const result = scrubObject(obj);
     expect(result.debug).toBe(true);
     expect(result.port).toBe(3000);
     expect(result.verbose).toBe(false);
+    expect(result.secrets_sync_timeout).toBe(60000);
   });
 
   test('scrubs secrets even if they contain whitelisted substrings', () => {

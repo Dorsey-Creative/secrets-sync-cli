@@ -60,6 +60,7 @@ const WHITELIST_KEYS = new Set([
   'debug', 'node_env', 'port',
   'host', 'hostname', 'path',
   'log_level', 'verbose',
+  'secrets_sync_timeout',
 ]);
 
 // User config patterns
