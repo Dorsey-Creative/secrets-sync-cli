@@ -161,6 +161,38 @@ Check that your JSON is valid:
 cat config/env/required-secrets.json | jq .
 ```
 
+### "GitHub CLI (gh) not found"
+Install the GitHub CLI:
+```bash
+# macOS
+brew install gh
+
+# Linux
+# See https://cli.github.com for installation instructions
+```
+
+### "GitHub CLI not authenticated"
+Authenticate with GitHub:
+```bash
+gh auth login
+```
+
+### "Permission denied" errors
+Fix file permissions:
+```bash
+# For read errors
+chmod 644 /path/to/file
+
+# For directory errors
+chmod 755 /path/to/directory
+```
+
+### "Operation timed out"
+Increase the timeout for slow networks:
+```bash
+SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
+```
+
 ### Build fails with "Could not resolve"
 This was fixed in version 1.0.1. Update to latest version:
 ```bash
@@ -183,9 +215,20 @@ bun run dev -- --help
 # Run tests
 bun test
 
+# Run quality checks
+bun run quality
+
 # Build
 bun run build
 ```
+
+### Quality Standards
+
+- **Code Duplication:** < 5% (checked with jscpd)
+- **Test Coverage:** >= 90% (148 tests, 269 assertions)
+- **Performance:** Dependency checks < 1s, CLI startup < 0.5s
+
+Run `bun run quality` before committing to ensure code quality standards are met.
 
 ## License
 

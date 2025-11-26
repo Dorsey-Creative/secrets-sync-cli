@@ -7,38 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-11-25
+
 ### Added
 
-- Error handling foundation: structured error classes with context support (#5)
-- Centralized error message catalog with consistent "what, why, how to fix" format (#5)
-- Logger module with 4 levels (ERROR, WARN, INFO, DEBUG) and colored output (#5)
-- `--verbose` flag to enable debug logging for troubleshooting (#5)
-- Error message builder with ANSI colors and template interpolation (#5)
-- Dependency validation at startup: checks for gh CLI, gh auth, and Node.js >= 18 (#5)
-- Parallel dependency checks with session caching (< 1 second total) (#5)
-- `SKIP_DEPENDENCY_CHECK` environment variable for CI/CD pipelines (#5)
-- Platform-specific installation instructions for missing dependencies (#5)
-- Safe file operations module with permission error handling (#5)
-- Automatic fix commands for permission errors (chmod suggestions) (#5)
-- Graceful handling of unreadable/unwritable files and directories (#5)
-- Network timeout protection with configurable timeout (default 30s) (#5)
-- `SECRETS_SYNC_TIMEOUT` environment variable to adjust timeout for slow networks (#5)
-- Timeout wrapper using AbortController for proper cleanup (#5)
-- All command executions now have timeout protection to prevent infinite hangs (#5)
-- Comprehensive unit tests for error handling (89 tests, 100% coverage) (#5)
-- Integration tests for dependency validation (8 tests) (#5)
-- Integration tests for file permissions (7 tests) (#5)
-- Integration tests for timeout functionality (7 tests) (#5)
-- TypeScript configuration (tsconfig.json) with strict mode enabled (#2)
-- Proper type checking for all flags and function parameters
+- Comprehensive error handling with structured error classes and centralized message catalog (#5)
+- Logger module with 4 levels (ERROR, WARN, INFO, DEBUG) and `--verbose` flag (#5, #7)
+- Dependency validation at startup (gh CLI, gh auth, Node.js >= 18) with parallel checks < 1s (#5)
+- Safe file operations with automatic fix commands for permission errors (#5)
+- Network timeout protection (default 30s) with AbortController cleanup (#5)
+- Environment variables: `SKIP_DEPENDENCY_CHECK` for CI/CD, `SECRETS_SYNC_TIMEOUT` for slow networks (#5)
+- 116 new tests: 89 unit, 22 integration, 5 E2E (100% coverage for error modules) (#5)
+- Documentation: error patterns, troubleshooting guide, UAT plan, performance benchmarks (#5, #16)
+- Code quality checks with jscpd (0% duplication) (#5)
+- TypeScript strict mode configuration (#2)
 
 ### Changed
 
-- All file operations now use safe wrappers with error handling (#5)
-- File permission errors now show exact paths and fix commands (#5)
-- Error messages include context for easier debugging (#5)
-- All command executions now use timeout wrapper to prevent hangs (#5)
-- Dependency checks (gh CLI, gh auth) now respect `SECRETS_SYNC_TIMEOUT` environment variable (#5)
+- All file operations use safe wrappers with error handling and context (#5)
+- All command executions have timeout protection to prevent infinite hangs (#5)
+- Error messages show exact paths, reasons, and copy-pasteable fix commands (#5)
 
 ## [1.0.6] - 2025-11-24
 
