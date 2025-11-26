@@ -5,8 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ## [1.1.0] - 2025-11-26
 
 ### Added
@@ -43,11 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- CI publish workflow now builds before testing to ensure dist/ artifacts exist
+- CI publish workflow now versions before build to ensure correct version in dist/ artifacts
+- CI publish workflow commits and tags after npm publish for atomic releases
+- CI publish workflow builds before testing to ensure dist/ artifacts exist
 - CI publish workflow fetches full git history for correct version detection
-- CI publish workflow auto-commits bun.lock changes to prevent version bump failures
 - Added separate pre-flight checks workflow for PRs to release branch
-- CI publish workflow fetches latest tags to ensure correct version bump
 
 ## [1.0.6] - 2025-11-24
 
