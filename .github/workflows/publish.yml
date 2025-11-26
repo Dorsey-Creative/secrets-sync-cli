@@ -35,7 +35,15 @@ jobs:
       
       - name: Install dependencies
         run: bun install
-      
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version (no tag yet)
+        run: npm version ${{ inputs.version }} --no-git-tag-version
+
       - name: Build
         run: bun run build
       
@@ -43,32 +51,6 @@ jobs:
         run: bun test
         env:
           SKIP_DEPENDENCY_CHECK: '1'
-      
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-      - name: Commit lockfile if changed
-        run: |
-          if [[ -n $(git status --porcelain bun.lock) ]]; then
-            git add bun.lock
-            git commit -m "chore: update lockfile [skip ci]"
-            git push origin release
-          fi
-      
-      - name: Bump version
-        run: |
-          # Strip build suffix if present (e.g., 1.0.2-20251124.1 -> 1.0.2)
-          CURRENT=$(node -p "require('./package.json').version")
-          BASE=$(echo "$CURRENT" | sed 's/-[0-9]*\.[0-9]*$//')
-          if [ "$CURRENT" != "$BASE" ]; then
-            npm version "$BASE" --no-git-tag-version
-          fi
-          npm version ${{ inputs.version }} -m "chore: release v%s [skip ci]"
-      
-      - name: Push changes
-        run: git push origin release --follow-tags
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -80,3 +62,15 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Commit and tag release
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          git add package.json bun.lock
+          if [[ -n $(git status --porcelain) ]]; then
+            git commit -m "chore: release v${NEW_VERSION} [skip ci]"
+            git tag "v${NEW_VERSION}"
+            git push origin release --tags
+          else
+            echo "No changes to commit."
+          fi
