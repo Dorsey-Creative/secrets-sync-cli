@@ -56,20 +56,24 @@ We already have robust error handling infrastructure from issue #5:
 ### Available Components
 
 1. **Logger Module** (`src/utils/logger.ts`)
+   
    - 4 log levels (ERROR, WARN, INFO, DEBUG)
    - Centralized logging with context
    - ANSI color formatting
 
 2. **Error Classes** (`src/utils/errors.ts`)
+   
    - `AppError` base class with context
    - Specialized error types (DependencyError, PermissionError, etc.)
 
 3. **Error Message Builder** (`src/utils/errorMessages.ts`)
+   
    - `buildErrorMessage()` - formats all error output
    - `formatContext()` - formats error context
    - Centralized message formatting
 
 4. **Error Catalog** (`src/messages/errors.json`)
+   
    - Structured error messages
    - Template interpolation
 
@@ -98,11 +102,13 @@ Create a **secret scrubbing utility** that:
 ### Additional Security Hardening
 
 1. **Add backup files to .gitignore**
+   
    - Prevent accidental commits of `config/env/bak/` directory
    - Backup files contain unencrypted secrets
    - Critical security fix (related: issue #30 for encryption)
 
 2. **Validate user's .gitignore**
+   
    - Check if user's project has `.gitignore`
    - Warn if `.env` files are not ignored
    - Warn if `bak/` directory is not ignored
@@ -110,6 +116,7 @@ Create a **secret scrubbing utility** that:
    - Run check at CLI startup (can be skipped with flag)
 
 **Example Warning:**
+
 ```
 ⚠️  Security Warning: Your .gitignore may not protect secrets
 
@@ -152,26 +159,31 @@ Identify secrets by:
 ### What Users Should Be Able To Do
 
 1. **Share error messages safely**
+   
    - Copy-paste errors into GitHub issues without exposing secrets
    - Share terminal output during pair programming
    - Post logs in public forums for help
 
 2. **Debug with confidence**
+   
    - See which key caused the error (key name preserved)
    - Understand the error context (structure preserved)
    - Get actionable fix commands (no secrets in commands)
 
 3. **Run in CI/CD safely**
+   
    - CI logs don't contain secret values
    - Build failures can be investigated without security risk
    - Audit logs are safe to store long-term
 
 4. **Use verbose mode without risk**
+   
    - `--verbose` flag shows debug info but scrubs secrets
    - Detailed logging for troubleshooting
    - No accidental exposure in debug output
 
 5. **Prevent accidental commits**
+   
    - CLI warns if .gitignore doesn't protect secrets
    - Get actionable commands to fix .gitignore
    - Optional `--fix-gitignore` flag to auto-fix
@@ -180,6 +192,7 @@ Identify secrets by:
 ### Success Validation
 
 **Before (Current - UNSAFE):**
+
 ```
 ❌ Failed to sync secret to GitHub
    API_KEY=sk_live_51abc123xyz789...
@@ -187,6 +200,7 @@ Identify secrets by:
 ```
 
 **After (With Scrubbing - SAFE):**
+
 ```
 ❌ Failed to sync secret to GitHub
    API_KEY=[REDACTED]
@@ -298,6 +312,7 @@ Identify secrets by:
 **Risk:** Scrubbing too aggressively removes useful debugging info
 
 **Mitigation:**
+
 - Whitelist common non-secret patterns
 - Preserve key names always
 - Test with real-world error scenarios
@@ -307,6 +322,7 @@ Identify secrets by:
 **Risk:** Missing secret patterns allows leaks
 
 **Mitigation:**
+
 - Comprehensive pattern matching
 - Test with various secret formats
 - Regular security reviews
@@ -317,6 +333,7 @@ Identify secrets by:
 **Risk:** Scrubbing adds latency to error handling
 
 **Mitigation:**
+
 - Optimize regex patterns
 - Cache compiled patterns
 - Benchmark performance

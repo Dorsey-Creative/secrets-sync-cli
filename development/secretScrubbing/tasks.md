@@ -13,6 +13,7 @@
 **Goal:** Prevent secret exposure in CLI output and protect against accidental commits
 
 **Key Deliverables:**
+
 1. Secret scrubbing utility module
 2. Logger integration with scrubbing
 3. Error message integration with scrubbing
@@ -26,6 +27,66 @@
 **Goal:** Create scrubber module with pattern matching  
 **Time Estimate:** 2 days  
 **Requirements:** FR-1, FR-2, TR-1, TR-2, NFR-1, NFR-2
+
+### Task 1.0: Create Bootstrap File (Module Initialization Protection)
+
+**Time:** 2 hours  
+**Requirements:** FR-1.9, FR-1.10, FR-1.11, FR-1.12, FR-1.13, NFR-4  
+**Design Reference:** Bootstrap Architecture
+
+**Sub-tasks:**
+
+- [ ] Create `src/bootstrap.ts` file
+- [ ] Import scrubSecrets, scrubObject, and loadUserConfig from scrubber module
+- [ ] Import fs, path, and yaml modules for config loading
+- [ ] Load env-config.yml synchronously before interception (if exists)
+- [ ] Call loadUserConfig() with parsed config
+- [ ] Intercept process.stdout.write with scrubbing wrapper
+- [ ] Intercept process.stderr.write with scrubbing wrapper
+- [ ] Use Proxy to intercept ALL console methods (not just 8 specific ones)
+- [ ] Add comment: "MUST be imported first before any other imports"
+- [ ] Update `src/secrets-sync.ts` to import './bootstrap' as first line
+- [ ] Verify bootstrap runs before any module initialization
+- [ ] Verify custom patterns active during module init
+
+**Validation for End-User Success:**
+
+```bash
+# Test that bootstrap runs before module imports
+node -e "
+// Simulate module that logs during initialization
+console.log('API_KEY=secret123');
+require('./dist/secrets-sync.js');
+"
+# Expected: API_KEY=*** (scrubbed even during module init)
+
+# Test with array of strings
+node -e "
+require('./dist/bootstrap.js');
+console.log(['API_KEY=secret123', 'PASSWORD=admin']);
+"
+# Expected: ['API_KEY=***', 'PASSWORD=***']
+
+# Test custom patterns during module init
+echo "scrubPatterns: ['CUSTOM_TOKEN']" > env-config.yml
+node -e "
+console.log('CUSTOM_TOKEN=abc123');
+require('./dist/secrets-sync.js');
+"
+# Expected: CUSTOM_TOKEN=*** (custom pattern active)
+```
+
+**Success Criteria:**
+
+- [ ] bootstrap.ts created with all interception code
+- [ ] env-config.yml loaded synchronously before interception
+- [ ] Custom patterns active during module initialization
+- [ ] secrets-sync.ts imports bootstrap as first line
+- [ ] Module initialization output is scrubbed
+- [ ] Arrays of strings are scrubbed
+- [ ] No module can bypass scrubbing by logging during import
+
+---
 
 ### Task 1.1: Create Scrubber Module Structure
 
@@ -63,21 +124,27 @@ bun run build
 
 ---
 
-### Task 1.2: Implement Pattern Definitions
+### Task 1.2: Implement Pattern Definitions and Cache
 
-**Time:** 3 hours  
-**Requirements:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, TR-2  
+**Time:** 4 hours  
+**Requirements:** FR-1.1, FR-1.2, FR-1.3, FR-1.4, FR-1.5, FR-1.7, FR-7.3, TR-2  
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
 
+- [ ] Install lru-cache package (`bun add lru-cache`)
 - [ ] Define `SECRET_PATTERNS` constant with regex patterns
-- [ ] Add KEY=value pattern (`/([A-Z_]+)=([^\s]+)/gi`)
+- [ ] Add KEY=value pattern (`/([A-Z_][A-Z0-9_]*)=([^\s]+)/gi`)
 - [ ] Add URL credentials pattern (`/(https?:\/\/[^:]+):([^@]+)@/gi`)
 - [ ] Add JWT token pattern
-- [ ] Add private key pattern (BEGIN/END blocks)
-- [ ] Define `SECRET_KEYS` Set with common secret key names
+- [ ] Add private key pattern (BEGIN/END blocks for multi-line)
+- [ ] Define `SECRET_KEYS` Set with 15+ common secret key names
 - [ ] Define `WHITELIST_KEYS` Set with non-secret keys
+- [ ] Initialize LRU cache (max 1000 entries)
+- [ ] Add input length limit constant (50KB max)
+- [ ] Add user config pattern arrays (scrubPatterns, whitelistPatterns)
+- [ ] Implement `loadUserConfig()` function
+- [ ] Implement `clearCache()` function
 - [ ] Compile patterns at module load time (not per call)
 
 **Validation for End-User Success:**
@@ -90,6 +157,14 @@ console.log('Patterns defined:', Object.keys(SECRET_PATTERNS));
 // Should show: keyValue, urlCreds, jwt, privateKey
 "
 
+# Test cache initialization
+node -e "
+const scrubber = require('./dist/utils/scrubber.js');
+scrubber.scrubSecrets('API_KEY=test');
+scrubber.scrubSecrets('API_KEY=test'); // Should hit cache
+console.log('✓ Cache working');
+"
+
 # Verify patterns compile without errors
 bun run build && echo "✓ Patterns compile successfully"
 ```
@@ -97,8 +172,11 @@ bun run build && echo "✓ Patterns compile successfully"
 **Success Criteria:**
 
 - [ ] All 4 pattern types defined
-- [ ] SECRET_KEYS contains 10+ common keys
-- [ ] WHITELIST_KEYS contains 5+ safe keys
+- [ ] SECRET_KEYS contains 15+ common keys (PASSWORD, API_KEY, TOKEN, etc.)
+- [ ] WHITELIST_KEYS contains 7+ safe keys (DEBUG, PORT, NODE_ENV, etc.)
+- [ ] LRU cache initialized with max 1000 entries
+- [ ] Input length limit defined (50KB)
+- [ ] User config support implemented
 - [ ] Patterns compile at module load
 - [ ] No runtime regex compilation
 
@@ -107,20 +185,25 @@ bun run build && echo "✓ Patterns compile successfully"
 ### Task 1.3: Implement scrubSecrets() Function
 
 **Time:** 4 hours  
-**Requirements:** FR-1, FR-2, FR-8, NFR-2  
+**Requirements:** FR-1, FR-2, FR-7.6, FR-8, NFR-2  
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
 
 - [ ] Implement input validation (handle null, undefined, empty)
+- [ ] Implement cache lookup before processing
+- [ ] Implement input length limit check (50KB max, return placeholder if exceeded)
 - [ ] Implement KEY=value pattern scrubbing
 - [ ] Implement URL credentials scrubbing
 - [ ] Implement JWT token scrubbing
-- [ ] Implement private key scrubbing
+- [ ] Implement private key scrubbing (multi-line support)
 - [ ] Add whitelist filtering (don't scrub DEBUG, PORT, etc.)
+- [ ] Add user-defined pattern matching (glob patterns)
 - [ ] Preserve key names in output
 - [ ] Return original text if no secrets found
 - [ ] Handle edge cases gracefully (never throw)
+- [ ] Implement graceful failure (return "[SCRUBBING_FAILED]" on error, never unscrubbed text)
+- [ ] Cache scrubbed result before returning
 
 **Validation for End-User Success:**
 
@@ -144,10 +227,21 @@ const test3 = scrubSecrets('DEBUG=true');
 console.log('Test 3:', test3);
 // Should output: DEBUG=true (not redacted)
 
-// Test 4: Edge cases
+// Test 4: Multi-line private key
+const test4 = scrubSecrets('-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----');
+console.log('Test 4:', test4.includes('[REDACTED:PRIVATE_KEY]'));
+// Should output: true
+
+// Test 5: Edge cases
 console.log('Null:', scrubSecrets(null));
 console.log('Empty:', scrubSecrets(''));
 // Should not throw errors
+
+// Test 6: Regex timeout
+const malicious = 'A'.repeat(10000) + '=secret';
+const test6 = scrubSecrets(malicious);
+console.log('Test 6:', !test6.includes('secret'));
+// Should output: true (secret scrubbed or failed gracefully)
 "
 ```
 
@@ -156,24 +250,31 @@ console.log('Empty:', scrubSecrets(''));
 - [ ] KEY=value patterns are scrubbed
 - [ ] URL credentials are scrubbed
 - [ ] JWT tokens are scrubbed
-- [ ] Private keys are scrubbed
+- [ ] Private keys are scrubbed (multi-line)
 - [ ] Whitelisted keys are NOT scrubbed
+- [ ] User-defined patterns work
 - [ ] Key names are preserved
 - [ ] Edge cases handled gracefully
 - [ ] Function never throws errors
+- [ ] Regex timeout protection works
+- [ ] Graceful failure never returns unscrubbed text
+- [ ] Cache is used for repeated inputs
 
 ---
+
 ### Task 1.4: Implement scrubObject() Function
 
 **Time:** 3 hours  
-**Requirements:** FR-2, FR-3.5, FR-3.6  
+**Requirements:** FR-2, FR-2.5, FR-3.5, FR-3.6  
 **Design Reference:** Component Design § 1
 
 **Sub-tasks:**
 
 - [ ] Implement input validation (handle null, undefined, non-objects)
-- [ ] Handle arrays (map over items)
-- [ ] Handle nested objects (recursive scrubbing)
+- [ ] Add cycle detection using WeakSet (prevent stack overflow)
+- [ ] Return [CIRCULAR] for cyclic references
+- [ ] Handle arrays (map over items, scrub strings)
+- [ ] Handle nested objects (recursive scrubbing with visited set)
 - [ ] Detect secret keys in object properties
 - [ ] Scrub string values in objects
 - [ ] Preserve non-secret values
@@ -191,9 +292,15 @@ const obj1 = { apiKey: 'secret', debug: true };
 console.log('Test 1:', scrubObject(obj1));
 // Should output: { apiKey: '[REDACTED]', debug: true }
 
-// Test 2: Nested object
-const obj2 = { config: { password: 'secret', port: 3000 } };
+// Test 2: Cyclic reference
+const obj2 = { name: 'test' };
+obj2.self = obj2;
 console.log('Test 2:', scrubObject(obj2));
+// Should output: { name: 'test', self: '[CIRCULAR]' }
+
+// Test 3: Nested object
+const obj3 = { config: { password: 'secret', port: 3000 } };
+console.log('Test 3:', scrubObject(obj3));
 // Should output: { config: { password: '[REDACTED]', port: 3000 } }
 
 // Test 3: Array
@@ -341,8 +448,8 @@ bun run scripts/benchmark-scrubbing.ts
 
 ### Task 2.1: Modify Logger Module
 
-**Time:** 2 hours  
-**Requirements:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, TR-3  
+**Time:** 3 hours  
+**Requirements:** FR-3.1-3.8, TR-3  
 **Design Reference:** Component Design § 2
 
 **Sub-tasks:**
@@ -351,6 +458,10 @@ bun run scripts/benchmark-scrubbing.ts
 - [ ] Add scrubbing to `formatMessage()` method
 - [ ] Scrub message text before formatting
 - [ ] Scrub context objects before formatting
+- [ ] Add special handling for Error objects with stack traces
+- [ ] Scrub error.stack property via context
+- [ ] Add logError() method for Error objects
+- [ ] Ensure file operation messages are scrubbed
 - [ ] Maintain existing logger API (no breaking changes)
 - [ ] Test that existing logger tests still pass
 
@@ -369,6 +480,15 @@ logger.error('Failed: API_KEY=secret123');
 // Test 2: Context with secret
 logger.error('Failed', { apiKey: 'secret' });
 // Output should show: { apiKey: '[REDACTED]' }
+
+// Test 3: Stack trace with secret
+const error = new Error('Failed with API_KEY=secret');
+logger.logError(error);
+// Stack trace should be scrubbed
+
+// Test 4: File operation with secret
+logger.info('Writing to /path/API_KEY=secret.env');
+// Output should show: Writing to /path/API_KEY=[REDACTED].env
 "
 
 # Verify existing tests pass
@@ -380,6 +500,9 @@ bun test tests/unit/logger.test.ts
 
 - [ ] Logger scrubs message text
 - [ ] Logger scrubs context objects
+- [ ] Logger scrubs stack traces
+- [ ] Logger scrubs file operation messages
+- [ ] logError() method added
 - [ ] Existing logger API unchanged
 - [ ] All existing logger tests pass
 - [ ] No breaking changes
@@ -388,7 +511,7 @@ bun test tests/unit/logger.test.ts
 
 ### Task 2.2: Write Integration Tests for Logger
 
-**Time:** 3 hours  
+**Time:** 4 hours  
 **Requirements:** Test-2, NFR-5  
 **Design Reference:** Testing Strategy § Integration Tests
 
@@ -401,6 +524,9 @@ bun test tests/unit/logger.test.ts
 - [ ] Test logger.debug() scrubs secrets (2 tests)
 - [ ] Test context object scrubbing (2 tests)
 - [ ] Test nested context scrubbing (1 test)
+- [ ] Test stack trace scrubbing (2 tests)
+- [ ] Test file operation message scrubbing (2 tests)
+- [ ] Test logError() method (1 test)
 - [ ] Verify all existing logger tests pass (1 test)
 
 **Validation for End-User Success:**
@@ -409,7 +535,7 @@ bun test tests/unit/logger.test.ts
 # Run integration tests
 bun test tests/integration/logger-scrubbing.test.ts
 
-# Should see: 12 pass, 0 fail
+# Should see: 17 pass, 0 fail
 
 # Test real-world scenario
 node -e "
@@ -423,9 +549,46 @@ logger.error('Database connection failed', {
 });
 
 // Output should NOT contain 'password'
+
+// Test stack trace
+try {
+  throw new Error('API_KEY=secret123 failed');
+} catch (error) {
+  logger.logError(error);
+}
+// Stack trace should NOT contain 'secret123'
 "
 ```
 
+**Success Criteria:**
+
+- [ ] All 17+ integration tests pass
+- [ ] All log levels scrub secrets
+- [ ] Context objects are scrubbed
+- [ ] Nested context is scrubbed
+- [ ] Stack traces are scrubbed
+- [ ] File operations are scrubbed
+- [ ] logError() works correctly
+- [ ] Real-world scenarios work
+
+# Should see: 12 pass, 0 fail
+
+# Test real-world scenario
+
+node -e "
+const { Logger } = require('./dist/utils/logger.js');
+const logger = new Logger({ verbose: true });
+
+// Simulate real error with secret
+logger.error('Database connection failed', {
+  connectionString: 'postgres://user:password@localhost/db',
+  error: 'ECONNREFUSED'
+});
+
+// Output should NOT contain 'password'
+"
+
+```
 **Success Criteria:**
 
 - [ ] All 12+ integration tests pass
@@ -479,7 +642,7 @@ grep -A 10 "@example" src/utils/logger.ts
 ### Task 3.1: Modify Error Message Builder
 
 **Time:** 2 hours  
-**Requirements:** FR-4.1, FR-4.2, TR-4  
+**Requirements:** FR-4.1-4.6, TR-4  
 **Design Reference:** Component Design § 3
 
 **Sub-tasks:**
@@ -488,6 +651,7 @@ grep -A 10 "@example" src/utils/logger.ts
 - [ ] Add scrubbing to `buildErrorMessage()` function
 - [ ] Scrub `what`, `why`, `howToFix` fields
 - [ ] Add scrubbing to `formatContext()` function
+- [ ] Ensure all errors are logged through logger (for stack trace scrubbing)
 - [ ] Maintain existing error message API
 - [ ] Test that existing error tests still pass
 
@@ -515,6 +679,15 @@ const msg2 = buildErrorMessage({
 });
 console.log(msg2);
 // Should not contain any secrets
+
+// Test 3: Ensure errors go through logger
+const { logger } = require('./dist/utils/logger.js');
+try {
+  throw new Error('Failed with API_KEY=secret');
+} catch (error) {
+  logger.logError(error);
+}
+// Stack trace should be scrubbed
 "
 
 # Verify existing tests pass
@@ -525,6 +698,8 @@ bun test tests/unit/errorMessages.test.ts
 
 - [ ] Error messages scrub secrets
 - [ ] Context is scrubbed
+- [ ] Errors logged through logger
+- [ ] Stack traces scrubbed via logger
 - [ ] Existing API unchanged
 - [ ] All existing tests pass
 - [ ] No breaking changes
@@ -631,7 +806,7 @@ cat error.log
 
 ### Task 4.1: Create GitIgnore Validator Module
 
-**Time:** 3 hours  
+**Time:** 4 hours  
 **Requirements:** FR-5, TR-5  
 **Design Reference:** Component Design § 4
 
@@ -639,11 +814,13 @@ cat error.log
 
 - [ ] Create `src/utils/gitignoreValidator.ts`
 - [ ] Define `ValidationResult` interface
-- [ ] Define `REQUIRED_PATTERNS` constant
+- [ ] Define `REQUIRED_PATTERNS` constant (in correct order)
 - [ ] Implement `getRequiredPatterns()` function
 - [ ] Implement `validateGitignore()` function
 - [ ] Handle missing .gitignore file
-- [ ] Handle malformed .gitignore file
+- [ ] Handle malformed .gitignore file (invalid syntax)
+- [ ] Validate pattern order (negations after wildcards)
+- [ ] Normalize paths for cross-platform (forward slashes)
 - [ ] Return structured validation results
 
 **Validation for End-User Success:**
@@ -656,7 +833,7 @@ const { validateGitignore } = require('./dist/utils/gitignoreValidator.js');
 const result = validateGitignore();
 console.log('Valid:', result.isValid);
 console.log('Missing:', result.missingPatterns);
-// Should show: Valid: false, Missing: ['.env', '.env.*', '**/bak/', '*.bak']
+// Should show: Valid: false, Missing: ['.env', '.env.*', '!.env.example', '**/bak/', '*.bak']
 "
 
 # Test validation with complete .gitignore
@@ -667,6 +844,23 @@ const result = validateGitignore();
 console.log('Valid:', result.isValid);
 // Should show: Valid: true
 "
+
+# Test malformed .gitignore
+echo "[invalid" > .gitignore
+node -e "
+const { validateGitignore } = require('./dist/utils/gitignoreValidator.js');
+const result = validateGitignore();
+console.log('Valid:', result.isValid);
+// Should show: Valid: false (with warning about invalid syntax)
+"
+
+# Test pattern order validation
+echo -e "!.env.example\n.env" > .gitignore
+node -e "
+const { validateGitignore } = require('./dist/utils/gitignoreValidator.js');
+const result = validateGitignore();
+// Should warn about incorrect pattern order
+"
 ```
 
 **Success Criteria:**
@@ -674,6 +868,9 @@ console.log('Valid:', result.isValid);
 - [ ] Module exports all functions
 - [ ] Detects missing .gitignore
 - [ ] Detects missing patterns
+- [ ] Detects malformed .gitignore (invalid syntax)
+- [ ] Validates pattern order
+- [ ] Normalizes paths for Windows
 - [ ] Returns structured results
 - [ ] Handles edge cases gracefully
 
@@ -689,10 +886,12 @@ console.log('Valid:', result.isValid);
 
 - [ ] Implement `fixGitignore()` function
 - [ ] Create .gitignore if it doesn't exist
-- [ ] Append missing patterns to existing .gitignore
+- [ ] Append missing patterns to existing .gitignore in correct order
 - [ ] Add comment explaining additions
 - [ ] Preserve existing .gitignore content
 - [ ] Show confirmation of patterns added
+- [ ] Enforce pattern order (wildcards before negations)
+- [ ] Use forward slashes for cross-platform compatibility
 
 **Validation for End-User Success:**
 
@@ -703,11 +902,11 @@ node -e "
 const { fixGitignore } = require('./dist/utils/gitignoreValidator.js');
 fixGitignore();
 "
-# Should output: ✓ Added 4 patterns to .gitignore
+# Should output: ✓ Added 5 patterns to .gitignore
 
-# Verify .gitignore was created
+# Verify .gitignore was created with correct order
 cat .gitignore
-# Should contain: .env, .env.*, **/bak/, *.bak
+# Should contain in order: .env, .env.*, !.env.example, **/bak/, *.bak
 
 # Test auto-fix with existing .gitignore
 echo "node_modules/" > .gitignore
@@ -716,9 +915,12 @@ const { fixGitignore } = require('./dist/utils/gitignoreValidator.js');
 fixGitignore();
 "
 
-# Verify existing content preserved
+# Verify existing content preserved and patterns in correct order
 cat .gitignore
-# Should contain: node_modules/ AND new patterns
+# Should contain: node_modules/ AND new patterns in correct order
+
+# Test Windows compatibility (patterns use forward slashes)
+# Even on Windows, patterns should use /
 ```
 
 **Success Criteria:**
@@ -728,6 +930,8 @@ cat .gitignore
 - [ ] Preserves existing content
 - [ ] Adds explanatory comment
 - [ ] Shows confirmation message
+- [ ] Enforces pattern order
+- [ ] Uses forward slashes on all platforms
 
 ---
 
@@ -885,6 +1089,53 @@ cat .gitignore
 **Goal:** Comprehensive testing and documentation  
 **Time Estimate:** 2 days  
 **Requirements:** Test-5, NFR-4, SEC-1, SEC-2, SEC-3
+
+### Task 5.0: Update CLI Integration
+
+**Time:** 1 hour  
+**Requirements:** FR-7.4, FR-8  
+**Design Reference:** Component Design § 5
+
+**Sub-tasks:**
+
+- [ ] Import `loadUserConfig` and `clearCache` from scrubber
+- [ ] Load user config at CLI startup
+- [ ] Add cache clearing in finally block
+- [ ] Verify cache is cleared after each run
+
+**Validation for End-User Success:**
+
+```bash
+# Test user config loading
+echo "scrubbing:
+  scrubPatterns:
+    - CUSTOM_*
+  whitelistPatterns:
+    - DEBUG_*" > env-config.yml
+
+secrets-sync --dry-run
+# Should load and use custom patterns
+
+# Test cache clearing
+node -e "
+const { getScrubberCache } = require('./dist/utils/scrubber.js');
+// Run CLI
+require('./dist/secrets-sync.js');
+// Check cache after run
+const cache = getScrubberCache();
+console.log('Cache size:', cache.size);
+// Should be 0 (cleared)
+"
+```
+
+**Success Criteria:**
+
+- [ ] User config loaded at startup
+- [ ] Custom patterns work
+- [ ] Cache cleared after each run
+- [ ] No memory leaks
+
+---
 
 ### Task 5.1: Write E2E Tests
 
@@ -1184,14 +1435,14 @@ secrets-sync --env staging
 
 ## Time Tracking
 
-| Phase | Estimated | Actual | Notes |
-|-------|-----------|--------|-------|
-| Phase 1: Core Scrubbing | 2 days | | |
-| Phase 2: Logger Integration | 1 day | | |
-| Phase 3: Error Message Integration | 1 day | | |
-| Phase 4: GitIgnore Validation | 2 days | | |
-| Phase 5: E2E Testing & Polish | 2 days | | |
-| **Total** | **8 days** | | |
+| Phase                              | Estimated  | Actual | Notes |
+| ---------------------------------- | ---------- | ------ | ----- |
+| Phase 1: Core Scrubbing            | 2 days     |        |       |
+| Phase 2: Logger Integration        | 1 day      |        |       |
+| Phase 3: Error Message Integration | 1 day      |        |       |
+| Phase 4: GitIgnore Validation      | 2 days     |        |       |
+| Phase 5: E2E Testing & Polish      | 2 days     |        |       |
+| **Total**                          | **8 days** |        |       |
 
 ---
 
