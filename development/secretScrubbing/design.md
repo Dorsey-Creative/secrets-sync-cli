@@ -246,22 +246,29 @@ export function clearCache() {
   scrubCache.clear();
 }
 
-export function scrubObject<T>(obj: T, visited: WeakSet<object> = new WeakSet()): T {
+export function scrubObject<T>(obj: T, path: WeakSet<object> = new WeakSet()): T {
   if (!obj || typeof obj !== 'object') return obj;
 
+  // Preserve known built-ins (Date, Buffer, Map, etc.) but scrub custom classes
+  if (!Array.isArray(obj) && isKnownBuiltIn(obj)) {
+    return obj;
+  }
+
   // SECURITY: Prevent stack overflow from cyclic references
-  if (visited.has(obj)) {
+  if (path.has(obj)) {
     return '[CIRCULAR]' as any;
   }
-  visited.add(obj);
+  path.add(obj);
 
   if (Array.isArray(obj)) {
-    return obj.map(item => {
+    const result = obj.map(item => {
       if (typeof item === 'string') {
         return scrubSecrets(item);
       }
-      return scrubObject(item, visited);
+      return scrubObject(item, path);
     }) as T;
+    path.delete(obj);  // Remove from path after processing
+    return result;
   }
 
   const scrubbed: any = {};
@@ -269,13 +276,14 @@ export function scrubObject<T>(obj: T, visited: WeakSet<object> = new WeakSet())
     if (isSecretKey(key) && !isWhitelisted(key)) {
       scrubbed[key] = '[REDACTED]';
     } else if (typeof value === 'object' && value !== null) {
-      scrubbed[key] = scrubObject(value, visited);
+      scrubbed[key] = scrubObject(value, path);
     } else if (typeof value === 'string') {
       scrubbed[key] = scrubSecrets(value);
     } else {
       scrubbed[key] = value;
     }
   }
+  path.delete(obj);  // Remove from path after processing
   return scrubbed as T;
 }
 ```
@@ -579,11 +587,15 @@ import { parse as parseYaml } from 'yaml';
 
 // SECURITY: Load user config BEFORE interception so custom patterns are active during module init
 try {
-  const configPath = join(process.cwd(), 'env-config.yml');
-  if (existsSync(configPath)) {
-    const configContent = readFileSync(configPath, 'utf-8');
-    const config = parseYaml(configContent);
-    loadUserConfig(config);
+  const configCandidates = ['env-config.yml', 'env-config.yaml'];
+  for (const filename of configCandidates) {
+    const configPath = join(process.cwd(), filename);
+    if (existsSync(configPath)) {
+      const configContent = readFileSync(configPath, 'utf-8');
+      const config = parseYaml(configContent);
+      loadUserConfig(config);
+      break;
+    }
   }
 } catch (error) {
   // Silently fail - built-in patterns still work
@@ -600,7 +612,13 @@ process.stdout.write = function(chunk: any, ...args: any[]): boolean {
   if (typeof chunk === 'string') {
     chunk = scrubSecrets(chunk);
   } else if (Buffer.isBuffer(chunk)) {
-    chunk = Buffer.from(scrubSecrets(chunk.toString()));
+    // Only scrub if buffer appears to be valid UTF-8 text
+    const str = chunk.toString('utf8');
+    // Check if conversion is reversible (no replacement characters)
+    if (Buffer.from(str, 'utf8').equals(chunk)) {
+      chunk = Buffer.from(scrubSecrets(str), 'utf8');
+    }
+    // Otherwise leave binary data untouched
   }
   return originalWrite.stdout(chunk, ...args);
 } as any;
@@ -610,7 +628,13 @@ process.stderr.write = function(chunk: any, ...args: any[]): boolean {
   if (typeof chunk === 'string') {
     chunk = scrubSecrets(chunk);
   } else if (Buffer.isBuffer(chunk)) {
-    chunk = Buffer.from(scrubSecrets(chunk.toString()));
+    // Only scrub if buffer appears to be valid UTF-8 text
+    const str = chunk.toString('utf8');
+    // Check if conversion is reversible (no replacement characters)
+    if (Buffer.from(str, 'utf8').equals(chunk)) {
+      chunk = Buffer.from(scrubSecrets(str), 'utf8');
+    }
+    // Otherwise leave binary data untouched
   }
   return originalWrite.stderr(chunk, ...args);
 } as any;

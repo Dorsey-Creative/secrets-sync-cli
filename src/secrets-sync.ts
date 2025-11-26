@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// MUST be imported first before any other imports
+import './bootstrap';
+
 /**
  * Secrets Sync CLI – Discovery & Parsing
  *

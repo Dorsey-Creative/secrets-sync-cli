@@ -51,5 +51,8 @@
     "bun-types": "latest",
     "jscpd": "^4.0.5"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lru-cache": "^11.2.2",
+    "yaml": "^2.8.1"
+  }
 }

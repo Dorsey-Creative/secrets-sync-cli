@@ -36,18 +36,18 @@
 
 **Sub-tasks:**
 
-- [ ] Create `src/bootstrap.ts` file
-- [ ] Import scrubSecrets, scrubObject, and loadUserConfig from scrubber module
-- [ ] Import fs, path, and yaml modules for config loading
-- [ ] Load env-config.yml synchronously before interception (if exists)
-- [ ] Call loadUserConfig() with parsed config
-- [ ] Intercept process.stdout.write with scrubbing wrapper
-- [ ] Intercept process.stderr.write with scrubbing wrapper
-- [ ] Use Proxy to intercept ALL console methods (not just 8 specific ones)
-- [ ] Add comment: "MUST be imported first before any other imports"
-- [ ] Update `src/secrets-sync.ts` to import './bootstrap' as first line
-- [ ] Verify bootstrap runs before any module initialization
-- [ ] Verify custom patterns active during module init
+- [x] Create `src/bootstrap.ts` file
+- [x] Import scrubSecrets, scrubObject, and loadUserConfig from scrubber module
+- [x] Import fs, path, and yaml modules for config loading
+- [x] Load env-config.yml synchronously before interception (if exists)
+- [x] Call loadUserConfig() with parsed config
+- [x] Intercept process.stdout.write with scrubbing wrapper
+- [x] Intercept process.stderr.write with scrubbing wrapper
+- [x] Use Proxy to intercept ALL console methods (not just 8 specific ones)
+- [x] Add comment: "MUST be imported first before any other imports"
+- [x] Update `src/secrets-sync.ts` to import './bootstrap' as first line
+- [x] Verify bootstrap runs before any module initialization
+- [x] Verify custom patterns active during module init
 
 **Validation for End-User Success:**
 
@@ -78,13 +78,13 @@ require('./dist/secrets-sync.js');
 
 **Success Criteria:**
 
-- [ ] bootstrap.ts created with all interception code
-- [ ] env-config.yml loaded synchronously before interception
-- [ ] Custom patterns active during module initialization
-- [ ] secrets-sync.ts imports bootstrap as first line
-- [ ] Module initialization output is scrubbed
-- [ ] Arrays of strings are scrubbed
-- [ ] No module can bypass scrubbing by logging during import
+- [x] bootstrap.ts created with all interception code
+- [x] env-config.yml loaded synchronously before interception
+- [x] Custom patterns active during module initialization
+- [x] secrets-sync.ts imports bootstrap as first line
+- [x] Module initialization output is scrubbed
+- [x] Arrays of strings are scrubbed
+- [x] No module can bypass scrubbing by logging during import
 
 ---
 
@@ -96,13 +96,13 @@ require('./dist/secrets-sync.js');
 
 **Sub-tasks:**
 
-- [ ] Create `src/utils/scrubber.ts` file
-- [ ] Define `ScrubberConfig` interface
-- [ ] Export `scrubSecrets(text: string): string` function signature
-- [ ] Export `scrubObject<T>(obj: T): T` function signature
-- [ ] Export `isSecretKey(key: string): boolean` function signature
-- [ ] Add TypeScript strict types
-- [ ] Add JSDoc comments for all exports
+- [x] Create `src/utils/scrubber.ts` file
+- [x] Define `ScrubberConfig` interface
+- [x] Export `scrubSecrets(text: string): string` function signature
+- [x] Export `scrubObject<T>(obj: T): T` function signature
+- [x] Export `isSecretKey(key: string): boolean` function signature
+- [x] Add TypeScript strict types
+- [x] Add JSDoc comments for all exports
 
 **Validation for End-User Success:**
 
@@ -117,10 +117,10 @@ bun run build
 
 **Success Criteria:**
 
-- [ ] Module exports all required functions
-- [ ] TypeScript compilation succeeds
-- [ ] JSDoc comments are complete
-- [ ] No linting errors
+- [x] Module exports all required functions
+- [x] TypeScript compilation succeeds
+- [x] JSDoc comments are complete
+- [x] No linting errors
 
 ---
 
@@ -132,20 +132,20 @@ bun run build
 
 **Sub-tasks:**
 
-- [ ] Install lru-cache package (`bun add lru-cache`)
-- [ ] Define `SECRET_PATTERNS` constant with regex patterns
-- [ ] Add KEY=value pattern (`/([A-Z_][A-Z0-9_]*)=([^\s]+)/gi`)
-- [ ] Add URL credentials pattern (`/(https?:\/\/[^:]+):([^@]+)@/gi`)
-- [ ] Add JWT token pattern
-- [ ] Add private key pattern (BEGIN/END blocks for multi-line)
-- [ ] Define `SECRET_KEYS` Set with 15+ common secret key names
-- [ ] Define `WHITELIST_KEYS` Set with non-secret keys
-- [ ] Initialize LRU cache (max 1000 entries)
-- [ ] Add input length limit constant (50KB max)
-- [ ] Add user config pattern arrays (scrubPatterns, whitelistPatterns)
-- [ ] Implement `loadUserConfig()` function
-- [ ] Implement `clearCache()` function
-- [ ] Compile patterns at module load time (not per call)
+- [x] Install lru-cache package (`bun add lru-cache`)
+- [x] Define `SECRET_PATTERNS` constant with regex patterns
+- [x] Add KEY=value pattern (`/([A-Z_][A-Z0-9_]*)=([^\s]+)/gi`)
+- [x] Add URL credentials pattern (`/(https?:\/\/[^:]+):([^@]+)@/gi`)
+- [x] Add JWT token pattern
+- [x] Add private key pattern (BEGIN/END blocks for multi-line)
+- [x] Define `SECRET_KEYS` Set with 15+ common secret key names
+- [x] Define `WHITELIST_KEYS` Set with non-secret keys
+- [x] Initialize LRU cache (max 1000 entries)
+- [x] Add input length limit constant (50KB max)
+- [x] Add user config pattern arrays (scrubPatterns, whitelistPatterns)
+- [x] Implement `loadUserConfig()` function
+- [x] Implement `clearCache()` function
+- [x] Compile patterns at module load time (not per call)
 
 **Validation for End-User Success:**
 
@@ -171,14 +171,14 @@ bun run build && echo "✓ Patterns compile successfully"
 
 **Success Criteria:**
 
-- [ ] All 4 pattern types defined
-- [ ] SECRET_KEYS contains 15+ common keys (PASSWORD, API_KEY, TOKEN, etc.)
-- [ ] WHITELIST_KEYS contains 7+ safe keys (DEBUG, PORT, NODE_ENV, etc.)
-- [ ] LRU cache initialized with max 1000 entries
-- [ ] Input length limit defined (50KB)
-- [ ] User config support implemented
-- [ ] Patterns compile at module load
-- [ ] No runtime regex compilation
+- [x] All 4 pattern types defined
+- [x] SECRET_KEYS contains 15+ common keys (PASSWORD, API_KEY, TOKEN, etc.)
+- [x] WHITELIST_KEYS contains 7+ safe keys (DEBUG, PORT, NODE_ENV, etc.)
+- [x] LRU cache initialized with max 1000 entries
+- [x] Input length limit defined (50KB)
+- [x] User config support implemented
+- [x] Patterns compile at module load
+- [x] No runtime regex compilation
 
 ---
 
@@ -190,20 +190,20 @@ bun run build && echo "✓ Patterns compile successfully"
 
 **Sub-tasks:**
 
-- [ ] Implement input validation (handle null, undefined, empty)
-- [ ] Implement cache lookup before processing
-- [ ] Implement input length limit check (50KB max, return placeholder if exceeded)
-- [ ] Implement KEY=value pattern scrubbing
-- [ ] Implement URL credentials scrubbing
-- [ ] Implement JWT token scrubbing
-- [ ] Implement private key scrubbing (multi-line support)
-- [ ] Add whitelist filtering (don't scrub DEBUG, PORT, etc.)
-- [ ] Add user-defined pattern matching (glob patterns)
-- [ ] Preserve key names in output
-- [ ] Return original text if no secrets found
-- [ ] Handle edge cases gracefully (never throw)
-- [ ] Implement graceful failure (return "[SCRUBBING_FAILED]" on error, never unscrubbed text)
-- [ ] Cache scrubbed result before returning
+- [x] Implement input validation (handle null, undefined, empty)
+- [x] Implement cache lookup before processing
+- [x] Implement input length limit check (50KB max, return placeholder if exceeded)
+- [x] Implement KEY=value pattern scrubbing
+- [x] Implement URL credentials scrubbing
+- [x] Implement JWT token scrubbing
+- [x] Implement private key scrubbing (multi-line support)
+- [x] Add whitelist filtering (don't scrub DEBUG, PORT, etc.)
+- [x] Add user-defined pattern matching (glob patterns)
+- [x] Preserve key names in output
+- [x] Return original text if no secrets found
+- [x] Handle edge cases gracefully (never throw)
+- [x] Implement graceful failure (return "[SCRUBBING_FAILED]" on error, never unscrubbed text)
+- [x] Cache scrubbed result before returning
 
 **Validation for End-User Success:**
 
@@ -247,18 +247,18 @@ console.log('Test 6:', !test6.includes('secret'));
 
 **Success Criteria:**
 
-- [ ] KEY=value patterns are scrubbed
-- [ ] URL credentials are scrubbed
-- [ ] JWT tokens are scrubbed
-- [ ] Private keys are scrubbed (multi-line)
-- [ ] Whitelisted keys are NOT scrubbed
-- [ ] User-defined patterns work
-- [ ] Key names are preserved
-- [ ] Edge cases handled gracefully
-- [ ] Function never throws errors
-- [ ] Regex timeout protection works
-- [ ] Graceful failure never returns unscrubbed text
-- [ ] Cache is used for repeated inputs
+- [x] KEY=value patterns are scrubbed
+- [x] URL credentials are scrubbed
+- [x] JWT tokens are scrubbed
+- [x] Private keys are scrubbed (multi-line)
+- [x] Whitelisted keys are NOT scrubbed
+- [x] User-defined patterns work
+- [x] Key names are preserved
+- [x] Edge cases handled gracefully
+- [x] Function never throws errors
+- [x] Regex timeout protection works
+- [x] Graceful failure never returns unscrubbed text
+- [x] Cache is used for repeated inputs
 
 ---
 
@@ -270,15 +270,15 @@ console.log('Test 6:', !test6.includes('secret'));
 
 **Sub-tasks:**
 
-- [ ] Implement input validation (handle null, undefined, non-objects)
-- [ ] Add cycle detection using WeakSet (prevent stack overflow)
-- [ ] Return [CIRCULAR] for cyclic references
-- [ ] Handle arrays (map over items, scrub strings)
-- [ ] Handle nested objects (recursive scrubbing with visited set)
-- [ ] Detect secret keys in object properties
-- [ ] Scrub string values in objects
-- [ ] Preserve non-secret values
-- [ ] Return scrubbed copy (don't mutate original)
+- [x] Implement input validation (handle null, undefined, non-objects)
+- [x] Add cycle detection using WeakSet (prevent stack overflow)
+- [x] Return [CIRCULAR] for cyclic references
+- [x] Handle arrays (map over items, scrub strings)
+- [x] Handle nested objects (recursive scrubbing with visited set)
+- [x] Detect secret keys in object properties
+- [x] Scrub string values in objects
+- [x] Preserve non-secret values
+- [x] Return scrubbed copy (don't mutate original)
 
 **Validation for End-User Success:**
 
@@ -312,13 +312,13 @@ console.log('Test 3:', scrubObject(arr));
 
 **Success Criteria:**
 
-- [ ] Simple objects are scrubbed
-- [ ] Nested objects are scrubbed
-- [ ] Arrays are scrubbed
-- [ ] Secret keys detected in properties
-- [ ] Non-secret values preserved
-- [ ] Original object not mutated
-- [ ] Edge cases handled
+- [x] Simple objects are scrubbed
+- [x] Nested objects are scrubbed
+- [x] Arrays are scrubbed
+- [x] Secret keys detected in properties
+- [x] Non-secret values preserved
+- [x] Original object not mutated
+- [x] Edge cases handled
 
 ---
 
@@ -330,10 +330,10 @@ console.log('Test 3:', scrubObject(arr));
 
 **Sub-tasks:**
 
-- [ ] Implement case-insensitive key matching
-- [ ] Check against SECRET_KEYS Set
-- [ ] Check for substring matches (password, secret, token, key)
-- [ ] Return boolean result
+- [x] Implement case-insensitive key matching
+- [x] Check against SECRET_KEYS Set
+- [x] Check for substring matches (password, secret, token, key)
+- [x] Return boolean result
 
 **Validation for End-User Success:**
 
@@ -353,11 +353,11 @@ console.log('MY_SECRET:', isSecretKey('MY_SECRET')); // true (contains 'secret')
 
 **Success Criteria:**
 
-- [ ] Detects common secret keys
-- [ ] Case-insensitive matching works
-- [ ] Substring matching works
-- [ ] Returns correct boolean
-- [ ] Fast execution (< 0.1ms)
+- [x] Detects common secret keys
+- [x] Case-insensitive matching works
+- [x] Substring matching works
+- [x] Returns correct boolean
+- [x] Fast execution (< 0.1ms)
 
 ---
 
@@ -369,14 +369,14 @@ console.log('MY_SECRET:', isSecretKey('MY_SECRET')); // true (contains 'secret')
 
 **Sub-tasks:**
 
-- [ ] Create `tests/unit/scrubber.test.ts`
-- [ ] Test scrubSecrets() with all pattern types (10 tests)
-- [ ] Test scrubObject() with various inputs (6 tests)
-- [ ] Test isSecretKey() with various keys (4 tests)
-- [ ] Test edge cases (null, undefined, empty) (3 tests)
-- [ ] Test whitelist filtering (3 tests)
-- [ ] Test performance (< 1ms per call) (1 test)
-- [ ] Achieve 100% code coverage
+- [x] Create `tests/unit/scrubber.test.ts`
+- [x] Test scrubSecrets() with all pattern types (10 tests)
+- [x] Test scrubObject() with various inputs (6 tests)
+- [x] Test isSecretKey() with various keys (4 tests)
+- [x] Test edge cases (null, undefined, empty) (3 tests)
+- [x] Test whitelist filtering (3 tests)
+- [x] Test performance (< 1ms per call) (1 test)
+- [x] Achieve 100% code coverage
 
 **Validation for End-User Success:**
 
@@ -394,11 +394,11 @@ bun test --coverage tests/unit/scrubber.test.ts
 
 **Success Criteria:**
 
-- [ ] All 27+ tests pass
-- [ ] 100% code coverage
-- [ ] Performance test passes (< 1ms)
-- [ ] Edge cases covered
-- [ ] No flaky tests
+- [x] All 27+ tests pass
+- [x] 100% code coverage
+- [x] Performance test passes (< 1ms)
+- [x] Edge cases covered
+- [x] No flaky tests
 
 ---
 
@@ -410,12 +410,12 @@ bun test --coverage tests/unit/scrubber.test.ts
 
 **Sub-tasks:**
 
-- [ ] Create `scripts/benchmark-scrubbing.ts`
-- [ ] Benchmark scrubSecrets() with various inputs
-- [ ] Benchmark scrubObject() with nested objects
-- [ ] Test with 10,000 iterations
-- [ ] Verify < 1ms per operation
-- [ ] Document results
+- [x] Create `scripts/benchmark-scrubbing.ts`
+- [x] Benchmark scrubSecrets() with various inputs
+- [x] Benchmark scrubObject() with nested objects
+- [x] Test with 10,000 iterations
+- [x] Verify < 1ms per operation
+- [x] Document results
 
 **Validation for End-User Success:**
 
@@ -433,10 +433,10 @@ bun run scripts/benchmark-scrubbing.ts
 
 **Success Criteria:**
 
-- [ ] All operations < 1ms
-- [ ] Benchmark script runs successfully
-- [ ] Results documented
-- [ ] No performance regressions
+- [x] All operations < 1ms
+- [x] Benchmark script runs successfully
+- [x] Results documented
+- [x] No performance regressions
 
 ---
 
