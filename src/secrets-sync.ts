@@ -21,6 +21,7 @@ import { Logger } from './utils/logger';
 import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck } from './utils/dependencies';
 import { safeReadFile, safeWriteFile, safeReadDir, safeExists } from './utils/safeFs';
 import { buildErrorMessage } from './utils/errorMessages';
+import { fixGitignore, validateGitignore } from './utils/gitignoreValidator';
 
 // Avoid extra dependencies; simple argv parsing
 interface Flags {
@@ -34,6 +35,7 @@ interface Flags {
   verbose?: boolean;
   help?: boolean;
   version?: boolean;
+  fixGitignore?: boolean;
 }
 
 const DEFAULTS = {
@@ -291,6 +293,7 @@ function printHelp() {
   console.log('  --verbose            Show detailed debug output');
   console.log('  --force, -f          Prefix additional production files (e.g., .env.prod -> PROD_) instead of layering');
   console.log('  --no-confirm         Non-interactive mode (fail instead of prompting)');
+  console.log('  --fix-gitignore      Add missing patterns to .gitignore and exit');
   console.log('  --help, -h           Show this help');
   console.log('  --version, -v        Show version');
   console.log('');
@@ -380,6 +383,9 @@ function parseFlags(argv: string[]): Flags {
       case '--version':
       case '-v':
         flags.version = true;
+        break;
+      case '--fix-gitignore':
+        flags.fixGitignore = true;
         break;
       default:
         if (arg.startsWith('-')) {
@@ -1054,8 +1060,38 @@ async function main() {
     return;
   }
 
+  // Handle --fix-gitignore flag
+  if (flags.fixGitignore) {
+    console.log(`${COLORS.cyan}Fixing .gitignore...${COLORS.reset}\n`);
+    const added = fixGitignore();
+    if (added.length === 0) {
+      console.log(`${COLORS.green}✓ .gitignore already contains all required patterns${COLORS.reset}`);
+    } else {
+      console.log(`${COLORS.green}✓ Added ${added.length} pattern${added.length === 1 ? '' : 's'} to .gitignore${COLORS.reset}`);
+      added.forEach(p => console.log(`  ${COLORS.dim}+ ${p}${COLORS.reset}`));
+    }
+    return;
+  }
+
   // Show parsed configuration; avoid printing sensitive data
   printHeader();
+
+  // Validate .gitignore (unless skipped)
+  if (!process.env.SKIP_GITIGNORE_CHECK) {
+    const gitignoreResult = validateGitignore();
+    if (!gitignoreResult.isValid) {
+      console.log(`${COLORS.yellow}${COLORS.bold}⚠️  Security Warning: Your .gitignore may not protect secrets${COLORS.reset}\n`);
+      console.log(`${COLORS.yellow}Missing patterns in .gitignore:${COLORS.reset}`);
+      gitignoreResult.missingPatterns.forEach(p => {
+        console.log(`  ${COLORS.yellow}- ${p}${COLORS.reset}`);
+      });
+      console.log('');
+      console.log(`${COLORS.dim}These files contain secrets and should not be committed.${COLORS.reset}\n`);
+      console.log(`${COLORS.cyan}Fix: Run with --fix-gitignore flag${COLORS.reset}`);
+      console.log(`  ${COLORS.dim}secrets-sync --fix-gitignore${COLORS.reset}\n`);
+    }
+  }
+
   console.log('Parsed options:');
   console.table({
     env: flags.env ?? '(not specified)',
