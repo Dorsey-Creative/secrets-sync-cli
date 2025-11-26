@@ -41,6 +41,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error messages show exact paths, reasons, and copy-pasteable fix commands (#5)
 - README simplified and restructured: moved development details to CONTRIBUTING.md, detailed troubleshooting to docs/ (#14)
 
+### Fixed
+
+- CI publish workflow now builds before testing to ensure dist/ artifacts exist
+- CI publish workflow includes pre-flight checks with clear error messages
+- CI publish workflow auto-commits lockfile changes to prevent version bump failures
+
 ## [1.0.6] - 2025-11-24
 
 ### Fixed
