@@ -1,0 +1,45 @@
+name: Release Pre-flight Checks
+
+on:
+  pull_request:
+    branches:
+      - release
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Pre-flight checks
+        run: |
+          echo "🔍 Running pre-flight checks for release..."
+          
+          # Check git status (should be clean for PR)
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "❌ Error: Git working directory is not clean"
+            echo "Uncommitted changes:"
+            git status --short
+            echo ""
+            echo "Please commit all changes before creating PR to release"
+            exit 1
+          fi
+          
+          # Check CHANGELOG has been updated
+          if ! grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            echo "⚠️  Warning: No [Unreleased] section in CHANGELOG.md"
+            echo "Consider adding release notes before merging to release"
+          fi
+          
+          # Check version in package.json
+          VERSION=$(node -p "require('./package.json').version")
+          echo "📦 Current version: $VERSION"
+          
+          if [[ $VERSION == *"-"* ]]; then
+            echo "✅ Version has build suffix (will be stripped during publish)"
+          fi
+          
+          echo "✅ All pre-flight checks passed"
