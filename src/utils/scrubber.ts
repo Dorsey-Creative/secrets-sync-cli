@@ -88,6 +88,14 @@ export function clearCache(): void {
 }
 
 /**
+ * Get the current cache size (for testing)
+ * @returns Number of entries in cache
+ */
+export function getCacheSize(): number {
+  return scrubCache.size;
+}
+
+/**
  * Check if a key name indicates it contains a secret
  * @param key - Key name to check
  * @returns True if key likely contains a secret

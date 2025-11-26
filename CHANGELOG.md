@@ -7,10 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2025-11-25
+## [1.1.0] - Unreleased
 
 ### Added
 
+- **Secret Scrubbing**: Automatic redaction of secrets from all CLI output (#11)
+  - Always-on scrubbing for console, logs, errors, and stack traces
+  - Pattern detection for KEY=value, URLs, JWT tokens, and private keys
+  - LRU cache for performance (< 1ms per operation)
+  - User-configurable patterns via `env-config.yml`
+  - 27 unit tests + 17 integration tests + 8 E2E tests + 10 security audit tests
+- **.gitignore Protection**: Validation and auto-fix for secret file patterns (#11)
+  - Startup validation warns about missing patterns
+  - `--fix-gitignore` flag to automatically add required patterns
+  - Smart pattern insertion preserves existing negations
+  - Cross-platform path normalization
+  - 12 unit tests + 5 integration tests
+- Bootstrap module for early interception of module initialization output (#11)
+- Performance benchmarks for scrubbing operations (#11)
 - Comprehensive error handling with structured error classes and centralized message catalog (#5)
 - Logger module with 4 levels (ERROR, WARN, INFO, DEBUG) and `--verbose` flag (#5, #7)
 - Dependency validation at startup (gh CLI, gh auth, Node.js >= 18) with parallel checks < 1s (#5)

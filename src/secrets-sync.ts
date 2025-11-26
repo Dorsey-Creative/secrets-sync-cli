@@ -22,6 +22,7 @@ import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck } from 
 import { safeReadFile, safeWriteFile, safeReadDir, safeExists } from './utils/safeFs';
 import { buildErrorMessage } from './utils/errorMessages';
 import { fixGitignore, validateGitignore } from './utils/gitignoreValidator';
+import { clearCache } from './utils/scrubber';
 
 // Avoid extra dependencies; simple argv parsing
 interface Flags {
@@ -1421,4 +1422,9 @@ async function main() {
   }
 }
 
-await main();
+try {
+  await main();
+} finally {
+  // Clear scrubbing cache to prevent memory leaks
+  clearCache();
+}

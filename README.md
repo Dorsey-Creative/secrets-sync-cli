@@ -11,6 +11,8 @@ CLI tool for syncing environment secrets across environments with drift detectio
 - 🛡️ **Safe by Default** - Dry-run mode, confirmations, backups
 - 📋 **Required Secrets** - Validate against required secrets config
 - 🚫 **Smart Ignoring** - Skips `.example`, `.template`, `.local`, `.test` files
+- 🔒 **Secret Scrubbing** - Automatically redacts secrets from all output
+- ✅ **.gitignore Protection** - Validates and auto-fixes .gitignore patterns
 
 ## Installation
 
@@ -99,6 +101,7 @@ your-project/
 | `--force` | Skip all confirmations |
 | `--no-confirm` | Skip confirmation prompts |
 | `--skip-unchanged` | Skip files with no changes |
+| `--fix-gitignore` | Add missing patterns to .gitignore |
 | `--verbose` | Show detailed debug output |
 | `--help` | Show help message |
 | `--version` | Show version |
@@ -135,6 +138,47 @@ SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
 # Skip dependency checks in CI
 SKIP_DEPENDENCY_CHECK=1 secrets-sync --dry-run
 ```
+
+## Security
+
+### Automatic Secret Scrubbing
+
+All CLI output is automatically scrubbed to prevent accidental secret exposure:
+
+- **Always Active** - Scrubbing cannot be disabled
+- **All Output Channels** - Covers console, logs, errors, and stack traces
+- **Pattern Detection** - Recognizes KEY=value, URLs with credentials, JWT tokens, and private keys
+- **Safe Sharing** - Copy-paste any output without security review
+
+Example output:
+```bash
+# Before scrubbing (internal)
+API_KEY=sk_live_abc123
+DATABASE_URL=postgres://admin:password@localhost/db
+
+# After scrubbing (displayed)
+API_KEY=[REDACTED]
+DATABASE_URL=postgres://admin:[REDACTED]@localhost/db
+```
+
+### .gitignore Protection
+
+The CLI validates your `.gitignore` to ensure secret files won't be committed:
+
+```bash
+# Check .gitignore (automatic on startup)
+secrets-sync --dry-run
+
+# Auto-fix missing patterns
+secrets-sync --fix-gitignore
+```
+
+Required patterns:
+- `.env` - Production secrets
+- `.env.*` - Environment-specific secrets
+- `!.env.example` - Allow example files
+- `**/bak/` - Backup directories
+- `*.bak` - Backup files
 
 ## How It Works
 
