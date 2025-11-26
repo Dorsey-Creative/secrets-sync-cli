@@ -21,12 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation: error patterns, troubleshooting guide, UAT plan, performance benchmarks (#5, #16)
 - Code quality checks with jscpd (0% duplication) (#5)
 - TypeScript strict mode configuration (#2)
+- CONTRIBUTING.md with development guidelines, code style, testing requirements, and PR process (#14)
+- docs/TROUBLESHOOTING.md with detailed solutions for common issues (#14)
 
 ### Changed
 
 - All file operations use safe wrappers with error handling and context (#5)
 - All command executions have timeout protection to prevent infinite hangs (#5)
 - Error messages show exact paths, reasons, and copy-pasteable fix commands (#5)
+- README simplified and restructured: moved development details to CONTRIBUTING.md, detailed troubleshooting to docs/ (#14)
 
 ## [1.0.6] - 2025-11-24
 
