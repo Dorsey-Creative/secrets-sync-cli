@@ -44,8 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - CI publish workflow now builds before testing to ensure dist/ artifacts exist
-- CI publish workflow includes pre-flight checks with clear error messages
-- CI publish workflow auto-commits lockfile changes to prevent version bump failures
+- CI publish workflow fetches full git history for correct version detection
+- CI publish workflow auto-commits bun.lock changes to prevent version bump failures
+- Added separate pre-flight checks workflow for PRs to release branch
 - CI publish workflow fetches latest tags to ensure correct version bump
 
 ## [1.0.6] - 2025-11-24
