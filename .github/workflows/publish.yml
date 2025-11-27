@@ -74,3 +74,38 @@ jobs:
           else
             echo "No changes to commit."
           fi
+
+  sync-to-dev:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release
+          fetch-depth: 0
+      
+      - name: Create PR to dev
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          BRANCH_NAME="sync/release-v${NEW_VERSION}-to-dev"
+          
+          git checkout -b "${BRANCH_NAME}"
+          git push origin "${BRANCH_NAME}"
+          
+          gh pr create \
+            --base dev \
+            --head "${BRANCH_NAME}" \
+            --title "chore: sync release v${NEW_VERSION} to dev" \
+            --body "Automated PR to sync release v${NEW_VERSION} back to dev branch.
+
+          **Changes:**
+          - Version bump to ${NEW_VERSION}
+          - Release tag created
+
+          This PR should be merged to keep dev in sync with release."
