@@ -302,59 +302,27 @@ function logDebug(msg: string) {
 
 function printHelp() {
   printHeader();
-  console.log('Usage: bun run scripts/secrets-sync.ts [options]');
+  console.log('Usage: secrets-sync [options]');
   console.log('');
   console.log('Options:');
-  console.log('  --env <name>         Target environment (e.g., production, staging)');
-  console.log('  --dir <path>         Env files root directory (default: config/env)');
-  console.log('  --dry-run            Perform validation and show planned actions only');
-  console.log('  --overwrite          Force update all secrets (ignores manifest)');
-  console.log('  --skip-unchanged     Trust manifest; skip secrets with matching hashes');
-  console.log('  --verbose            Show detailed debug output');
-  console.log('  --debug-logger       Show logger call stacks (for debugging duplicates)');
-  console.log('  --force, -f          Prefix additional production files (e.g., .env.prod -> PROD_) instead of layering');
-  console.log('  --no-confirm         Non-interactive mode (fail instead of prompting)');
-  console.log('  --fix-gitignore      Add missing patterns to .gitignore and exit');
+  console.log('  --env <name>         Target specific environment');
+  console.log('  --dir <path>         Env files directory (default: config/env)');
+  console.log('  --dry-run            Preview changes without applying');
+  console.log('  --overwrite          Apply all changes without prompts');
+  console.log('  --force, -f          Use prefixes for production files');
+  console.log('  --skip-unchanged     Skip secrets with matching hashes');
+  console.log('  --no-confirm         Non-interactive mode');
+  console.log('  --fix-gitignore      Add missing .gitignore patterns');
+  console.log('  --verbose            Show detailed output');
   console.log('  --help, -h           Show this help');
   console.log('  --version, -v        Show version');
   console.log('');
-  console.log('Configuration (env-config.yml):');
-  console.log('  backupRetention: <n> Number of backup files to keep per env file (default: 3)');
-  console.log('  skipSecrets: [...]   Secrets to skip (supports wildcards like TEST_*)');
+  console.log('Examples:');
+  console.log('  secrets-sync --dry-run              # Preview changes');
+  console.log('  secrets-sync --env staging          # Sync staging only');
+  console.log('  secrets-sync --fix-gitignore        # Fix .gitignore');
   console.log('');
-  console.log('Interactive approvals:');
-  console.log('  Prompts accept y (yes), a (approve all remaining), default N (skip).');
-  console.log('');
-  console.log('Production layering:');
-  console.log('  .env is treated as the canonical production base.');
-  console.log('  Additional production files (e.g., .env.prod) are layered on top automatically,');
-  console.log('  so overrides win without introducing prefixed secrets.');
-  console.log('');
-  console.log('Drift Detection:');
-  console.log('  The CLI uses GitHub updatedAt timestamps to detect out-of-band changes.');
-  console.log('  Manifest (config/env/bak/secrets-sync-state.json) tracks:');
-  console.log('    - SHA-256 hash of published value');
-  console.log('    - GitHub updatedAt timestamp from last sync');
-  console.log('    - Source file for traceability');
-  console.log('');
-  console.log('  Diff logic (default mode):');
-  console.log('    - Secret missing remotely → CREATE');
-  console.log('    - No manifest entry → UPDATE (first sync)');
-  console.log('    - Local hash changed → UPDATE (local edit)');
-  console.log('    - GitHub timestamp changed → UPDATE (drift detected!)');
-  console.log('    - Hash + timestamp match → NOOP (already in sync)');
-  console.log('    - Missing timestamp data → UPDATE (ensure convergence)');
-  console.log('');
-  console.log('  With --skip-unchanged:');
-  console.log('    Trust the manifest even when timestamps are absent.');
-  console.log('    Use when confident in sync state to reduce prompts.');
-  console.log('');
-  console.log('Mock Mode:');
-  console.log('  Set SECRETS_SYNC_MOCK=1 to use in-memory mock adapter (testing only).');
-  console.log('  The .secrets-mock.json fixture does NOT enable mock mode for writes.');
-  console.log('');
-  console.log('Design docs: development/secretsWorkflow/design.md');
-  console.log('Requirements: development/secretsWorkflow/requirements.md');
+  console.log('Documentation: https://github.com/Dorsey-Creative/secrets-sync-cli#readme');
 }
 
 function parseFlags(argv: string[]): Flags {
@@ -424,7 +392,8 @@ function parseFlags(argv: string[]): Flags {
 }
 
 function printVersion() {
-  console.log('secrets-sync phase2 version 0.3.0');
+  const { version } = require('../package.json');
+  console.log(`secrets-sync version ${version}`);
 }
 
 function ensureDir(dir: string) {
@@ -1034,6 +1003,16 @@ async function main() {
   const args = process.argv.slice(2);
   const flags = parseFlags(args);
 
+  // Handle version and help flags immediately (no config needed)
+  if (flags.help) {
+    printHelp();
+    return;
+  }
+  if (flags.version) {
+    printVersion();
+    return;
+  }
+
   // Initialize logger with verbose flag
   logger = new Logger({ verbose: flags.verbose, debugLogger: flags.debugLogger });
   logDebug(`Parsed flags: ${JSON.stringify(flags)}`);
@@ -1084,15 +1063,6 @@ async function main() {
   
   const skipSecrets = new Set<string>((envConfig.skipSecrets ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean));
   const backupRetention = envConfig.backupRetention ?? 3;
-
-  if (flags.help) {
-    printHelp();
-    return;
-  }
-  if (flags.version) {
-    printVersion();
-    return;
-  }
 
   // Handle --fix-gitignore flag
   if (flags.fixGitignore) {
