@@ -17,12 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `--debug-logger` flag for debugging log call stacks and duplication issues
+- Example directory for local testing with setup script (`bun run setup:example`)
+- E2E tests for example directory workflow (4 tests)
 
 ### Changed
 
 - Moved versioning.md from development/ to docs/ for permanent reference
 - Removed completed secret scrubbing development artifacts (10k+ lines)
 - Enhanced scrubbing coverage for improved security
+- Updated CI workflows to setup example directory before tests
 
 ## [1.1.0] - 2025-11-26
 

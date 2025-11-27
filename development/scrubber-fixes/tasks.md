@@ -537,10 +537,10 @@ bun test tests/integration/logger-output.test.ts
 **Path:** `example/`
 
 **Sub-tasks:**
-- [ ] Create `example/` directory
-- [ ] Create `example/config/env/` subdirectories
-- [ ] Create `example/README.md` with usage instructions
-- [ ] Create sample `.env` files with fake data
+- [x] Create `example/` directory
+- [x] Create `example/config/env/` subdirectories
+- [x] Create `example/README.md` with usage instructions
+- [x] Create sample `.env` files with fake data
 
 **Validation:**
 ```bash
@@ -566,9 +566,9 @@ ls -la example/config/env/
 **File:** `.gitignore`
 
 **Sub-tasks:**
-- [ ] Add `example/` to .gitignore
-- [ ] Add comment explaining why
-- [ ] Test git status doesn't show example/
+- [x] Add `example/` to .gitignore
+- [x] Add comment explaining why
+- [x] Test git status doesn't show example/
 
 **Validation:**
 ```bash
@@ -594,10 +594,10 @@ git status
 **File:** `package.json`
 
 **Sub-tasks:**
-- [ ] Verify `files` field exists in package.json
-- [ ] Ensure example/ not in files list
-- [ ] Add comment if needed
-- [ ] Test with npm pack
+- [x] Verify `files` field exists in package.json
+- [x] Ensure example/ not in files list
+- [x] Add comment if needed
+- [x] Test with npm pack
 
 **Validation:**
 ```bash
@@ -623,11 +623,11 @@ tar -tzf secrets-sync-cli-*.tgz | grep example
 **File:** `example/README.md`
 
 **Sub-tasks:**
-- [ ] Document purpose of example/ directory
-- [ ] Provide setup instructions
-- [ ] Show CLI usage examples
-- [ ] Add safety warnings
-- [ ] Explain git/npm exclusion
+- [x] Document purpose of example/ directory
+- [x] Provide setup instructions
+- [x] Show CLI usage examples
+- [x] Add safety warnings
+- [x] Explain git/npm exclusion
 
 **Validation:**
 ```bash
@@ -653,10 +653,10 @@ cat example/README.md
 **File:** `CONTRIBUTING.md`
 
 **Sub-tasks:**
-- [ ] Add section on local testing with example/
-- [ ] Document example/ directory purpose
-- [ ] Provide workflow examples
-- [ ] Link to example/README.md
+- [x] Add section on local testing with example/
+- [x] Document example/ directory purpose
+- [x] Provide workflow examples
+- [x] Link to example/README.md
 
 **Validation:**
 ```bash
@@ -681,10 +681,10 @@ grep -A 10 "example" CONTRIBUTING.md
 **File:** `tests/e2e/example-directory.test.ts`
 
 **Sub-tasks:**
-- [ ] Test CLI runs against example/ files
-- [ ] Test example/ not in git status
-- [ ] Test example/ not in npm pack
-- [ ] Test scrubbing works with example data
+- [x] Test CLI runs against example/ files
+- [x] Test example/ not in git status
+- [x] Test example/ not in npm pack
+- [x] Test scrubbing works with example data
 
 **Validation:**
 ```bash
@@ -708,14 +708,14 @@ bun test tests/e2e/example-directory.test.ts
 ### Phase 3 Validation Checklist
 
 **End-User Success Criteria:**
-- [ ] Create test files in example/config/env/
-- [ ] Run `git status` and verify example/ not shown
-- [ ] Run `bun run dev -- --dir example/config/env --dry-run`
-- [ ] Verify CLI works with example/ files
-- [ ] Run `npm pack` and verify example/ not in tarball
-- [ ] Follow example/README.md instructions successfully
+- [x] Create test files in example/config/env/
+- [x] Run `git status` and verify example/ not shown
+- [x] Run `bun run dev -- --dir example/config/env --dry-run`
+- [x] Verify CLI works with example/ files
+- [x] Run `npm pack` and verify example/ not in tarball
+- [x] Follow example/README.md instructions successfully
 
-**Time Check:** 2 hours total
+**Time Check:** 2 hours total (completed in ~30 minutes)
 
 ---
 

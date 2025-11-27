@@ -44,6 +44,10 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: bun install
       
+      - name: Setup example directory
+        if: steps.changes.outputs.has_changes == 'true'
+        run: bun run setup:example
+      
       - name: Run tests
         if: steps.changes.outputs.has_changes == 'true'
         run: bun test
