@@ -4,35 +4,15 @@
  * Provides structured logging with level support and verbose mode.
  * Respects --verbose flag for debug output.
  * 
- * **Security:** All log output is automatically scrubbed to prevent secret exposure.
- * Secrets are detected using pattern matching (KEY=value, URLs, JWT tokens, etc.)
- * and replaced with [REDACTED] before logging. This scrubbing is always enabled
- * and cannot be disabled.
- * 
- * **Performance:** Scrubbing adds < 1ms overhead per log call, with no noticeable
- * impact on CLI performance.
+ * **Security:** Scrubbing happens at TWO levels for defense-in-depth:
+ * 1. Logger scrubs messages and context objects before formatting
+ * 2. Bootstrap scrubs final string output at stream level
+ * This ensures both structured data (objects) and text patterns are caught.
  * 
  * @example
  * const logger = new Logger({ verbose: true });
- * 
- * // Secrets are automatically scrubbed
  * logger.error('Failed: API_KEY=secret123');
  * // Output: Failed: API_KEY=[REDACTED]
- * 
- * logger.error('Connection failed', { 
- *   url: 'postgres://user:password@localhost/db' 
- * });
- * // Output: { url: 'postgres://user:[REDACTED]@localhost/db' }
- * 
- * // Stack traces are scrubbed via logError()
- * try {
- *   throw new Error('API_KEY=secret failed');
- * } catch (error) {
- *   logger.logError(error);
- * }
- * // Output: Error occurred
- * //   message: API_KEY=[REDACTED] failed
- * //   stack: (scrubbed stack trace)
  */
 
 import { scrubSecrets, scrubObject } from './scrubber';
@@ -70,31 +50,44 @@ const levelNames = {
 export interface LoggerOptions {
   verbose?: boolean;
   minLevel?: LogLevel;
+  debugLogger?: boolean;
 }
+
+let logCallId = 0;
 
 export class Logger {
   private minLevel: LogLevel;
+  private debugLogger: boolean;
 
   constructor(options: LoggerOptions = {}) {
     this.minLevel = options.verbose ? LogLevel.DEBUG : options.minLevel ?? LogLevel.INFO;
+    this.debugLogger = options.debugLogger ?? false;
   }
 
   private log(level: LogLevel, message: string, context?: Record<string, unknown>): void {
     if (level > this.minLevel) return;
 
+    const callId = ++logCallId;
     const timestamp = new Date().toISOString();
     const levelName = levelNames[level];
     const color = levelColors[level];
     
-    // Scrub message before logging
+    // Debug: Capture call stack if debug mode enabled
+    if (this.debugLogger) {
+      const stack = new Error().stack?.split('\n').slice(3, 6).join('\n') || 'unknown';
+      console.error(`[DEBUG-LOGGER] Call #${callId} from:\n${stack}`);
+    }
+    
+    // Scrub message (defense-in-depth: logger scrubs objects, bootstrap scrubs final strings)
     const scrubbedMessage = scrubSecrets(message);
     const logLine = `${colors.gray}[${timestamp}]${colors.reset} ${color}[${levelName}]${colors.reset} ${scrubbedMessage}`;
     
-    const output = level === LogLevel.ERROR ? console.error : console.log;
+    // Route to appropriate stream: ERROR and WARN to stderr, INFO and DEBUG to stdout
+    const output = (level === LogLevel.ERROR || level === LogLevel.WARN) ? console.error : console.log;
     output(logLine);
     
     if (context && Object.keys(context).length > 0) {
-      // Scrub context object before logging
+      // Scrub context object (defense-in-depth: catches { password: "secret" } patterns)
       const scrubbedContext = scrubObject(context);
       const contextStr = JSON.stringify(scrubbedContext, null, 2)
         .split('\n')
@@ -106,15 +99,11 @@ export class Logger {
 
   /**
    * Log an error message with optional context.
-   * Secrets in both message and context are automatically scrubbed.
+   * Secrets are scrubbed at both logger and stream level (defense-in-depth).
    * 
    * @example
    * logger.error('Database connection failed: PASSWORD=secret123');
    * // Output: Database connection failed: PASSWORD=[REDACTED]
-   * 
-   * logger.error('Failed', { apiKey: 'secret', port: 3000 });
-   * // Output: Failed
-   * //   Context: { apiKey: '[REDACTED]', port: 3000 }
    */
   error(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.ERROR, message, context);
@@ -122,7 +111,7 @@ export class Logger {
 
   /**
    * Log a warning message with optional context.
-   * Secrets in both message and context are automatically scrubbed.
+   * Secrets are scrubbed at both logger and stream level (defense-in-depth).
    */
   warn(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.WARN, message, context);
@@ -130,7 +119,7 @@ export class Logger {
 
   /**
    * Log an info message with optional context.
-   * Secrets in both message and context are automatically scrubbed.
+   * Secrets are scrubbed at both logger and stream level (defense-in-depth).
    */
   info(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.INFO, message, context);
@@ -138,7 +127,7 @@ export class Logger {
 
   /**
    * Log a debug message with optional context (only shown in verbose mode).
-   * Secrets in both message and context are automatically scrubbed.
+   * Secrets are scrubbed at both logger and stream level (defense-in-depth).
    */
   debug(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.DEBUG, message, context);
@@ -146,16 +135,7 @@ export class Logger {
 
   /**
    * Log an Error object with automatic stack trace scrubbing.
-   * 
-   * @example
-   * try {
-   *   throw new Error('API_KEY=secret123 failed');
-   * } catch (error) {
-   *   logger.logError(error);
-   * }
-   * // Output: Error occurred
-   * //   message: API_KEY=[REDACTED] failed
-   * //   stack: (scrubbed stack trace)
+   * Secrets are scrubbed at both logger and stream level (defense-in-depth).
    */
   logError(error: Error, additionalContext?: Record<string, unknown>): void {
     const context: Record<string, unknown> = {

@@ -1,6 +1,6 @@
 // SECURITY: This file MUST be imported first before any other imports
-// It intercepts stdout/stderr streams and console methods to scrub secrets
-// before any module initialization code can output sensitive data
+// It intercepts stdout/stderr streams AND console methods to scrub secrets
+// Stream interception catches text output, console interception catches objects
 
 import { scrubSecrets, scrubObject, loadUserConfig } from './utils/scrubber';
 import { existsSync, readFileSync } from 'fs';
@@ -23,45 +23,45 @@ try {
   // Silently fail - built-in patterns still work
 }
 
-// SECURITY: Intercept stdout/stderr streams BEFORE any other code runs
+// SECURITY: Intercept stdout/stderr streams to catch ALL text output
 const originalWrite = {
   stdout: process.stdout.write.bind(process.stdout),
   stderr: process.stderr.write.bind(process.stderr),
 };
 
-// Intercept process.stdout.write
 process.stdout.write = function(chunk: any, ...args: any[]): boolean {
   if (typeof chunk === 'string') {
     chunk = scrubSecrets(chunk);
   } else if (Buffer.isBuffer(chunk)) {
-    // Only scrub if buffer appears to be valid UTF-8 text
     const str = chunk.toString('utf8');
-    // Check if conversion is reversible (no replacement characters)
     if (Buffer.from(str, 'utf8').equals(chunk)) {
       chunk = Buffer.from(scrubSecrets(str), 'utf8');
     }
-    // Otherwise leave binary data untouched
   }
   return originalWrite.stdout(chunk, ...args);
 } as any;
 
-// Intercept process.stderr.write
 process.stderr.write = function(chunk: any, ...args: any[]): boolean {
   if (typeof chunk === 'string') {
     chunk = scrubSecrets(chunk);
   } else if (Buffer.isBuffer(chunk)) {
-    // Only scrub if buffer appears to be valid UTF-8 text
     const str = chunk.toString('utf8');
-    // Check if conversion is reversible (no replacement characters)
     if (Buffer.from(str, 'utf8').equals(chunk)) {
       chunk = Buffer.from(scrubSecrets(str), 'utf8');
     }
-    // Otherwise leave binary data untouched
   }
   return originalWrite.stderr(chunk, ...args);
 } as any;
 
-// SECURITY: Intercept ALL console methods using Proxy to prevent bypass
+// SECURITY: Intercept console methods to scrub objects BEFORE they're stringified
+const originalConsole = {
+  log: console.log.bind(console),
+  error: console.error.bind(console),
+  warn: console.warn.bind(console),
+  info: console.info.bind(console),
+  debug: console.debug.bind(console),
+};
+
 function scrubArgs(...args: any[]): any[] {
   return args.map(arg => {
     if (typeof arg === 'string') {
@@ -73,22 +73,22 @@ function scrubArgs(...args: any[]): any[] {
   });
 }
 
-// Wrap console with Proxy to intercept ALL methods (including future ones)
-const consoleProxy = new Proxy(console, {
-  get(target: any, prop: string) {
-    const original = target[prop];
+console.log = function(...args: any[]) {
+  return originalConsole.log(...scrubArgs(...args));
+};
 
-    // Only wrap functions that might output user content
-    if (typeof original === 'function') {
-      return function(...args: any[]) {
-        const scrubbedArgs = scrubArgs(...args);
-        return original.apply(target, scrubbedArgs);
-      };
-    }
+console.error = function(...args: any[]) {
+  return originalConsole.error(...scrubArgs(...args));
+};
 
-    return original;
-  }
-});
+console.warn = function(...args: any[]) {
+  return originalConsole.warn(...scrubArgs(...args));
+};
 
-// Replace global console with proxy
-Object.assign(console, consoleProxy);
+console.info = function(...args: any[]) {
+  return originalConsole.info(...scrubArgs(...args));
+};
+
+console.debug = function(...args: any[]) {
+  return originalConsole.debug(...scrubArgs(...args));
+};

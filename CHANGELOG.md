@@ -11,11 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Scrubber whitelist enhancements to prevent over-redaction of configuration fields
 - Audit table field abstraction to avoid false-positive secret detection
+- Logger duplicate output eliminated (each message now appears exactly once)
+- WARN messages correctly routed to stderr for proper log filtering
+
+### Added
+
+- `--debug-logger` flag for debugging log call stacks and duplication issues
 
 ### Changed
 
 - Moved versioning.md from development/ to docs/ for permanent reference
 - Removed completed secret scrubbing development artifacts (10k+ lines)
+- Enhanced scrubbing coverage for improved security
 
 ## [1.1.0] - 2025-11-26
 

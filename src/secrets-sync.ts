@@ -34,6 +34,7 @@ interface Flags {
   noConfirm?: boolean;
   skipUnchanged?: boolean;
   verbose?: boolean;
+  debugLogger?: boolean;
   help?: boolean;
   version?: boolean;
   fixGitignore?: boolean;
@@ -266,19 +267,37 @@ let logger: Logger;
 
 // Structured logging helpers
 function logInfo(msg: string) {
-  logger?.info(msg) ?? console.log(`${COLORS.cyan}[INFO]${COLORS.reset} ${msg}`);
+  if (logger) {
+    logger.info(msg);
+  } else {
+    console.log(`${COLORS.cyan}[INFO]${COLORS.reset} ${msg}`);
+  }
 }
 function logWarn(msg: string) {
-  logger?.warn(msg) ?? console.warn(`${COLORS.yellow}[WARN]${COLORS.reset} ${msg}`);
+  if (logger) {
+    logger.warn(msg);
+  } else {
+    console.warn(`${COLORS.yellow}[WARN]${COLORS.reset} ${msg}`);
+  }
 }
 function logErr(msg: string) {
-  logger?.error(msg) ?? console.error(`${COLORS.red}[ERROR]${COLORS.reset} ${msg}`);
+  if (logger) {
+    logger.error(msg);
+  } else {
+    console.error(`${COLORS.red}[ERROR]${COLORS.reset} ${msg}`);
+  }
 }
 function logSuccess(msg: string) {
-  logger?.info(msg) ?? console.log(`${COLORS.green}[OK]${COLORS.reset} ${msg}`);
+  if (logger) {
+    logger.info(msg);
+  } else {
+    console.log(`${COLORS.green}[OK]${COLORS.reset} ${msg}`);
+  }
 }
 function logDebug(msg: string) {
-  logger?.debug(msg);
+  if (logger) {
+    logger.debug(msg);
+  }
 }
 
 function printHelp() {
@@ -292,6 +311,7 @@ function printHelp() {
   console.log('  --overwrite          Force update all secrets (ignores manifest)');
   console.log('  --skip-unchanged     Trust manifest; skip secrets with matching hashes');
   console.log('  --verbose            Show detailed debug output');
+  console.log('  --debug-logger       Show logger call stacks (for debugging duplicates)');
   console.log('  --force, -f          Prefix additional production files (e.g., .env.prod -> PROD_) instead of layering');
   console.log('  --no-confirm         Non-interactive mode (fail instead of prompting)');
   console.log('  --fix-gitignore      Add missing patterns to .gitignore and exit');
@@ -345,6 +365,7 @@ function parseFlags(argv: string[]): Flags {
     noConfirm: false,
     skipUnchanged: false,
     verbose: false,
+    debugLogger: false,
     help: false,
     version: false,
   };
@@ -369,6 +390,9 @@ function parseFlags(argv: string[]): Flags {
         break;
       case '--verbose':
         flags.verbose = true;
+        break;
+      case '--debug-logger':
+        flags.debugLogger = true;
         break;
       case '--force':
       case '-f':
@@ -1011,7 +1035,7 @@ async function main() {
   const flags = parseFlags(args);
 
   // Initialize logger with verbose flag
-  logger = new Logger({ verbose: flags.verbose });
+  logger = new Logger({ verbose: flags.verbose, debugLogger: flags.debugLogger });
   logDebug(`Parsed flags: ${JSON.stringify(flags)}`);
 
   // Validate dependencies (unless skipped for CI)
