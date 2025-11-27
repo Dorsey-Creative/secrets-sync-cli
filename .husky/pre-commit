@@ -1,7 +1,16 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Validate version format (must be X.Y.Z-YYYYMMDD.N for dev branch)
+# Get current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Skip validation on release branch (CI manages version there)
+if [ "$BRANCH" = "release" ]; then
+  echo "✅ Release branch - skipping version format check"
+  exit 0
+fi
+
+# Validate version format (must be X.Y.Z-YYYYMMDD.N for dev branches)
 VERSION=$(node -p "require('./package.json').version")
 
 if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+-[0-9]{8}\.[0-9]+$'; then

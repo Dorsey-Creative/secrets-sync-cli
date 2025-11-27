@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Publish workflow now correctly bumps patch versions from prerelease format (e.g., 1.1.0-20251126.1 → 1.1.1)
+- Pre-commit hook now allows version changes on release branch (CI-managed)
+- Version command now reads from package.json instead of hardcoded value
+- Version and help commands now exit early without loading config (no unnecessary warnings)
+
 ### Changed
 
-- Publish workflow now automatically creates PR to sync release changes back to dev branch
+- Post-release sync now pushes to version-specific develop branch (e.g., 1.1.1-develop) instead of creating PR
+- Help screen simplified and cleaned up (removed technical details, added examples)
+- Flag descriptions clarified: `--overwrite` vs `--force` distinction now clear
+
+### Added
+
+- Integration tests for version command (-v and --version flags)
 
 ## [1.1.1] - 2025-11-26
 
