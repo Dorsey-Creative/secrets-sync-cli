@@ -1,12 +1,14 @@
 import { describe, it, expect } from "bun:test";
 import { execSync } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { join } from "path";
 
 const projectRoot = join(import.meta.dir, "../..");
 const exampleDir = join(projectRoot, "example");
 const exampleEnvDir = join(exampleDir, "config/env");
-const skipTests = !existsSync(exampleEnvDir);
+const hasEnvFiles = existsSync(exampleEnvDir) && 
+  readdirSync(exampleEnvDir).some(f => f.startsWith(".env"));
+const skipTests = !hasEnvFiles;
 
 if (skipTests) {
   console.warn("⚠️  Skipping example directory tests - run 'bun run setup:example' first");
