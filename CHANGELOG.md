@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Publish workflow now correctly bumps patch versions from prerelease format (e.g., 1.1.0-20251126.1 → 1.1.1)
+- Pre-commit hook now allows version changes on release branch (CI-managed)
+
 ### Changed
 
-- Publish workflow now automatically creates PR to sync release changes back to dev branch
+- Post-release sync now pushes to version-specific develop branch (e.g., 1.1.1-develop) instead of creating PR
 
 ## [1.1.1] - 2025-11-26
 
