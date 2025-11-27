@@ -726,7 +726,7 @@ type DiffAction = 'create' | 'update' | 'delete' | 'noop';
 
 type PlannedChange = { action: DiffAction; name: string; sourceFile?: string };
 
-type AuditRow = { secret: string; source: string; action: DiffAction; status: 'planned' | 'applied' | 'skipped' | 'failed' | 'unchanged' };
+type AuditRow = { syncItemName: string; itemSource: string; syncAction: DiffAction; syncStatus: 'planned' | 'applied' | 'skipped' | 'failed' | 'unchanged' };
 
 // Manifest for tracking published secret hashes
 type SecretManifestEntry = { hash: string; sourceFile: string; updatedAt: string };
@@ -909,7 +909,7 @@ function printAuditSummary(
   const rows: AuditRow[] = [];
 
   for (const p of plan) {
-    let status: AuditRow['status'];
+    let status: AuditRow['syncStatus'];
     if (options.mode === 'dry-run') {
       if (p.action === 'noop') status = 'unchanged';
       else status = 'planned';
@@ -923,27 +923,36 @@ function printAuditSummary(
     }
 
     rows.push({
-      secret: p.name,
-      source: p.sourceFile ?? '(n/a)',
-      action: p.action,
-      status,
+      syncItemName: p.name,
+      itemSource: p.sourceFile ?? '(n/a)',
+      syncAction: p.action,
+      syncStatus: status,
     });
   }
 
   if (options.skippedFromConfig?.length) {
     for (const s of options.skippedFromConfig) {
       rows.push({
-        secret: s.name,
-        source: s.sourceFile ?? '(n/a)',
-        action: 'noop',
-        status: 'skipped',
+        syncItemName: s.name,
+        itemSource: s.sourceFile ?? '(n/a)',
+        syncAction: 'noop',
+        syncStatus: 'skipped',
       });
     }
   }
 
   console.log('');
   console.log('Audit Summary');
-  console.table(rows);
+  
+  // Map internal field names to user-friendly display names
+  const displayRows = rows.map(row => ({
+    'Secret Name': row.syncItemName,
+    'Source': row.itemSource,
+    'Action': row.syncAction,
+    'Status': row.syncStatus,
+  }));
+  
+  console.table(displayRows);
 }
 
 // ---- Backup Writer ----

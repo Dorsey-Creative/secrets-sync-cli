@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Scrubber whitelist enhancements to prevent over-redaction of configuration fields
+- Audit table field abstraction to avoid false-positive secret detection
+
 ### Changed
 
 - Moved versioning.md from development/ to docs/ for permanent reference
