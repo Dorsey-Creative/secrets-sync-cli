@@ -15,6 +15,7 @@
     "quality:duplication": "jscpd src/",
     "quality": "bun run quality:duplication",
     "setup:example": "./scripts/setup-example.sh",
+    "prepare": "[ -d .git ] && git config core.hooksPath .husky || true",
     "prepublishOnly": "bun run build && node -e \"if (!process.env.CI) { console.error('❌ Use CI/CD to publish. Push a version tag instead.'); process.exit(1); }\"",
     "release": "./scripts/release.sh",
     "version:build": "./scripts/bump-build.sh",

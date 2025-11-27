@@ -281,6 +281,31 @@ Include:
 
 ## Development Workflow
 
+### Version Management
+
+**Important:** Version numbers are managed by CI/CD and follow this format:
+- Dev branch: `X.Y.Z-YYYYMMDD.N` (e.g., `1.1.1-20251126.1`)
+- Release branch: `X.Y.Z` (e.g., `1.1.1`)
+
+A pre-commit hook validates the version format to ensure you're working from the dev branch. If you see this error:
+
+```
+❌ ERROR: Invalid version format in package.json
+   Current: 1.1.1
+   Expected: X.Y.Z-YYYYMMDD.N (e.g., 1.1.1-20251126.1)
+```
+
+You've accidentally modified the version. Revert it and let CI/CD handle versioning.
+
+### Setup
+
+1. Clone the repository
+2. Install dependencies: `bun install`
+3. Git hooks install automatically via `prepare` script
+4. Run tests: `bun test`
+
+## Development Workflow
+
 ### Branch Strategy
 
 - `main`: Production releases only
