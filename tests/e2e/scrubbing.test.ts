@@ -37,10 +37,13 @@ describe('E2E: Secret Scrubbing', () => {
 
     const output = result.stdout + result.stderr;
 
-    // Verify secrets are scrubbed
+    // Verify secret VALUES are scrubbed (not shown in output)
     expect(output).not.toContain('sk_live_secret123');
     expect(output).not.toContain('password');
-    expect(output).toContain('[REDACTED]');
+    
+    // Key names should be visible (whitelisted)
+    expect(output).toContain('API_KEY');
+    expect(output).toContain('DATABASE_URL');
   });
 
   test('verbose mode scrubs secrets', () => {
