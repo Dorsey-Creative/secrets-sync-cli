@@ -139,6 +139,57 @@ bun test --watch
 bun test --coverage
 ```
 
+## Local Testing with Example Directory
+
+The `example/` directory provides a safe environment for testing CLI functionality without affecting real secrets.
+
+### Setup
+
+```bash
+# Run setup script to create example directory with sample files
+bun run setup:example
+
+# Test CLI against example files
+bun run dev -- --dir example/config/env --dry-run
+
+# Test specific environment
+bun run dev -- --dir example/config/env --env staging --dry-run
+
+# Test with various flags
+bun run dev -- --dir example/config/env --skip-unchanged --dry-run
+```
+
+### Testing Scenarios
+
+**Drift Detection:**
+```bash
+# Add a key to production that staging is missing
+echo "NEW_KEY=test_value" >> example/config/env/.env
+bun run dev -- --dir example/config/env --env staging --dry-run
+# Expected: Warning about missing NEW_KEY in staging
+```
+
+**Scrubbing Verification:**
+```bash
+# Verify secrets are redacted in output
+bun run dev -- --dir example/config/env --dry-run
+# Expected: Values show [REDACTED], key names visible
+```
+
+**Options Table:**
+```bash
+# Verify configuration visible
+bun run dev -- --dir example/config/env --skip-unchanged --dry-run
+# Expected: Options table shows skipUnchanged: true
+```
+
+### Safety Notes
+
+- `example/` is in `.gitignore` - never committed
+- `example/` excluded from npm package distribution
+- Only use fake/test data in this directory
+- See `example/README.md` for detailed usage instructions
+
 ## Quality Standards
 
 Before submitting a PR, ensure:
@@ -227,6 +278,31 @@ Include:
 - `documentation`: Documentation improvements
 - `good first issue`: Good for newcomers
 - `help wanted`: Extra attention needed
+
+## Development Workflow
+
+### Version Management
+
+**Important:** Version numbers are managed by CI/CD and follow this format:
+- Dev branch: `X.Y.Z-YYYYMMDD.N` (e.g., `1.1.1-20251126.1`)
+- Release branch: `X.Y.Z` (e.g., `1.1.1`)
+
+A pre-commit hook validates the version format to ensure you're working from the dev branch. If you see this error:
+
+```
+❌ ERROR: Invalid version format in package.json
+   Current: 1.1.1
+   Expected: X.Y.Z-YYYYMMDD.N (e.g., 1.1.1-20251126.1)
+```
+
+You've accidentally modified the version. Revert it and let CI/CD handle versioning.
+
+### Setup
+
+1. Clone the repository
+2. Install dependencies: `bun install`
+3. Git hooks install automatically via `prepare` script
+4. Run tests: `bun test`
 
 ## Development Workflow
 

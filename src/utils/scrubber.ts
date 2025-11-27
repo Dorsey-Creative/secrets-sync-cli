@@ -29,8 +29,8 @@ function hashInput(text: string): string {
 
 // Pattern definitions (compiled once at module load)
 const SECRET_PATTERNS = {
-  // KEY=value format
-  keyValue: /([A-Z_][A-Z0-9_]*)=([^\s]+)/gi,
+  // KEY=value format (supports underscores and hyphens)
+  keyValue: /([A-Z_-][A-Z0-9_-]*)=([^\s]+)/gi,
 
   // URL with credentials (any protocol)
   urlCreds: /([a-z]+:\/\/[^:]+):([^@]+)@/gi,
@@ -61,6 +61,21 @@ const WHITELIST_KEYS = new Set([
   'host', 'hostname', 'path',
   'log_level', 'verbose',
   'secrets_sync_timeout',
+  'skipsecrets',
+  'skipunchanged',
+  'backupretention',
+  'syncitemname',
+  'itemsource',
+  'syncaction',
+  'syncstatus',
+  'env',
+  'dir',
+  'dryrun',
+  'overwrite',
+  'force',
+  'noconfirm',
+  'fixgitignore',
+  'skipgitignorecheck',
 ]);
 
 // User config patterns
@@ -104,6 +119,14 @@ export function isSecretKey(key: string): boolean {
   if (!key || typeof key !== 'string') return false;
   
   const lower = key.toLowerCase();
+
+  // Check whitelist FIRST - whitelisted keys are never secrets
+  if (WHITELIST_KEYS.has(lower)) return false;
+
+  // Check user-defined whitelist patterns
+  for (const pattern of userWhitelistPatterns) {
+    if (matchesGlobPattern(key, pattern)) return false;
+  }
 
   // Check built-in secret keys
   if (SECRET_KEYS.has(lower)) return true;

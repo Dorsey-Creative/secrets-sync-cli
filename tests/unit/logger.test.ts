@@ -43,7 +43,8 @@ describe('Logger', () => {
       logger.info('test');
       logger.warn('test');
       
-      expect(logOutput.length).toBe(1); // Only WARN shown
+      expect(errorOutput.length).toBe(1); // WARN goes to stderr
+      expect(logOutput.length).toBe(0); // INFO filtered out
     });
   });
 
@@ -87,17 +88,17 @@ describe('Logger', () => {
       const logger = new Logger();
       logger.warn('Test warning');
       
-      expect(logOutput.length).toBe(1);
-      expect(logOutput[0]).toContain('WARN');
-      expect(logOutput[0]).toContain('Test warning');
+      expect(errorOutput.length).toBe(1);
+      expect(errorOutput[0]).toContain('WARN');
+      expect(errorOutput[0]).toContain('Test warning');
     });
 
     test('logs warning with context', () => {
       const logger = new Logger();
       logger.warn('Test warning', { line: 42 });
       
-      expect(logOutput.length).toBe(2);
-      expect(logOutput[1]).toContain('42');
+      expect(errorOutput.length).toBe(2);
+      expect(errorOutput[1]).toContain('42');
     });
   });
 
@@ -207,8 +208,8 @@ describe('Logger', () => {
       logger.info('test');
       logger.debug('test');
       
-      expect(errorOutput.length).toBe(1);
-      expect(logOutput.length).toBe(1);
+      expect(errorOutput.length).toBe(2); // ERROR and WARN both go to stderr
+      expect(logOutput.length).toBe(0);
     });
 
     test('INFO shows INFO, WARN, and ERROR', () => {
@@ -218,8 +219,8 @@ describe('Logger', () => {
       logger.info('test');
       logger.debug('test');
       
-      expect(errorOutput.length).toBe(1);
-      expect(logOutput.length).toBe(2);
+      expect(errorOutput.length).toBe(2); // ERROR and WARN go to stderr
+      expect(logOutput.length).toBe(1); // INFO goes to stdout
     });
 
     test('DEBUG shows all levels', () => {
@@ -229,8 +230,8 @@ describe('Logger', () => {
       logger.info('test');
       logger.debug('test');
       
-      expect(errorOutput.length).toBe(1);
-      expect(logOutput.length).toBe(3);
+      expect(errorOutput.length).toBe(2); // ERROR and WARN go to stderr
+      expect(logOutput.length).toBe(2); // INFO and DEBUG go to stdout
     });
   });
 });

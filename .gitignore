@@ -14,6 +14,10 @@ dist/
 **/bak/
 *.bak
 
+# Local testing (never commit - may contain test secrets)
+example/
+!example/README.md
+
 # IDE
 .vscode/
 .idea/

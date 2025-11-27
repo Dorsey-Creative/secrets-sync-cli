@@ -7,10 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2025-11-26
+
+### Fixed
+
+- Configuration fields and audit table columns now display correctly (no over-redaction)
+- Logger duplicate output eliminated (each message appears exactly once)
+- WARN messages correctly routed to stderr
+
+### Added
+
+- `--debug-logger` flag for troubleshooting
+- Example directory for local testing (`bun run setup:example`)
+- Pre-commit hook to validate version format
+
 ### Changed
 
-- Moved versioning.md from development/ to docs/ for permanent reference
-- Removed completed secret scrubbing development artifacts (10k+ lines)
+- Enhanced scrubbing coverage
+- Updated CI workflows for example directory support
 
 ## [1.1.0] - 2025-11-26
 
