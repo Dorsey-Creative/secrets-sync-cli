@@ -1444,7 +1444,7 @@ async function main() {
   
   // Create timestamp file for pre-push hook (only on successful real sync)
   if (!flags.dryRun && approved.length > 0 && failures.length === 0) {
-    await Bun.write('.secrets-last-sync', new Date().toISOString());
+    safeWriteFile('.secrets-last-sync', new Date().toISOString());
   }
 }
 
