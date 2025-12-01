@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { Logger } from './utils/logger';
 import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck } from './utils/dependencies';
 import { safeReadFile, safeWriteFile, safeReadDir, safeExists } from './utils/safeFs';
@@ -658,12 +659,12 @@ class MockGitHubSecretsAdapter implements GitHubSecretsAdapter {
 class GhCliSecretsAdapter implements GitHubSecretsAdapter {
   async list(): Promise<Map<string, RemoteSecretInfo>> {
     try {
-      const proc = Bun.spawnSync(['gh', 'secret', 'list', '--json', 'name,updatedAt']);
-      if (proc.exitCode !== 0) {
+      const proc = spawnSync('gh', ['secret', 'list', '--json', 'name,updatedAt']);
+      if (proc.status !== 0) {
         console.warn('[WARN] gh secret list failed; falling back to empty set.');
         return new Map();
       }
-      const text = new TextDecoder().decode(proc.stdout || new Uint8Array());
+      const text = proc.stdout?.toString() || '';
       const arr = JSON.parse(text) as Array<{ name: string; updatedAt: string }>;
       const map = new Map<string, RemoteSecretInfo>();
       for (const item of arr) {
@@ -676,18 +677,18 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
     }
   }
   async set(name: string, value: string): Promise<void> {
-    const proc = Bun.spawnSync(['gh', 'secret', 'set', name, '--body', value]);
-    if (proc.exitCode !== 0) {
-      const stderr = new TextDecoder().decode(proc.stderr || new Uint8Array());
+    const proc = spawnSync('gh', ['secret', 'set', name, '--body', value]);
+    if (proc.status !== 0) {
+      const stderr = proc.stderr?.toString() || '';
       throw new Error(`gh secret set ${name} failed: ${stderr.trim()}`);
     }
   }
   async delete(name: string): Promise<void> {
-    const proc = Bun.spawnSync(['gh', 'secret', 'delete', name], {
-      stdin: CONFIRM_INPUT.slice(),
+    const proc = spawnSync('gh', ['secret', 'delete', name], {
+      input: CONFIRM_INPUT.slice(),
     });
-    if (proc.exitCode !== 0) {
-      const stderr = new TextDecoder().decode(proc.stderr || new Uint8Array());
+    if (proc.status !== 0) {
+      const stderr = proc.stderr?.toString() || '';
       // Treat not found as success (idempotent)
       if (/not found/i.test(stderr)) return;
       throw new Error(`gh secret delete ${name} failed: ${stderr.trim()}`);
@@ -977,7 +978,7 @@ function writeBackup(dir: string, fileName: string, sourcePath: string, dryRun: 
   cpSync(sourcePath, target);
   try {
     const mode = statSync(sourcePath).mode;
-    Bun.spawnSync(['chmod', mode.toString(8), target]);
+    spawnSync('chmod', [mode.toString(8), target]);
   } catch {
     // best-effort
   }
@@ -1004,7 +1005,7 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
     if (backups.length > keepCount) {
       const toDelete = backups.slice(keepCount);
       for (const backup of toDelete) {
-        Bun.spawnSync(['rm', backup.path]);
+        spawnSync('rm', [backup.path]);
       }
     }
   } catch (e) {

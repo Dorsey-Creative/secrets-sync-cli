@@ -8,6 +8,17 @@ const CONFIG_DIR = path.join(TEST_DIR, "config", "env");
 describe("File Permission Integration Tests", () => {
   beforeEach(() => {
     if (fs.existsSync(TEST_DIR)) {
+      // Reset permissions before cleanup
+      try {
+        fs.chmodSync(CONFIG_DIR, 0o755);
+        const files = fs.readdirSync(CONFIG_DIR);
+        files.forEach(file => {
+          const filePath = path.join(CONFIG_DIR, file);
+          try {
+            fs.chmodSync(filePath, 0o644);
+          } catch {}
+        });
+      } catch {}
       fs.rmSync(TEST_DIR, { recursive: true, force: true });
     }
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
