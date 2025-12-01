@@ -96,7 +96,19 @@ jobs:
           ref: release
           fetch-depth: 0
       
-      - name: Push to version-specific develop branch
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Merge release to develop
+        run: |
+          git fetch origin develop
+          git checkout develop
+          git merge origin/release --no-edit
+          git push origin develop
+      
+      - name: Create version-specific develop branch
         run: |
           NEW_VERSION=$(node -p "require('./package.json').version")
           BRANCH_NAME="${NEW_VERSION}-develop"
