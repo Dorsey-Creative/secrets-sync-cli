@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.0] - 2025-11-30
+## [1.2.1] - 2025-12-01
+
+### Fixed
+
+- CLI now works with Node.js runtime
+- GitHub CLI integration no longer fails with runtime errors
+
+## [1.2.0] - 2025-11-30 [DEPRECATED]
+
+**This version is broken. Use 1.2.1 or later.**
 
 ### Added
 
@@ -29,7 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Version and help commands now exit early without unnecessary warnings
 
-## [1.1.1] - 2025-11-26
+## [1.1.1] - 2025-11-26 [DEPRECATED]
+
+**This version is broken. Use 1.2.1 or later.**
 
 ### Fixed
 
@@ -41,7 +52,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example directory for local testing (`bun run setup:example`)
 - Pre-commit hook to validate version format
 
-## [1.1.0] - 2025-11-26
+## [1.1.0] - 2025-11-26 [DEPRECATED]
+
+**This version is broken. Use 1.2.1 or later.**
 
 ### Added
 
