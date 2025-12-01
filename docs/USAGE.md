@@ -4,12 +4,68 @@ Practical guide for using secrets-sync-cli in real-world scenarios.
 
 ## Table of Contents
 
+- [Contextual Help](#contextual-help)
 - [CLI Options](#cli-options)
 - [Environment Variables](#environment-variables)
 - [Configuration File](#configuration-file)
 - [Common Workflows](#common-workflows)
 - [CI/CD Integration](#cicd-integration)
 - [Troubleshooting](#troubleshooting)
+
+## Contextual Help
+
+Get detailed, contextual help for any flag by adding `--help` after it:
+
+```bash
+secrets-sync --force --help
+secrets-sync --env --help
+secrets-sync --dry-run --help
+```
+
+### What You Get
+
+Each flag's help includes:
+- **Description**: What the flag does
+- **Usage Examples**: Real commands you can copy-paste
+- **When to Use**: Scenarios where this flag is helpful
+- **When NOT to Use**: Common mistakes to avoid (when applicable)
+- **Related Flags**: Other flags that work well together
+- **Documentation**: Link to detailed docs
+
+### Examples
+
+```bash
+# Learn about the --force flag
+secrets-sync --force --help
+
+# Get help for --env flag
+secrets-sync --env --help
+
+# Works with short flags too
+secrets-sync -f --help
+```
+
+### Best Practices
+
+- **Start with contextual help**: Before using a new flag, check its help
+- **Copy examples**: Usage examples are tested and safe to copy-paste
+- **Check related flags**: Often used together for better workflows
+- **Use --dry-run first**: Most examples include --dry-run for safety
+
+### All Flags with Help
+
+All documented flags support contextual help:
+- `--env` - Target specific environment
+- `--dir` - Custom env files directory
+- `--dry-run` - Preview changes
+- `--overwrite` - Apply without prompts
+- `--skip-unchanged` - Skip unchanged secrets
+- `--force` - Use prefixes for production
+- `--no-confirm` - Non-interactive mode
+- `--fix-gitignore` - Fix .gitignore patterns
+- `--verbose` - Detailed output
+- `--help` - Show help
+- `--version` - Show version
 
 ## CLI Options
 

@@ -109,6 +109,24 @@ skipSecrets:
   - LOCAL_ONLY_VAR
 ```
 
+## Contextual Help
+
+Get detailed help for any flag by adding `--help` after it:
+
+```bash
+secrets-sync --force --help
+secrets-sync --env --help
+secrets-sync --dry-run --help
+```
+
+Each flag shows:
+- Description and usage examples
+- When to use (and when not to)
+- Related flags
+- Documentation links
+
+Works with short flags too: `secrets-sync -f --help`
+
 ## CLI options
 
 | Flag | Description |
