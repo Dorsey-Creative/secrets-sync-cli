@@ -300,7 +300,7 @@ function logDebug(msg: string) {
   }
 }
 
-function printHelp() {
+export function printHelp() {
   printHeader();
   console.log('Usage: secrets-sync [options]');
   console.log('');
@@ -325,7 +325,17 @@ function printHelp() {
   console.log('Documentation: https://github.com/Dorsey-Creative/secrets-sync-cli#readme');
 }
 
-function parseFlags(argv: string[]): Flags {
+export function parseFlags(argv: string[]): Flags | { contextualHelp: string } {
+  // Detect contextual help pattern: <flag> --help
+  for (let i = 0; i < argv.length - 1; i++) {
+    const arg = argv[i];
+    const next = argv[i + 1];
+
+    if ((next === '--help' || next === '-h') && arg.startsWith('--')) {
+      return { contextualHelp: arg };
+    }
+  }
+
   const flags: Flags = {
     dryRun: false,
     overwrite: false,
@@ -1001,7 +1011,16 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
 
 async function main() {
   const args = process.argv.slice(2);
-  const flags = parseFlags(args);
+  const result = parseFlags(args);
+
+  // Handle contextual help first (before any other processing)
+  if ('contextualHelp' in result) {
+    const { printFlagHelp } = await import('./help/renderer');
+    await printFlagHelp(result.contextualHelp);
+    return;
+  }
+
+  const flags = result as Flags;
 
   // Handle version and help flags immediately (no config needed)
   if (flags.help) {

@@ -17,11 +17,11 @@ Implementation broken into 6 phases with time estimates and validation steps. To
 **Time:** 30 minutes  
 **References:** TR-2 (Help Content Structure), Design Section 1
 
-- [ ] Create `src/help/flagHelp.ts`
-- [ ] Define `FlagHelp` TypeScript interface
-- [ ] Create `FLAG_HELP` object with `--force` entry
-- [ ] Add description, usage, whenToUse, relatedFlags, docsUrl
-- [ ] Export `FLAG_HELP` for use in renderer
+- [x] Create `src/help/flagHelp.ts`
+- [x] Define `FlagHelp` TypeScript interface
+- [x] Create `FLAG_HELP` object with `--force` entry
+- [x] Add description, usage, whenToUse, relatedFlags, docsUrl
+- [x] Export `FLAG_HELP` for use in renderer
 
 **Validation:**
 
@@ -42,11 +42,11 @@ bun run typecheck
 **Time:** 30 minutes  
 **References:** TR-3 (Help Renderer), Design Section 3
 
-- [ ] Create `src/help/renderer.ts`
-- [ ] Implement `printFlagHelp(flagName: string)` function
-- [ ] Format output with emojis and sections
-- [ ] Handle unknown flags with error message
-- [ ] Export `printFlagHelp` function
+- [x] Create `src/help/renderer.ts`
+- [x] Implement `printFlagHelp(flagName: string)` function
+- [x] Format output with emojis and sections
+- [x] Handle unknown flags with error message
+- [x] Export `printFlagHelp` function
 
 **Validation:**
 
@@ -70,11 +70,11 @@ node
 **Time:** 30 minutes  
 **References:** FR-1 (Parse Contextual Help), TR-1 (Extend Flag Parser), Design Section 2
 
-- [ ] Open `src/secrets-sync.ts`
-- [ ] Modify `parseFlags()` return type to `Flags | { contextualHelp: string }`
-- [ ] Add loop to detect `<flag> --help` pattern before existing parsing
-- [ ] Return `{ contextualHelp: flagName }` when pattern detected
-- [ ] Ensure existing flag parsing logic unchanged
+- [x] Open `src/secrets-sync.ts`
+- [x] Modify `parseFlags()` return type to `Flags | { contextualHelp: string }`
+- [x] Add loop to detect `<flag> --help` pattern before existing parsing
+- [x] Return `{ contextualHelp: flagName }` when pattern detected
+- [x] Ensure existing flag parsing logic unchanged
 
 **Validation:**
 
@@ -96,11 +96,11 @@ console.log(testResult2); // Should be { help: true, ... }
 **Time:** 30 minutes  
 **References:** FR-3 (Exit Without Execution), TR-5 (Early Exit), Design Section 4
 
-- [ ] Open `src/secrets-sync.ts`
-- [ ] Modify `main()` to check for contextual help first
-- [ ] Import `printFlagHelp` dynamically
-- [ ] Call `printFlagHelp()` and return early
-- [ ] Ensure no logger initialization or config loading occurs
+- [x] Open `src/secrets-sync.ts`
+- [x] Modify `main()` to check for contextual help first
+- [x] Import `printFlagHelp` dynamically
+- [x] Call `printFlagHelp()` and return early
+- [x] Ensure no logger initialization or config loading occurs
 
 **Validation:**
 
@@ -124,12 +124,12 @@ secrets-sync --dry-run
 
 ### Phase 1 Acceptance
 
-- [ ] `secrets-sync --force --help` displays formatted help
-- [ ] No warnings or errors in output
-- [ ] Exit code is 0
-- [ ] `secrets-sync --help` still shows full help (unchanged)
-- [ ] `secrets-sync --force` runs normally (no help displayed)
-- [ ] All existing tests still pass: `bun test`
+- [x] `secrets-sync --force --help` displays formatted help
+- [x] No warnings or errors in output
+- [x] Exit code is 0
+- [x] `secrets-sync --help` still shows full help (unchanged)
+- [x] `secrets-sync --force` runs normally (no help displayed)
+- [x] All existing tests still pass: `bun test` (280/281 pass, 1 timeout unrelated)
 
 ---
 
