@@ -1,57 +1,94 @@
 # secrets-sync-cli
 
-CLI tool for syncing environment secrets across environments with drift detection and GitHub Secrets integration.
+Sync `.env` files and GitHub Actions secrets with lightweight drift detection and guardrails built for monorepos and multi-env apps.
 
-## Features
+## Why this tool
+- Keep production as the canonical source of truth while highlighting drift in other env files.
+- Avoid tedious copy/paste when updating GitHub Actions secrets.
+- Preview every change with dry-run and optional confirmation gates.
 
-- 🔍 **Discovery & Parsing** - Automatically finds and parses `.env` files
-- 🎯 **Production-First** - Uses production as canonical source of truth
-- 🔄 **Drift Detection** - Warns when non-production environments are missing keys
-- 🔐 **GitHub Secrets** - Sync secrets to GitHub Actions
-- 🛡️ **Safe by Default** - Dry-run mode, confirmations, backups
-- 📋 **Required Secrets** - Validate against required secrets config
-- 🚫 **Smart Ignoring** - Skips `.example`, `.template`, `.local`, `.test` files
-- 🔒 **Secret Scrubbing** - Automatically redacts secrets from all output
-- ✅ **.gitignore Protection** - Validates and auto-fixes .gitignore patterns
+## Prerequisites
+- Node 18+ runtime. Development and tests use Bun (`bun install`, `bun test`).
+- GitHub CLI (`gh`) authenticated if you want to sync to GitHub Secrets.
+- Env files live in `config/env` by default (configurable via `--dir`).
 
-## Installation
+## Install
 
 ```bash
-# Using bun
-bun add secrets-sync-cli
+# Add to your project (recommended for pinned version)
+bun add -D secrets-sync-cli
+# or
+npm install -D secrets-sync-cli
 
-# Using npm
-npm install secrets-sync-cli
-
-# Using yarn
-yarn add secrets-sync-cli
+# Ad-hoc without installing
+bunx secrets-sync --help
+# or
+npx secrets-sync --help
 ```
 
-## Usage
-
-### Basic Commands
-
+## 🚀 Quick start
+1) Ensure you have a production file at `config/env/.env` (canonical) and any env-specific files like `.env.staging`.
+2) Validate and preview changes:
 ```bash
-# Dry run (preview changes without applying)
+# Using bunx/npx (no install needed)
+bunx secrets-sync --dry-run
+bunx secrets-sync --env staging --dry-run
+
+# If installed locally
 secrets-sync --dry-run
-
-# Sync secrets
-secrets-sync
-
-# Sync specific environment
+```
+3) Apply changes (writes backups first):
+```bash
 secrets-sync --env staging
-
-# Overwrite without confirmation
-secrets-sync --overwrite --no-confirm
-
-# Show help
-secrets-sync --help
+```
+4) Sync to GitHub Actions when `gh` is available:
+```bash
+secrets-sync --env production --dry-run
 ```
 
-### Configuration
+## Default directory structure
+```
+your-project/
+├── config/
+│   └── env/
+│       ├── .env                # production (canonical)
+│       ├── .env.production     # optional overrides
+│       ├── .env.staging
+│       ├── .env.development
+│       └── required-secrets.json (optional)
+└── env-config.yml              # optional CLI defaults
+```
 
-Create `config/env/required-secrets.json` to validate required secrets:
+## What it does
+1. Discover `.env*` files under the configured directory (skips templates/examples).
+2. Treat `.env` as canonical; compare other envs against it for missing or extra keys.
+3. Optionally validate against `required-secrets.json`.
+4. Show a diff and audit summary; in non-dry runs, write updates and timestamped backups.
+5. When enabled, push secrets to GitHub Actions using the GitHub CLI (`gh secret` commands).
 
+## ✨ Key features
+- Drift detection between production and other environments.
+- GitHub Actions sync via `gh` with dry-run safety.
+- Optional required-secrets validation.
+- Smart skipping for `.example`, `.template`, `.local`, `.test` env files.
+- .gitignore protection with `--fix-gitignore`.
+- Best-effort secret scrubbing in console/log output to reduce accidental leaks.
+
+## 🔌 Provider support
+
+**Currently supported:**
+- ✅ GitHub Actions (via GitHub CLI)
+
+**Planned (see [issue #52](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/52)):**
+- ⬜ AWS Secrets Manager
+- ⬜ Azure Key Vault
+- ⬜ GCP Secret Manager
+- ⬜ HashiCorp Vault
+
+## ⚙️ Configuration
+
+**Required secrets (optional)**
+`config/env/required-secrets.json`:
 ```json
 {
   "shared": ["API_KEY", "DATABASE_URL"],
@@ -60,12 +97,8 @@ Create `config/env/required-secrets.json` to validate required secrets:
 }
 ```
 
-**Optional:** The tool works without this file. Add it when you need validation.
-
-**Location:** Place in `config/env/` relative to your project root, or specify with `--dir` flag.
-
-Create `env-config.yml` in your project root:
-
+**CLI defaults**
+`env-config.yml` (project root):
 ```yaml
 flags:
   skipUnchanged: true
@@ -76,163 +109,69 @@ skipSecrets:
   - LOCAL_ONLY_VAR
 ```
 
-### Directory Structure
+## Contextual Help
 
-```
-your-project/
-├── config/
-│   └── env/
-│       ├── .env                    # Production (canonical)
-│       ├── .env.production         # Production overrides (optional)
-│       ├── .env.staging
-│       ├── .env.development
-│       └── required-secrets.json
-└── env-config.yml
+Get detailed help for any flag by adding `--help` after it:
+
+```bash
+secrets-sync --force --help
+secrets-sync --env --help
+secrets-sync --dry-run --help
 ```
 
-## CLI Options
+Each flag shows:
+- Description and usage examples
+- When to use (and when not to)
+- Related flags
+- Documentation links
+
+Works with short flags too: `secrets-sync -f --help`
+
+## CLI options
 
 | Flag | Description |
 |------|-------------|
 | `--env <name>` | Target specific environment |
-| `--dir <path>` | Custom env directory (default: `config/env`) |
+| `--dir <path>` | Env files directory (default: `config/env`) |
 | `--dry-run` | Preview changes without applying |
-| `--overwrite` | Overwrite existing files |
-| `--force` | Skip all confirmations |
-| `--no-confirm` | Skip confirmation prompts |
-| `--skip-unchanged` | Skip files with no changes |
-| `--fix-gitignore` | Add missing patterns to .gitignore |
-| `--verbose` | Show detailed debug output |
-| `--help` | Show help message |
-| `--version` | Show version |
+| `--overwrite` | Apply all changes without prompts |
+| `--force, -f` | Use prefixes for production files |
+| `--skip-unchanged` | Skip secrets with matching hashes |
+| `--no-confirm` | Non-interactive mode |
+| `--fix-gitignore` | Add missing .gitignore patterns |
+| `--verbose` | Show detailed output |
+| `--help, -h` | Show help message |
+| `--version, -v` | Show version |
 
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SECRETS_SYNC_TIMEOUT` | Timeout for network operations (ms) | `30000` (30s) |
-| `SKIP_DEPENDENCY_CHECK` | Skip dependency validation (for CI/CD) | `false` |
-
-## Examples
-
-### Basic Usage
+## 💡 Examples
 
 ```bash
-# Sync staging environment
-secrets-sync --env staging --dry-run
-secrets-sync --env staging
-
-# Sync all environments with overwrite
-secrets-sync --overwrite --no-confirm
-
-# Custom directory
-secrets-sync --dir ./environments
-```
-
-### Environment Variables
-
-```bash
-# Increase timeout for slow networks
-SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
-
-# Skip dependency checks in CI
-SKIP_DEPENDENCY_CHECK=1 secrets-sync --dry-run
-```
-
-## Security
-
-### Automatic Secret Scrubbing
-
-All CLI output is automatically scrubbed to prevent accidental secret exposure:
-
-- **Always Active** - Scrubbing cannot be disabled
-- **All Output Channels** - Covers console, logs, errors, and stack traces
-- **Pattern Detection** - Recognizes KEY=value, URLs with credentials, JWT tokens, and private keys
-- **Safe Sharing** - Copy-paste any output without security review
-
-Example output:
-```bash
-# Before scrubbing (internal)
-API_KEY=sk_live_abc123
-DATABASE_URL=postgres://admin:password@localhost/db
-
-# After scrubbing (displayed)
-API_KEY=[REDACTED]
-DATABASE_URL=postgres://admin:[REDACTED]@localhost/db
-```
-
-### .gitignore Protection
-
-The CLI validates your `.gitignore` to ensure secret files won't be committed:
-
-```bash
-# Check .gitignore (automatic on startup)
+# Preview changes
 secrets-sync --dry-run
 
-# Auto-fix missing patterns
+# Sync specific environment
+secrets-sync --env staging
+
+# Fix .gitignore patterns
 secrets-sync --fix-gitignore
+
+# Non-interactive mode (requires --overwrite)
+secrets-sync --overwrite --no-confirm
 ```
 
-Required patterns:
-- `.env` - Production secrets
-- `.env.*` - Environment-specific secrets
-- `!.env.example` - Allow example files
-- `**/bak/` - Backup directories
-- `*.bak` - Backup files
+## 🔒 Security and data handling
+- Scrubbing is best-effort: it hides common secret patterns, but you should still avoid pasting real secrets into terminals or issue trackers.
+- Backups are stored locally with timestamps; review before discarding.
+- `.gitignore` checks aim to keep env files out of version control, but verify your ignore rules before committing.
 
-## How It Works
-
-1. **Discovery** - Scans `config/env` for `.env` files (ignores templates/examples)
-2. **Production First** - Loads `.env` as canonical, optionally layers `.env.production`
-3. **Drift Detection** - Compares other environments against production
-4. **Validation** - Checks for required secrets
-5. **Sync** - Updates target environments with missing keys
-6. **Backup** - Creates timestamped backups before changes
-
-## Troubleshooting
-
-### Common Issues
-
-**"GitHub CLI (gh) not found"**
-```bash
-brew install gh  # macOS
-# See https://cli.github.com for other platforms
-```
-
-**"GitHub CLI not authenticated"**
-```bash
-gh auth login
-```
-
-**"Permission denied" errors**
-```bash
-chmod 644 /path/to/file      # For files
-chmod 755 /path/to/directory # For directories
-```
-
-**"Operation timed out"**
-```bash
-SECRETS_SYNC_TIMEOUT=60000 secrets-sync --env staging
-```
-
-For more troubleshooting help, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
-
-## Documentation
-
-- [Contributing Guidelines](CONTRIBUTING.md) - Development setup and contribution process
-- [Changelog](CHANGELOG.md) - Release history and version notes
-- [Troubleshooting](docs/TROUBLESHOOTING.md) - Detailed troubleshooting guide
-- [Error Message Patterns](docs/ERROR_MESSAGES.md) - Error handling standards
+## Troubleshooting and docs
+- [Contributing Guidelines](CONTRIBUTING.md) — Development setup and workflows.
+- [Changelog](CHANGELOG.md) — Release history.
+- [Troubleshooting](docs/TROUBLESHOOTING.md) — Common fixes.
+- [Error Message Patterns](docs/ERROR_MESSAGES.md) — Error handling standards.
 
 ## License
-
 MIT © Dorsey Creative
 
 ## Contributing
-
-Issues and PRs welcome! Please read the [contributing guidelines](CONTRIBUTING.md) first.
-
-## Related Projects
-
-- [dotenv](https://github.com/motdotla/dotenv) - Load environment variables
-- [env-cmd](https://github.com/toddbluhm/env-cmd) - Run commands with environment variables
+Issues and PRs welcome. Please read the [contributing guidelines](CONTRIBUTING.md) first.
