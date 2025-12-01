@@ -106,6 +106,15 @@ jobs:
           git fetch origin develop
           git checkout develop
           git merge origin/release --no-edit
+          
+          # Convert version to prerelease format for develop branch
+          RELEASE_VERSION=$(node -p "require('./package.json').version")
+          DATESTAMP=$(date +%Y%m%d)
+          PRERELEASE_VERSION="${RELEASE_VERSION}-${DATESTAMP}.1"
+          
+          npm version $PRERELEASE_VERSION --no-git-tag-version
+          git add package.json bun.lock
+          git commit -m "chore: convert to prerelease version ${PRERELEASE_VERSION} [skip ci]"
           git push origin develop
       
       - name: Create version-specific develop branch
