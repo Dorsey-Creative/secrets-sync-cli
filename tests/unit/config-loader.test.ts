@@ -31,7 +31,7 @@ describe("loadRequiredSecrets", () => {
     const proc = Bun.spawnSync([
       "./dist/secrets-sync.js",
       "--dir", testDir,
-      "--help"
+      "--dry-run"
     ]);
     
     const output = new TextDecoder().decode(proc.stderr);
@@ -50,7 +50,7 @@ describe("loadRequiredSecrets", () => {
     const proc = Bun.spawnSync([
       "./dist/secrets-sync.js",
       "--dir", testDir,
-      "--help"
+      "--dry-run"
     ]);
     
     const output = new TextDecoder().decode(proc.stdout);
@@ -65,7 +65,7 @@ describe("loadRequiredSecrets", () => {
     const proc = Bun.spawnSync([
       "./dist/secrets-sync.js",
       "--dir", testDir,
-      "--help"
+      "--dry-run"
     ]);
     
     const output = new TextDecoder().decode(proc.stderr);
@@ -78,7 +78,7 @@ describe("loadRequiredSecrets", () => {
     const proc1 = Bun.spawnSync([
       "./dist/secrets-sync.js",
       "--dir", testDir,
-      "--help"
+      "--dry-run"
     ]);
     const output1 = new TextDecoder().decode(proc1.stderr);
     expect(output1).toMatch(/\[CONFIG\]/);
@@ -88,7 +88,7 @@ describe("loadRequiredSecrets", () => {
     const proc2 = Bun.spawnSync([
       "./dist/secrets-sync.js",
       "--dir", testDir,
-      "--help"
+      "--dry-run"
     ]);
     const output2 = new TextDecoder().decode(proc2.stderr);
     expect(output2).toMatch(/\[CONFIG\]/);
@@ -104,7 +104,7 @@ describe("loadRequiredSecrets", () => {
       const proc = Bun.spawnSync([
         "./dist/secrets-sync.js",
         "--dir", testDir,
-        "--help"
+        "--dry-run"
       ]);
       
       expect(proc.exitCode).toBe(0);

@@ -42,7 +42,16 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Bump version (no tag yet)
-        run: npm version ${{ inputs.version }} --no-git-tag-version
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          # Strip prerelease suffix if present (e.g., 1.1.0-20251126.1 -> 1.1.0)
+          BASE=$(echo $CURRENT | cut -d'-' -f1)
+          
+          # Set base version without prerelease
+          npm version $BASE --no-git-tag-version --allow-same-version
+          
+          # Now bump the version type
+          npm version ${{ inputs.version }} --no-git-tag-version
 
       - name: Build
         run: bun run build
@@ -80,7 +89,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     
     steps:
       - uses: actions/checkout@v4
@@ -88,24 +96,10 @@ jobs:
           ref: release
           fetch-depth: 0
       
-      - name: Create PR to dev
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push to version-specific develop branch
         run: |
           NEW_VERSION=$(node -p "require('./package.json').version")
-          BRANCH_NAME="sync/release-v${NEW_VERSION}-to-dev"
+          BRANCH_NAME="${NEW_VERSION}-develop"
           
           git checkout -b "${BRANCH_NAME}"
-          git push origin "${BRANCH_NAME}"
-          
-          gh pr create \
-            --base dev \
-            --head "${BRANCH_NAME}" \
-            --title "chore: sync release v${NEW_VERSION} to dev" \
-            --body "Automated PR to sync release v${NEW_VERSION} back to dev branch.
-
-          **Changes:**
-          - Version bump to ${NEW_VERSION}
-          - Release tag created
-
-          This PR should be merged to keep dev in sync with release."
+          git push origin "${BRANCH_NAME}" --force

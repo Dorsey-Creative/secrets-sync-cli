@@ -7,9 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-30
+
+### Added
+
+- **Contextual help system**: Get detailed help for any flag with `<flag> --help` pattern
+  - Works with all documented flags and short aliases (e.g., `secrets-sync -f --help`)
+  - Shows description, usage examples, when to use, related flags, and documentation links
+- `docs/FEATURES.md` - Comprehensive feature documentation
+- `docs/USAGE.md` - Practical how-to guide with CLI options, workflows, and CI/CD examples
+- Provider support section in README with roadmap for AWS/Azure/GCP/Vault
+- Integration tests for version and contextual help commands
+
 ### Changed
 
-- Publish workflow now automatically creates PR to sync release changes back to dev branch
+- Help screen simplified with examples and clearer flag descriptions
+- README restructured as quick start guide
+- Post-release sync now pushes to version-specific develop branch
+
+### Fixed
+
+- Version and help commands now exit early without unnecessary warnings
 
 ## [1.1.1] - 2025-11-26
 

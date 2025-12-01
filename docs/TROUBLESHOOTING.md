@@ -143,7 +143,7 @@ bun add secrets-sync-cli@latest
 
 ```bash
 # Reinstall dependencies
-rm -rf node_modules bun.lockb
+rm -rf node_modules bun.lockb bun.lock
 bun install
 
 # Rebuild
