@@ -331,8 +331,11 @@ export function parseFlags(argv: string[]): Flags | { contextualHelp: string } {
     const arg = argv[i];
     const next = argv[i + 1];
 
-    if ((next === '--help' || next === '-h') && arg.startsWith('--')) {
-      return { contextualHelp: arg };
+    if ((next === '--help' || next === '-h') && arg.startsWith('-')) {
+      // Import alias map to resolve short flags
+      const { ALIAS_MAP } = require('./help/flagHelp');
+      const resolvedFlag = ALIAS_MAP[arg] || arg;
+      return { contextualHelp: resolvedFlag };
     }
   }
 

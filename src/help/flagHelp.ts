@@ -9,6 +9,12 @@ interface FlagHelp {
   docsUrl: string;
 }
 
+const ALIAS_MAP: Record<string, string> = {
+  '-f': '--force',
+  '-h': '--help',
+  '-v': '--version',
+};
+
 const FLAG_HELP: Record<string, FlagHelp> = {
   '--env': {
     flag: '--env',
@@ -189,5 +195,5 @@ const FLAG_HELP: Record<string, FlagHelp> = {
   },
 };
 
-export { FLAG_HELP };
+export { FLAG_HELP, ALIAS_MAP };
 export type { FlagHelp };

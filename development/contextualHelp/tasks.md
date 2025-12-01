@@ -237,9 +237,9 @@ secrets-sync --version --help  # Should explain version flag
 **Time:** 15 minutes  
 **References:** FR-5, Design Section 2
 
-- [ ] Create alias mapping in `flagHelp.ts`
-- [ ] Add `ALIAS_MAP: Record<string, string>` constant
-- [ ] Map `-f` → `--force`, `-h` → `--help`, `-v` → `--version`
+- [x] Create alias mapping in `flagHelp.ts`
+- [x] Add `ALIAS_MAP: Record<string, string>` constant
+- [x] Map `-f` → `--force`, `-h` → `--help`, `-v` → `--version`
 
 **Validation:**
 
@@ -264,9 +264,9 @@ console.log(ALIAS_MAP['-f']); // Should be '--force'
 **Time:** 15 minutes  
 **References:** FR-5, TR-1
 
-- [ ] Modify `parseFlags()` to resolve aliases
-- [ ] Check `ALIAS_MAP` when detecting contextual help
-- [ ] Return long flag name for consistency
+- [x] Modify `parseFlags()` to resolve aliases
+- [x] Check `ALIAS_MAP` when detecting contextual help
+- [x] Return long flag name for consistency
 
 **Validation:**
 
@@ -290,10 +290,10 @@ secrets-sync -v
 
 ### Phase 3 Acceptance
 
-- [ ] `-f --help` shows `--force` help
-- [ ] `-h` alone shows full help (unchanged)
-- [ ] `-v` alone shows version (unchanged)
-- [ ] All short flags work correctly
+- [x] `-f --help` shows `--force` help
+- [x] `-h` alone shows full help (unchanged)
+- [x] `-v` alone shows version (unchanged)
+- [x] All short flags work correctly
 
 ---
 
