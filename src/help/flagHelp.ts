@@ -15,6 +15,12 @@ const ALIAS_MAP: Record<string, string> = {
   '-v': '--version',
 };
 
+const VALID_FLAGS = [
+  '--env', '--dir', '--dry-run', '--overwrite', '--skip-unchanged',
+  '--force', '--no-confirm', '--fix-gitignore', '--verbose',
+  '--help', '--version', '--debug-logger'
+];
+
 const FLAG_HELP: Record<string, FlagHelp> = {
   '--env': {
     flag: '--env',
@@ -195,5 +201,5 @@ const FLAG_HELP: Record<string, FlagHelp> = {
   },
 };
 
-export { FLAG_HELP, ALIAS_MAP };
+export { FLAG_HELP, ALIAS_MAP, VALID_FLAGS };
 export type { FlagHelp };

@@ -1,11 +1,20 @@
-import { FLAG_HELP } from './flagHelp';
+import { FLAG_HELP, VALID_FLAGS } from './flagHelp';
 
 export async function printFlagHelp(flagName: string): Promise<void> {
   const help = FLAG_HELP[flagName];
 
   if (!help) {
-    console.log(`\nNo detailed help available for ${flagName} yet.`);
-    console.log(`Run 'secrets-sync --help' to see all available options.\n`);
+    // Check if it's a valid flag without help content
+    if (VALID_FLAGS.includes(flagName)) {
+      console.log(`\nNo detailed help available for ${flagName} yet.`);
+      console.log(`Run 'secrets-sync --help' to see all available options.\n`);
+      return;
+    }
+    
+    // Invalid flag - show error
+    console.error(`\nError: Unknown flag '${flagName}'`);
+    console.error(`Run 'secrets-sync --help' to see all available options.\n`);
+    process.exitCode = 1;
     return;
   }
 
