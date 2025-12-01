@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Post-release workflow now merges to `develop` before creating version branch
 - Version-specific branches (e.g., `1.2.2-develop`) created from merged `develop` state
+- Removed test coverage failure from the CI workflow
 
 ### Added
 
