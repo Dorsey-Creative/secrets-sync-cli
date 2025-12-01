@@ -1447,9 +1447,12 @@ async function main() {
   }
 }
 
-try {
-  await main();
-} finally {
-  // Clear scrubbing cache to prevent memory leaks
-  clearCache();
+// Only run main() when executed directly, not when imported
+if (import.meta.main) {
+  try {
+    await main();
+  } finally {
+    // Clear scrubbing cache to prevent memory leaks
+    clearCache();
+  }
 }
