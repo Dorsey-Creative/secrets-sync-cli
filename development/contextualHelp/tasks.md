@@ -144,19 +144,19 @@ secrets-sync --dry-run
 **Time:** 45 minutes  
 **References:** FR-4, CR-1 through CR-5
 
-- [ ] Add `--env` help entry
-- [ ] Add `--dir` help entry
-- [ ] Add `--dry-run` help entry
-- [ ] Add `--overwrite` help entry
-- [ ] Add `--skip-unchanged` help entry
+- [x] Add `--env` help entry
+- [x] Add `--dir` help entry
+- [x] Add `--dry-run` help entry
+- [x] Add `--overwrite` help entry
+- [x] Add `--skip-unchanged` help entry
 
 **Content checklist per flag:**
 
-- [ ] Description (2-3 sentences)
-- [ ] Usage examples (2-3 commands)
-- [ ] When to use (2-3 scenarios)
-- [ ] Related flags (2-4 flags)
-- [ ] Documentation URL
+- [x] Description (2-3 sentences)
+- [x] Usage examples (2-3 commands)
+- [x] When to use (2-3 scenarios)
+- [x] Related flags (2-4 flags)
+- [x] Documentation URL
 
 **Validation:**
 
@@ -181,9 +181,9 @@ secrets-sync --skip-unchanged --help
 **Time:** 30 minutes  
 **References:** FR-4, CR-1 through CR-5
 
-- [ ] Add `--no-confirm` help entry
-- [ ] Add `--fix-gitignore` help entry
-- [ ] Add `--verbose` help entry
+- [x] Add `--no-confirm` help entry
+- [x] Add `--fix-gitignore` help entry
+- [x] Add `--verbose` help entry
 
 **Validation:**
 
@@ -202,8 +202,8 @@ secrets-sync --verbose --help
 **Time:** 15 minutes  
 **References:** FR-4, CR-1 through CR-5
 
-- [ ] Add `--help` / `-h` help entry (meta: explains help system)
-- [ ] Add `--version` / `-v` help entry
+- [x] Add `--help` / `-h` help entry (meta: explains help system)
+- [x] Add `--version` / `-v` help entry
 
 **Validation:**
 
@@ -218,11 +218,11 @@ secrets-sync --version --help  # Should explain version flag
 
 ### Phase 2 Acceptance
 
-- [ ] All 11 flags have help content
-- [ ] All help entries follow consistent format
-- [ ] All help entries include required sections
-- [ ] All documentation URLs are valid
-- [ ] Manual test of all flags shows clean output
+- [x] All 11 flags have help content
+- [x] All help entries follow consistent format
+- [x] All help entries include required sections
+- [x] All documentation URLs are valid
+- [x] Manual test of all flags shows clean output
 
 ---
 
