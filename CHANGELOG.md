@@ -7,40 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.1] - 2025-12-01
+## [1.2.2] - 2025-12-01
+
+### Fixed
+
+- File write operations now use Node.js APIs instead of Bun-specific methods
+- Timestamp file creation works correctly in Node.js runtime
+
+### Changed
+
+- Post-release workflow now merges to `develop` before creating version branch
+- Version-specific branches (e.g., `1.2.2-develop`) created from merged `develop` state
+
+### Added
+
+- Test coverage configuration in `bunfig.toml` (80% threshold)
+- Coverage reporting enabled for all test runs
+
+## [1.2.1] - 2025-12-01 [DEPRECATED]
+
+**This version is broken. Use 1.2.2 or later.**
 
 ### Fixed
 
 - CLI now works with Node.js runtime
 - GitHub CLI integration no longer fails with runtime errors
 
-## [1.2.0] - 2025-11-30 [DEPRECATED]
-
-**This version is broken. Use 1.2.1 or later.**
-
-### Added
-
-- **Contextual help system**: Get detailed help for any flag with `<flag> --help` pattern
-  - Works with all documented flags and short aliases (e.g., `secrets-sync -f --help`)
-  - Shows description, usage examples, when to use, related flags, and documentation links
-- `docs/FEATURES.md` - Comprehensive feature documentation
-- `docs/USAGE.md` - Practical how-to guide with CLI options, workflows, and CI/CD examples
-- Provider support section in README with roadmap for AWS/Azure/GCP/Vault
-- Integration tests for version and contextual help commands
-
-### Changed
-
-- Help screen simplified with examples and clearer flag descriptions
-- README restructured as quick start guide
-- Post-release sync now pushes to version-specific develop branch
-
-### Fixed
-
-- Version and help commands now exit early without unnecessary warnings
-
 ## [1.1.1] - 2025-11-26 [DEPRECATED]
 
-**This version is broken. Use 1.2.1 or later.**
+**This version is broken. Use 1.2.2 or later.**
 
 ### Fixed
 
@@ -54,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2025-11-26 [DEPRECATED]
 
-**This version is broken. Use 1.2.1 or later.**
+**This version is broken. Use 1.2.2 or later.**
 
 ### Added
 

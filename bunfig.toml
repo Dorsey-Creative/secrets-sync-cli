@@ -1,0 +1,4 @@
+[test]
+timeout = 5000
+coverage = true
+coverageThreshold = 80
