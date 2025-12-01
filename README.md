@@ -8,9 +8,10 @@ Sync `.env` files and GitHub Actions secrets with lightweight drift detection an
 - Preview every change with dry-run and optional confirmation gates.
 
 ## Prerequisites
-- Node 18+ runtime. Development and tests use Bun (`bun install`, `bun test`).
-- GitHub CLI (`gh`) authenticated if you want to sync to GitHub Secrets.
-- Env files live in `config/env` by default (configurable via `--dir`).
+- Node.js 18+ (for running the CLI)
+- Bun runtime (for development - install from [bun.sh](https://bun.sh))
+- GitHub CLI (`gh`) authenticated if you want to sync to GitHub Secrets
+- Env files live in `config/env` by default (configurable via `--dir`)
 
 ## Install
 
