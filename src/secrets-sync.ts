@@ -1261,7 +1261,7 @@ async function main() {
     logInfo('MOCK MODE enabled via SECRETS_SYNC_MOCK=1 — using in-memory mock adapter');
     adapter = new MockGitHubSecretsAdapter(mockExisting);
   } else {
-    logInfo('Using gh CLI adapter to read existing GitHub secrets');
+    logDebug('Using gh CLI adapter to read existing GitHub secrets');
     adapter = new GhCliSecretsAdapter();
   }
 
@@ -1269,7 +1269,7 @@ async function main() {
   const manifest = loadManifest(dir);
   const manifestCount = Object.keys(manifest).length;
   if (manifestCount > 0) {
-    logInfo(`Loaded manifest with ${manifestCount} secret(s) for diff comparison`);
+    logDebug(`Loaded manifest with ${manifestCount} secret(s) for diff comparison`);
   }
 
   const { desired, sourceBySecret } = buildDesiredWithSources(envSummaries);
@@ -1308,7 +1308,7 @@ async function main() {
     logInfo('Dry-run mode: no prompts, no mutations.');
     printAuditSummary(plan, { mode: 'dry-run', skippedFromConfig: allSkipped });
     console.log('');
-    logSuccess('Initialization complete: files scanned, production resolved, dotenv parsed, drift warnings emitted.');
+    logDebug('Initialization complete: files scanned, production resolved, dotenv parsed, drift warnings emitted.');
     return;
   }
 
@@ -1440,7 +1440,7 @@ async function main() {
   });
 
   console.log('');
-  logSuccess('Initialization complete: files scanned, production resolved, dotenv parsed, drift warnings emitted.');
+  logDebug('Initialization complete: files scanned, production resolved, dotenv parsed, drift warnings emitted.');
   
   // Create timestamp file for pre-push hook (only on successful real sync)
   if (!flags.dryRun && approved.length > 0 && failures.length === 0) {
