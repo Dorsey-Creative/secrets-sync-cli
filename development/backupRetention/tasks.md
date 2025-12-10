@@ -17,11 +17,11 @@ Implementation broken into 3 phases with time estimates and validation steps. To
 **Time:** 30 minutes  
 **References:** TR-1 (Content Hash Comparison), Design Section 1
 
-- [ ] Create `src/utils/backupUtils.ts`
-- [ ] Define `BackupInfo` interface
-- [ ] Implement `generateContentHash()` function using SHA-256
-- [ ] Add error handling for file read failures
-- [ ] Export utilities for use in cleanup logic
+- [x] Create `src/utils/backupUtils.ts`
+- [x] Define `BackupInfo` interface
+- [x] Implement `generateContentHash()` function using SHA-256
+- [x] Add error handling for file read failures
+- [x] Export utilities for use in cleanup logic
 
 **Validation:**
 
@@ -45,10 +45,10 @@ console.log(generateContentHash('config/env/.env'));
 **Time:** 30 minutes  
 **References:** FR-1 (Duplicate Detection), Design Section 2
 
-- [ ] Implement `findDuplicateBackups()` function
-- [ ] Group backups by content hash
-- [ ] Handle hash generation failures gracefully
-- [ ] Add debug logging for duplicate detection
+- [x] Implement `findDuplicateBackups()` function
+- [x] Group backups by content hash
+- [x] Handle hash generation failures gracefully
+- [x] Add debug logging for duplicate detection
 
 **Validation:**
 
@@ -72,10 +72,10 @@ const groups = findDuplicateBackups(backups);
 **Time:** 30 minutes  
 **References:** FR-2 (Content-Based Deduplication), FR-3 (Preserve Recent Timestamp), REQ-3, REQ-4
 
-- [ ] Implement `deduplicateBackups()` function
-- [ ] Keep newest timestamp for each unique content
-- [ ] Sort final result by modification time
-- [ ] Add comprehensive unit tests
+- [x] Implement `deduplicateBackups()` function
+- [x] Keep newest timestamp for each unique content
+- [x] Sort final result by modification time
+- [x] Add comprehensive unit tests
 
 **Validation:**
 
@@ -99,10 +99,10 @@ const result = deduplicateBackups(backups);
 **Time:** 30 minutes  
 **References:** TR-3 (Backward Compatibility), REQ-2 (Duplicate Cleanup)
 
-- [ ] Modify `cleanupOldBackups()` in `src/secrets-sync.ts`
-- [ ] Import and use deduplication utilities
-- [ ] Add debug logging for cleanup operations
-- [ ] Ensure existing backup structure is preserved
+- [x] Modify `cleanupOldBackups()` in `src/secrets-sync.ts`
+- [x] Import and use deduplication utilities
+- [x] Add debug logging for cleanup operations
+- [x] Ensure existing backup structure is preserved
 
 **Validation:**
 
@@ -126,12 +126,12 @@ ls config/env/bak/.env-*.bak
 
 ### Phase 1 Acceptance
 
-- [ ] Hash generation works for typical .env files
-- [ ] Duplicate detection identifies identical content
-- [ ] Deduplication keeps newest timestamp per unique content
-- [ ] Cleanup removes duplicate backups
-- [ ] Retention count applies to unique versions only
-- [ ] All unit tests pass: `bun test tests/unit/backupUtils.test.ts`
+- [x] Hash generation works for typical .env files
+- [x] Duplicate detection identifies identical content
+- [x] Deduplication keeps newest timestamp per unique content
+- [x] Cleanup removes duplicate backups
+- [x] Retention count applies to unique versions only
+- [x] All unit tests pass: `bun test tests/unit/backupUtils.test.ts`
 
 ---
 

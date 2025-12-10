@@ -995,12 +995,74 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
     return;
   }
   
+  const pattern = `${fileName}-`; // Hoist pattern to function scope
+  
   try {
-    const pattern = `${fileName}-`;
+    const backupFiles = readResult.data
+      .filter(f => f.startsWith(pattern) && f.endsWith('.bak'))
+      .map(f => {
+        const path = join(bakDir, f);
+        const stat = statSync(path);
+        return { name: f, path, stat };
+      });
+
+    // Generate content hashes and create BackupInfo objects
+    const { generateContentHash, findDuplicateBackups }: {
+      generateContentHash: (filePath: string) => string;
+      findDuplicateBackups: (backups: Array<{ path: string; hash: string; mtime: number; name: string }>) => Map<string, Array<{ path: string; hash: string; mtime: number; name: string }>>;
+    } = require('./utils/backupUtils');
+    
+    const backups: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    
+    for (const file of backupFiles) {
+      try {
+        const hash = generateContentHash(file.path);
+        backups.push({
+          path: file.path,
+          hash,
+          mtime: file.stat.mtimeMs,
+          name: file.name
+        });
+      } catch (error) {
+        // Skip files that can't be hashed, but keep them in cleanup
+        backups.push({
+          path: file.path,
+          hash: `error-${Date.now()}-${Math.random()}`, // unique hash for error cases
+          mtime: file.stat.mtimeMs,
+          name: file.name
+        });
+      }
+    }
+
+    // Group by hash and delete older duplicates + excess unique versions
+    const groups = findDuplicateBackups(backups);
+    const toDelete: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    const uniqueBackups: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    
+    for (const group of groups.values()) {
+      // Sort group by mtime (newest first)
+      group.sort((a, b) => b.mtime - a.mtime);
+      // Keep newest, mark older duplicates for deletion
+      uniqueBackups.push(group[0]);
+      toDelete.push(...group.slice(1));
+    }
+    
+    // Sort unique backups by mtime (newest first) and delete excess
+    uniqueBackups.sort((a, b) => b.mtime - a.mtime);
+    if (uniqueBackups.length > keepCount) {
+      toDelete.push(...uniqueBackups.slice(keepCount));
+    }
+    
+    // Delete all marked files
+    for (const backup of toDelete) {
+      spawnSync('rm', [backup.path]);
+    }
+  } catch (e) {
+    // best-effort cleanup - fallback to original logic
     const backups = readResult.data
       .filter(f => f.startsWith(pattern) && f.endsWith('.bak'))
       .map(f => ({ name: f, path: join(bakDir, f), stat: statSync(join(bakDir, f)) }))
-      .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs); // newest first
+      .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
     
     if (backups.length > keepCount) {
       const toDelete = backups.slice(keepCount);
@@ -1008,8 +1070,6 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
         spawnSync('rm', [backup.path]);
       }
     }
-  } catch (e) {
-    // best-effort cleanup
   }
 }
 
