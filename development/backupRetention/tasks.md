@@ -146,10 +146,10 @@ ls config/env/bak/.env-*.bak
 **Time:** 45 minutes  
 **References:** Design Section 5, REQ-1 (No Duplicate Backups)
 
-- [ ] Create `createBackupIfNeeded()` function
-- [ ] Compare content hash before backup creation
-- [ ] Skip backup if content matches most recent backup
-- [ ] Add debug logging for skipped backups
+- [x] Create `createBackupIfNeeded()` function
+- [x] Compare content hash before backup creation
+- [x] Skip backup if content matches most recent backup
+- [x] Add debug logging for skipped backups
 
 **Validation:**
 
@@ -175,9 +175,9 @@ ls config/env/bak/.env-*.bak | wc -l
 **Time:** 15 minutes  
 **References:** TR-3 (Backward Compatibility)
 
-- [ ] Replace `createBackup()` calls with `createBackupIfNeeded()`
-- [ ] Ensure all backup creation points use smart logic
-- [ ] Maintain existing backup behavior for changed content
+- [x] Replace `createBackup()` calls with `createBackupIfNeeded()`
+- [x] Ensure all backup creation points use smart logic
+- [x] Maintain existing backup behavior for changed content
 
 **Validation:**
 
@@ -200,11 +200,11 @@ ls config/env/bak/.env-*.bak | wc -l
 
 ### Phase 2 Acceptance
 
-- [ ] Backup creation skipped when content unchanged
-- [ ] Backup created when content changes
-- [ ] Debug logs show skip/create decisions
-- [ ] No performance regression in sync operations
-- [ ] Integration tests pass
+- [x] Backup creation skipped when content unchanged
+- [x] Backup created when content changes
+- [x] Debug logs show skip/create decisions
+- [x] No performance regression in sync operations
+- [x] Integration tests pass
 
 ---
 

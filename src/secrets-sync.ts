@@ -988,6 +988,28 @@ function writeBackup(dir: string, fileName: string, sourcePath: string, dryRun: 
   cleanupOldBackups(bakDir, fileName, retention);
 }
 
+function createBackupIfNeeded(dir: string, fileName: string, sourcePath: string, dryRun: boolean, retention: number = 3) {
+  if (dryRun) return; // Skip backups in dry-run mode
+  
+  const bakDir = join(dir, 'bak');
+  
+  try {
+    const { shouldCreateBackup } = require('./utils/backupUtils');
+    
+    if (!shouldCreateBackup(sourcePath, bakDir, fileName)) {
+      console.debug(`[DEBUG] Skipping backup for ${fileName} - content unchanged`);
+      return;
+    }
+    
+    console.debug(`[DEBUG] Creating backup for ${fileName} - content changed`);
+  } catch (error) {
+    console.debug(`[DEBUG] Error checking backup necessity, creating backup anyway: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+  
+  // Create backup using existing logic
+  writeBackup(dir, fileName, sourcePath, dryRun, retention);
+}
+
 function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) {
   const readResult = safeReadDir(bakDir);
   if (!readResult.success) {
@@ -1228,7 +1250,7 @@ async function main() {
 
     // Backup after parsing each file
     try {
-      writeBackup(dir, f.name, f.path, flags.dryRun ?? false, backupRetention);
+      createBackupIfNeeded(dir, f.name, f.path, flags.dryRun ?? false, backupRetention);
     } catch (e) {
       console.warn('[WARN] Failed to write backup for', f.name, '-', (e as Error).message);
     }

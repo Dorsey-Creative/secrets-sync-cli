@@ -64,3 +64,53 @@ export function deduplicateBackups(backups: BackupInfo[]): BackupInfo[] {
   // Sort by modification time (newest first)
   return unique.sort((a, b) => b.mtime - a.mtime);
 }
+
+/**
+ * Check if backup is needed by comparing content hash with most recent backup
+ * @param sourcePath Path to the source file
+ * @param bakDir Backup directory path
+ * @param fileName Base filename for backup pattern
+ * @returns true if backup is needed, false if content matches most recent backup
+ */
+export function shouldCreateBackup(sourcePath: string, bakDir: string, fileName: string): boolean {
+  try {
+    const sourceHash = generateContentHash(sourcePath);
+    
+    // Find most recent backup for this file
+    const { readFileSync, readdirSync, statSync } = require('fs');
+    const { join } = require('path');
+    
+    let backupFiles: string[];
+    try {
+      backupFiles = readdirSync(bakDir);
+    } catch {
+      // Backup directory doesn't exist, backup is needed
+      return true;
+    }
+    
+    const pattern = `${fileName}-`;
+    const matchingBackups = backupFiles
+      .filter(f => f.startsWith(pattern) && f.endsWith('.bak'))
+      .map(f => {
+        const fullPath = join(bakDir, f);
+        const stat = statSync(fullPath);
+        return { path: fullPath, mtime: stat.mtimeMs };
+      })
+      .sort((a, b) => b.mtime - a.mtime);
+    
+    if (matchingBackups.length === 0) {
+      // No existing backups, backup is needed
+      return true;
+    }
+    
+    // Compare with most recent backup
+    const mostRecentBackup = matchingBackups[0];
+    const backupHash = generateContentHash(mostRecentBackup.path);
+    
+    return sourceHash !== backupHash;
+  } catch (error) {
+    // If we can't determine, err on the side of creating backup
+    console.debug(`[DEBUG] Error checking backup necessity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return true;
+  }
+}
