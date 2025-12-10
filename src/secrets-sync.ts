@@ -1011,6 +1011,7 @@ function createBackupIfNeeded(dir: string, fileName: string, sourcePath: string,
 }
 
 function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) {
+  const cleanupStartTime = performance.now();
   const readResult = safeReadDir(bakDir);
   if (!readResult.success) {
     logWarn(`Failed to cleanup old backups: ${readResult.error.error.message}`);
@@ -1057,8 +1058,9 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
     }
 
     // Group by hash and delete older duplicates + excess unique versions
+    const dedupeStartTime = performance.now();
     const groups = findDuplicateBackups(backups);
-    const toDelete: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    const duplicatesToDelete: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
     const uniqueBackups: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
     
     for (const group of groups.values()) {
@@ -1066,18 +1068,48 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
       group.sort((a, b) => b.mtime - a.mtime);
       // Keep newest, mark older duplicates for deletion
       uniqueBackups.push(group[0]);
-      toDelete.push(...group.slice(1));
+      duplicatesToDelete.push(...group.slice(1));
     }
     
     // Sort unique backups by mtime (newest first) and delete excess
     uniqueBackups.sort((a, b) => b.mtime - a.mtime);
+    const retentionToDelete: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
     if (uniqueBackups.length > keepCount) {
-      toDelete.push(...uniqueBackups.slice(keepCount));
+      retentionToDelete.push(...uniqueBackups.slice(keepCount));
     }
     
+    const dedupeDuration = performance.now() - dedupeStartTime;
+    
     // Delete all marked files
-    for (const backup of toDelete) {
+    const allToDelete = [...duplicatesToDelete, ...retentionToDelete];
+    for (const backup of allToDelete) {
       spawnSync('rm', [backup.path]);
+    }
+    
+    const totalDuration = performance.now() - cleanupStartTime;
+    
+    // Calculate correct metrics
+    const duplicatesRemoved = duplicatesToDelete.length;
+    const excessRemoved = retentionToDelete.length;
+    const totalBackupsProcessed = backupFiles.length;
+    const uniqueBackupsKept = Math.min(uniqueBackups.length, keepCount);
+    
+    // Log performance metrics if cleanup took significant time or processed many files
+    if (totalDuration > 100 || backupFiles.length > 5) {
+      console.debug(`[DEBUG] Cleanup performance: ${totalDuration.toFixed(1)}ms total (dedupe: ${dedupeDuration.toFixed(1)}ms) for ${backupFiles.length} files`);
+    }
+    
+    // Log summary of cleanup operations
+    if (totalBackupsProcessed > 0) {
+      console.debug(`[DEBUG] Kept ${uniqueBackupsKept} unique backups out of ${totalBackupsProcessed} total for ${fileName}`);
+      
+      if (duplicatesRemoved > 0) {
+        console.debug(`[DEBUG] Deduplication saved ${duplicatesRemoved} duplicate files for ${fileName}`);
+      }
+      
+      if (excessRemoved > 0) {
+        console.debug(`[DEBUG] Retention cleanup removed ${excessRemoved} excess files for ${fileName}`);
+      }
     }
   } catch (e) {
     // best-effort cleanup - fallback to original logic

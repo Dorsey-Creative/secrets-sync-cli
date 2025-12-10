@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { readFileSync } from 'fs';
+import { readFileSync, statSync } from 'fs';
 
 /**
  * Backup file information for deduplication
@@ -18,10 +18,29 @@ export interface BackupInfo {
  * @throws Error if file cannot be read
  */
 export function generateContentHash(filePath: string): string {
+  const startTime = performance.now();
   try {
+    // Check file size for optimization
+    const stats = statSync(filePath);
+    const fileSizeMB = stats.size / (1024 * 1024);
+    
+    // Warn for very large files (>10MB) - env files should be small
+    if (fileSizeMB > 10) {
+      console.debug(`[DEBUG] Large file detected: ${filePath} (${fileSizeMB.toFixed(1)}MB)`);
+    }
+    
     const content = readFileSync(filePath, 'utf8');
-    return createHash('sha256').update(content).digest('hex');
+    const hash = createHash('sha256').update(content).digest('hex');
+    const duration = performance.now() - startTime;
+    
+    if (duration > 50) {
+      console.debug(`[DEBUG] Hash generation took ${duration.toFixed(1)}ms for ${filePath} (${fileSizeMB.toFixed(1)}MB)`);
+    }
+    
+    return hash;
   } catch (error) {
+    const duration = performance.now() - startTime;
+    console.debug(`[DEBUG] Hash generation failed after ${duration.toFixed(1)}ms for ${filePath}`);
     throw new Error(`Failed to generate hash for ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
