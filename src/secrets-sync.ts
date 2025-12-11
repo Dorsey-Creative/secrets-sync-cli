@@ -988,19 +988,135 @@ function writeBackup(dir: string, fileName: string, sourcePath: string, dryRun: 
   cleanupOldBackups(bakDir, fileName, retention);
 }
 
+function createBackupIfNeeded(dir: string, fileName: string, sourcePath: string, dryRun: boolean, retention: number = 3) {
+  if (dryRun) return; // Skip backups in dry-run mode
+  
+  const bakDir = join(dir, 'bak');
+  
+  try {
+    const { shouldCreateBackup } = require('./utils/backupUtils');
+    
+    if (!shouldCreateBackup(sourcePath, bakDir, fileName)) {
+      console.debug(`[DEBUG] Skipping backup for ${fileName} - content unchanged`);
+      return;
+    }
+    
+    console.debug(`[DEBUG] Creating backup for ${fileName} - content changed`);
+  } catch (error) {
+    console.debug(`[DEBUG] Error checking backup necessity, creating backup anyway: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+  
+  // Create backup using existing logic
+  writeBackup(dir, fileName, sourcePath, dryRun, retention);
+}
+
 function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) {
+  const cleanupStartTime = performance.now();
   const readResult = safeReadDir(bakDir);
   if (!readResult.success) {
     logWarn(`Failed to cleanup old backups: ${readResult.error.error.message}`);
     return;
   }
   
+  const pattern = `${fileName}-`; // Hoist pattern to function scope
+  
   try {
-    const pattern = `${fileName}-`;
+    const backupFiles = readResult.data
+      .filter(f => f.startsWith(pattern) && f.endsWith('.bak'))
+      .map(f => {
+        const path = join(bakDir, f);
+        const stat = statSync(path);
+        return { name: f, path, stat };
+      });
+
+    // Generate content hashes and create BackupInfo objects
+    const { generateContentHash, findDuplicateBackups }: {
+      generateContentHash: (filePath: string) => string;
+      findDuplicateBackups: (backups: Array<{ path: string; hash: string; mtime: number; name: string }>) => Map<string, Array<{ path: string; hash: string; mtime: number; name: string }>>;
+    } = require('./utils/backupUtils');
+    
+    const backups: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    
+    for (const file of backupFiles) {
+      try {
+        const hash = generateContentHash(file.path);
+        backups.push({
+          path: file.path,
+          hash,
+          mtime: file.stat.mtimeMs,
+          name: file.name
+        });
+      } catch (error) {
+        // Skip files that can't be hashed, but keep them in cleanup
+        backups.push({
+          path: file.path,
+          hash: `error-${Date.now()}-${Math.random()}`, // unique hash for error cases
+          mtime: file.stat.mtimeMs,
+          name: file.name
+        });
+      }
+    }
+
+    // Group by hash and delete older duplicates + excess unique versions
+    const dedupeStartTime = performance.now();
+    const groups = findDuplicateBackups(backups);
+    const duplicatesToDelete: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    const uniqueBackups: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    
+    for (const group of groups.values()) {
+      // Sort group by mtime (newest first)
+      group.sort((a, b) => b.mtime - a.mtime);
+      // Keep newest, mark older duplicates for deletion
+      uniqueBackups.push(group[0]);
+      duplicatesToDelete.push(...group.slice(1));
+    }
+    
+    // Sort unique backups by mtime (newest first) and delete excess
+    uniqueBackups.sort((a, b) => b.mtime - a.mtime);
+    const retentionToDelete: Array<{ path: string; hash: string; mtime: number; name: string }> = [];
+    if (uniqueBackups.length > keepCount) {
+      retentionToDelete.push(...uniqueBackups.slice(keepCount));
+    }
+    
+    const dedupeDuration = performance.now() - dedupeStartTime;
+    
+    // Delete all marked files
+    const allToDelete = [...duplicatesToDelete, ...retentionToDelete];
+    for (const backup of allToDelete) {
+      spawnSync('rm', [backup.path]);
+    }
+    
+    const totalDuration = performance.now() - cleanupStartTime;
+    
+    // Calculate correct metrics
+    const duplicatesRemoved = duplicatesToDelete.length;
+    const excessRemoved = retentionToDelete.length;
+    const totalBackupsProcessed = backupFiles.length;
+    const uniqueBackupsKept = Math.min(uniqueBackups.length, keepCount);
+    
+    // Log performance metrics if cleanup took significant time or processed many files
+    if (totalDuration > 100 || backupFiles.length > 5) {
+      console.debug(`[DEBUG] Cleanup performance: ${totalDuration.toFixed(1)}ms total (dedupe: ${dedupeDuration.toFixed(1)}ms) for ${backupFiles.length} files`);
+    }
+    
+    // Log summary of cleanup operations
+    if (totalBackupsProcessed > 0) {
+      console.debug(`[DEBUG] Kept ${uniqueBackupsKept} unique backups out of ${totalBackupsProcessed} total for ${fileName}`);
+      
+      if (duplicatesRemoved > 0) {
+        console.debug(`[DEBUG] Deduplication saved ${duplicatesRemoved} duplicate files for ${fileName}`);
+      }
+      
+      if (excessRemoved > 0) {
+        console.debug(`[DEBUG] Retention cleanup removed ${excessRemoved} excess files for ${fileName}`);
+      }
+    }
+  } catch (e) {
+    // best-effort cleanup - fallback to original logic
     const backups = readResult.data
       .filter(f => f.startsWith(pattern) && f.endsWith('.bak'))
       .map(f => ({ name: f, path: join(bakDir, f), stat: statSync(join(bakDir, f)) }))
-      .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs); // newest first
+      .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
     
     if (backups.length > keepCount) {
       const toDelete = backups.slice(keepCount);
@@ -1008,8 +1124,6 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
         spawnSync('rm', [backup.path]);
       }
     }
-  } catch (e) {
-    // best-effort cleanup
   }
 }
 
@@ -1168,7 +1282,7 @@ async function main() {
 
     // Backup after parsing each file
     try {
-      writeBackup(dir, f.name, f.path, flags.dryRun ?? false, backupRetention);
+      createBackupIfNeeded(dir, f.name, f.path, flags.dryRun ?? false, backupRetention);
     } catch (e) {
       console.warn('[WARN] Failed to write backup for', f.name, '-', (e as Error).message);
     }
