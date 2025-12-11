@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [1.2.4] - 2025-12-11
 
-- **Backup retention deduplication system**: Intelligent backup management with content-based deduplication
-  - Smart backup creation prevents duplicate backups when content hasn't changed
-  - Content-based deduplication removes duplicate backup files while preserving unique versions
-  - Performance optimization with timing metrics and file size monitoring
-  - Enhanced logging shows storage savings and cleanup operations
-  - Configurable retention limits apply to unique backup versions only
+### Fixed
+
+- **Backup retention deduplication**: Implement intelligent backup management to prevent storage waste
+  - Prevent duplicate backups when content unchanged
+  - Remove duplicate backup files while preserving unique versions
+  - Fix backup pattern matching for dotfiles and files without extensions
+  - Correct cleanup metrics to properly separate duplicate vs retention deletions
+  - Apply retention limits to unique backup versions only
 
 ## [1.2.3] - 2025-12-01
 
