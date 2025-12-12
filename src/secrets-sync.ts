@@ -996,14 +996,14 @@ function createBackupIfNeeded(dir: string, fileName: string, sourcePath: string,
   try {
     const { shouldCreateBackup } = require('./utils/backupUtils');
     
-    if (!shouldCreateBackup(sourcePath, bakDir, fileName)) {
-      console.debug(`[DEBUG] Skipping backup for ${fileName} - content unchanged`);
+    if (!shouldCreateBackup(sourcePath, bakDir, fileName, logger)) {
+      if (logger) logger.debug(`Skipping backup for ${fileName} - content unchanged`);
       return;
     }
     
-    console.debug(`[DEBUG] Creating backup for ${fileName} - content changed`);
+    if (logger) logger.debug(`Creating backup for ${fileName} - content changed`);
   } catch (error) {
-    console.debug(`[DEBUG] Error checking backup necessity, creating backup anyway: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (logger) logger.debug(`Error checking backup necessity, creating backup anyway: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
   
   // Create backup using existing logic
@@ -1031,7 +1031,7 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
 
     // Generate content hashes and create BackupInfo objects
     const { generateContentHash, findDuplicateBackups }: {
-      generateContentHash: (filePath: string) => string;
+      generateContentHash: (filePath: string, logger?: { debug: (msg: string) => void }) => string;
       findDuplicateBackups: (backups: Array<{ path: string; hash: string; mtime: number; name: string }>) => Map<string, Array<{ path: string; hash: string; mtime: number; name: string }>>;
     } = require('./utils/backupUtils');
     
@@ -1039,7 +1039,7 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
     
     for (const file of backupFiles) {
       try {
-        const hash = generateContentHash(file.path);
+        const hash = generateContentHash(file.path, logger);
         backups.push({
           path: file.path,
           hash,
@@ -1095,20 +1095,20 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
     const uniqueBackupsKept = Math.min(uniqueBackups.length, keepCount);
     
     // Log performance metrics if cleanup took significant time or processed many files
-    if (totalDuration > 100 || backupFiles.length > 5) {
-      console.debug(`[DEBUG] Cleanup performance: ${totalDuration.toFixed(1)}ms total (dedupe: ${dedupeDuration.toFixed(1)}ms) for ${backupFiles.length} files`);
+    if ((totalDuration > 100 || backupFiles.length > 5) && logger) {
+      logger.debug(`Cleanup performance: ${totalDuration.toFixed(1)}ms total (dedupe: ${dedupeDuration.toFixed(1)}ms) for ${backupFiles.length} files`);
     }
     
     // Log summary of cleanup operations
-    if (totalBackupsProcessed > 0) {
-      console.debug(`[DEBUG] Kept ${uniqueBackupsKept} unique backups out of ${totalBackupsProcessed} total for ${fileName}`);
+    if (totalBackupsProcessed > 0 && logger) {
+      logger.debug(`Kept ${uniqueBackupsKept} unique backups out of ${totalBackupsProcessed} total for ${fileName}`);
       
       if (duplicatesRemoved > 0) {
-        console.debug(`[DEBUG] Deduplication saved ${duplicatesRemoved} duplicate files for ${fileName}`);
+        logger.debug(`Deduplication saved ${duplicatesRemoved} duplicate files for ${fileName}`);
       }
       
       if (excessRemoved > 0) {
-        console.debug(`[DEBUG] Retention cleanup removed ${excessRemoved} excess files for ${fileName}`);
+        logger.debug(`Retention cleanup removed ${excessRemoved} excess files for ${fileName}`);
       }
     }
   } catch (e) {
