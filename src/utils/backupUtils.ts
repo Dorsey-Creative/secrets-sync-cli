@@ -14,10 +14,11 @@ export interface BackupInfo {
 /**
  * Generate SHA-256 content hash for a file
  * @param filePath Path to the file to hash
+ * @param logger Optional logger for debug output
  * @returns SHA-256 hash of file content
  * @throws Error if file cannot be read
  */
-export function generateContentHash(filePath: string): string {
+export function generateContentHash(filePath: string, logger?: { debug: (msg: string) => void }): string {
   const startTime = performance.now();
   try {
     // Check file size for optimization
@@ -25,22 +26,24 @@ export function generateContentHash(filePath: string): string {
     const fileSizeMB = stats.size / (1024 * 1024);
     
     // Warn for very large files (>10MB) - env files should be small
-    if (fileSizeMB > 10) {
-      console.debug(`[DEBUG] Large file detected: ${filePath} (${fileSizeMB.toFixed(1)}MB)`);
+    if (fileSizeMB > 10 && logger) {
+      logger.debug(`Large file detected: ${filePath} (${fileSizeMB.toFixed(1)}MB)`);
     }
     
     const content = readFileSync(filePath, 'utf8');
     const hash = createHash('sha256').update(content).digest('hex');
     const duration = performance.now() - startTime;
     
-    if (duration > 50) {
-      console.debug(`[DEBUG] Hash generation took ${duration.toFixed(1)}ms for ${filePath} (${fileSizeMB.toFixed(1)}MB)`);
+    if (duration > 50 && logger) {
+      logger.debug(`Hash generation took ${duration.toFixed(1)}ms for ${filePath} (${fileSizeMB.toFixed(1)}MB)`);
     }
     
     return hash;
   } catch (error) {
     const duration = performance.now() - startTime;
-    console.debug(`[DEBUG] Hash generation failed after ${duration.toFixed(1)}ms for ${filePath}`);
+    if (logger) {
+      logger.debug(`Hash generation failed after ${duration.toFixed(1)}ms for ${filePath}`);
+    }
     throw new Error(`Failed to generate hash for ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -89,11 +92,12 @@ export function deduplicateBackups(backups: BackupInfo[]): BackupInfo[] {
  * @param sourcePath Path to the source file
  * @param bakDir Backup directory path
  * @param fileName Base filename for backup pattern
+ * @param logger Optional logger for debug output
  * @returns true if backup is needed, false if content matches most recent backup
  */
-export function shouldCreateBackup(sourcePath: string, bakDir: string, fileName: string): boolean {
+export function shouldCreateBackup(sourcePath: string, bakDir: string, fileName: string, logger?: { debug: (msg: string) => void }): boolean {
   try {
-    const sourceHash = generateContentHash(sourcePath);
+    const sourceHash = generateContentHash(sourcePath, logger);
     
     // Find most recent backup for this file
     const { readFileSync, readdirSync, statSync } = require('fs');
@@ -124,12 +128,14 @@ export function shouldCreateBackup(sourcePath: string, bakDir: string, fileName:
     
     // Compare with most recent backup
     const mostRecentBackup = matchingBackups[0];
-    const backupHash = generateContentHash(mostRecentBackup.path);
+    const backupHash = generateContentHash(mostRecentBackup.path, logger);
     
     return sourceHash !== backupHash;
   } catch (error) {
     // If we can't determine, err on the side of creating backup
-    console.debug(`[DEBUG] Error checking backup necessity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (logger) {
+      logger.debug(`Error checking backup necessity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
     return true;
   }
 }
