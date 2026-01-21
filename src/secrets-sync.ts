@@ -1195,11 +1195,16 @@ async function main() {
     if (envConfig.environment.timeout !== undefined && !process.env.SECRETS_SYNC_TIMEOUT) {
       process.env.SECRETS_SYNC_TIMEOUT = String(envConfig.environment.timeout);
     }
-    logDebug(`Applied environment config: ${JSON.stringify(envConfig.environment)}`);
   }
 
   // Initialize logger with verbose flag
   logger = new Logger({ verbose: flags.verbose, debugLogger: flags.debugLogger });
+  
+  // Log environment config after logger is initialized
+  if (envConfig.environment) {
+    logger.debug(`Applied environment config: ${JSON.stringify(envConfig.environment)}`);
+  }
+  
   logDebug(`Parsed flags: ${JSON.stringify(flags)}`);
 
   // Validate dependencies (unless skipped for CI)
