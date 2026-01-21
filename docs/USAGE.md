@@ -261,7 +261,7 @@ secrets-sync -v
 
 Control tool behavior via environment variables.
 
-> **Note:** Currently, environment variables must be set via shell. Support for configuring these in `env-config.yml` is planned in [issue #55](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/55).
+> **Note:** Environment variables can be set via shell or in `env-config.yml` (see [Configuration File](#configuration-file)). Shell environment variables take priority over `env-config.yml`.
 
 ### `SKIP_DEPENDENCY_CHECK`
 
@@ -379,7 +379,14 @@ skipSecrets:
   - DEBUG
   - LOCAL_ONLY_VAR
   - TEST_*
-  - *_LOCAL
+  - '*_LOCAL'
+
+# Environment variable configuration
+environment:
+  skipDependencyCheck: true
+  skipGitignoreCheck: false
+  timeout: 60000
+  mock: false
 ```
 
 ### Options Reference
@@ -418,23 +425,36 @@ Array of secret names to skip (supports wildcards).
 skipSecrets:
   - DEBUG              # Exact match
   - TEST_*             # Prefix wildcard
-  - *_LOCAL            # Suffix wildcard
-  - *_TEMP_*           # Contains wildcard
+  - '*_LOCAL'          # Suffix wildcard
+  - '*_TEMP_*'         # Contains wildcard
 ```
 
 **Type:** `array<string>`  
 **Default:** `[]`
 
-**Wildcard patterns:**
-- `TEST_*` - Matches `TEST_API_KEY`, `TEST_SECRET`, etc.
-- `*_LOCAL` - Matches `DB_LOCAL`, `API_LOCAL`, etc.
-- `*_TEMP_*` - Matches `API_TEMP_KEY`, `DB_TEMP_URL`, etc.
+#### `environment`
+
+Section for configuring environment variables.
+
+```yaml
+environment:
+  skipDependencyCheck: true
+  skipGitignoreCheck: false
+  timeout: 60000
+  mock: false
+```
+
+- `skipDependencyCheck`: (boolean) Skip `gh` CLI and auth checks.
+- `skipGitignoreCheck`: (boolean) Skip `.gitignore` validation.
+- `timeout`: (number) Network timeout in milliseconds.
+- `mock`: (boolean) Enable mock mode (for testing).
 
 ### Configuration Priority
 
-1. CLI flags (highest priority)
-2. Configuration file (`env-config.yml`)
-3. Default values (lowest priority)
+1. Shell environment variables (highest priority)
+2. CLI flags
+3. Configuration file (`env-config.yml`)
+4. Default values (lowest priority)
 
 **Example:**
 ```bash

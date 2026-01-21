@@ -304,13 +304,14 @@ skipSecrets:
 | `flags.skipUnchanged`   | boolean | Skip secrets with matching hashes         |
 | `flags.backupRetention` | number  | Number of backups to keep (default: 3)    |
 | `skipSecrets`           | array   | Secret names to skip (supports wildcards) |
+| `environment`           | object  | Environment variable configuration        |
 
 **Wildcard support:**
 
 ```yaml
 skipSecrets:
   - TEST_*      # Skips TEST_API_KEY, TEST_SECRET, etc.
-  - *_LOCAL     # Skips DB_LOCAL, API_LOCAL, etc.
+  - '*_LOCAL'     # Skips DB_LOCAL, API_LOCAL, etc.
   - DEBUG       # Exact match only
 ```
 

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Environment configuration section in env-config.yml for test and CI/CD settings
+    - `skipDependencyCheck`: Skip dependency validation checks
+    - `skipGitignoreCheck`: Skip .gitignore validation
+    - `timeout`: Configure operation timeout in milliseconds
+    - `mock`: Enable mock mode for testing
+
 ## [1.2.5] - 2025-12-11
 
 ### Fixed

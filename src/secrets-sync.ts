@@ -64,6 +64,12 @@ type EnvConfig = {
   flags?: Partial<Flags>;
   skipSecrets?: string[];
   backupRetention?: number;
+  environment?: {
+    skipDependencyCheck?: boolean;
+    skipGitignoreCheck?: boolean;
+    timeout?: number;
+    mock?: boolean;
+  };
 };
 
 type RequiredSecretConfig = {
@@ -132,9 +138,10 @@ function loadEnvConfig(initialDir: string): EnvConfig {
 
 function parseEnvConfig(raw: string): EnvConfig {
   const config: EnvConfig = {};
-  let currentSection: 'flags' | 'skipSecrets' | null = null;
+  let currentSection: 'flags' | 'skipSecrets' | 'environment' | null = null;
   const skipSecrets: string[] = [];
   const flags: Record<string, string> = {};
+  const environment: Record<string, string> = {};
 
   const lines = raw.split(/\r?\n/);
   for (const lineRaw of lines) {
@@ -145,6 +152,7 @@ function parseEnvConfig(raw: string): EnvConfig {
       const section = line.slice(0, line.indexOf(':')).trim();
       if (section === 'flags') currentSection = 'flags';
       else if (section === 'skipSecrets') currentSection = 'skipSecrets';
+      else if (section === 'environment') currentSection = 'environment';
       else currentSection = null;
       continue;
     }
@@ -177,6 +185,15 @@ function parseEnvConfig(raw: string): EnvConfig {
       const key = keyRaw.trim();
       const value = valueRaw.trim();
       if (key) flags[key] = value;
+      continue;
+    }
+
+    if (currentSection === 'environment' && line.includes(':')) {
+      const [keyRaw, valueRaw] = line.split(':', 2);
+      const key = keyRaw.trim();
+      const value = valueRaw.trim();
+      if (key) environment[key] = value;
+      continue;
     }
   }
 
@@ -189,6 +206,17 @@ function parseEnvConfig(raw: string): EnvConfig {
       } else if (normalized === 'dir' || normalized === 'env') {
         config.flags[normalized] = value as any;
       }
+    }
+  }
+
+  if (Object.keys(environment).length > 0) {
+    config.environment = {};
+    if (environment.skipDependencyCheck) config.environment.skipDependencyCheck = parseBoolean(environment.skipDependencyCheck);
+    if (environment.skipGitignoreCheck) config.environment.skipGitignoreCheck = parseBoolean(environment.skipGitignoreCheck);
+    if (environment.mock) config.environment.mock = parseBoolean(environment.mock);
+    if (environment.timeout) {
+      const num = parseInt(environment.timeout, 10);
+      if (!isNaN(num)) config.environment.timeout = num;
     }
   }
 
@@ -1150,12 +1178,32 @@ async function main() {
     return;
   }
 
+  const initialDir = flags.dir ?? DEFAULTS.dir;
+  const envConfig = loadEnvConfig(initialDir);
+
+  // Apply environment configuration from config file if not already set in process.env
+  if (envConfig.environment) {
+    if (envConfig.environment.skipDependencyCheck !== undefined && !process.env.SKIP_DEPENDENCY_CHECK) {
+      process.env.SKIP_DEPENDENCY_CHECK = envConfig.environment.skipDependencyCheck ? '1' : '';
+    }
+    if (envConfig.environment.skipGitignoreCheck !== undefined && !process.env.SKIP_GITIGNORE_CHECK) {
+      process.env.SKIP_GITIGNORE_CHECK = envConfig.environment.skipGitignoreCheck ? '1' : '';
+    }
+    if (envConfig.environment.mock !== undefined && !process.env.SECRETS_SYNC_MOCK) {
+      process.env.SECRETS_SYNC_MOCK = envConfig.environment.mock ? '1' : '';
+    }
+    if (envConfig.environment.timeout !== undefined && !process.env.SECRETS_SYNC_TIMEOUT) {
+      process.env.SECRETS_SYNC_TIMEOUT = String(envConfig.environment.timeout);
+    }
+    logDebug(`Applied environment config: ${JSON.stringify(envConfig.environment)}`);
+  }
+
   // Initialize logger with verbose flag
   logger = new Logger({ verbose: flags.verbose, debugLogger: flags.debugLogger });
   logDebug(`Parsed flags: ${JSON.stringify(flags)}`);
 
   // Validate dependencies (unless skipped for CI)
-  if (!process.env.SKIP_DEPENDENCY_CHECK) {
+  if (!process.env.SKIP_DEPENDENCY_CHECK || process.env.SKIP_DEPENDENCY_CHECK === '0') {
     logDebug('Running dependency checks...');
     const result = await validateDependencies([
       nodeVersionCheck,
@@ -1183,8 +1231,6 @@ async function main() {
     logDebug('Skipping dependency checks (SKIP_DEPENDENCY_CHECK set)');
   }
 
-  const initialDir = flags.dir ?? DEFAULTS.dir;
-  const envConfig = loadEnvConfig(initialDir);
   applyConfigFlags(flags, envConfig.flags);
   const dir = flags.dir ?? DEFAULTS.dir;
   
@@ -1218,7 +1264,7 @@ async function main() {
   printHeader();
 
   // Validate .gitignore (unless skipped)
-  if (!process.env.SKIP_GITIGNORE_CHECK) {
+  if (!process.env.SKIP_GITIGNORE_CHECK || process.env.SKIP_GITIGNORE_CHECK === '0') {
     const gitignoreResult = validateGitignore();
     if (!gitignoreResult.isValid) {
       console.log(`${COLORS.yellow}${COLORS.bold}⚠️  Security Warning: Your .gitignore may not protect secrets${COLORS.reset}\n`);
