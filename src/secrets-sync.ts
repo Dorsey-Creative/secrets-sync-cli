@@ -7,7 +7,7 @@ import './bootstrap';
  *
  * Implements:
  *  - EnvDirectoryScanner with ignore rules and deterministic ordering (production first)
- *  - ProductionResolver layering canonical .env with optional production overrides (opt-in prefix mode available)
+ *  - ProductionResolver layering canonical .env with optional production additions (opt-in prefix mode available)
  *  - Dotenv parsing into key/value maps (no values logged)
  *  - Drift detection: warn when non-production has keys missing from production
  */
@@ -511,7 +511,7 @@ function resolveProduction(files: EnvFile[], force: boolean) {
   if (prod.length === 1) {
     return { canonical: prod[0], others: [] as EnvFile[] };
   }
-  // multiple production files – layer overrides by default, optional prefix mode with --force
+  // multiple production files - layer additive variants by default, optional prefix mode with --force
   const canonical = prod.find((p) => p.name === '.env') || prod[0];
   const others = prod.filter((p) => p !== canonical);
   if (others.length > 0) {
@@ -526,7 +526,7 @@ function resolveProduction(files: EnvFile[], force: boolean) {
       logInfo(`Prefixing production variants (${forcedList}); ${canonical.name} remains canonical.`);
     } else {
       const layeredNames = others.map((p) => p.name).join(', ');
-      logInfo(`Layering production overrides: ${canonical.name} <- ${layeredNames}`);
+      logInfo(`Layering production variants: ${canonical.name} <- ${layeredNames}`);
     }
   }
   return { canonical, others };
@@ -646,7 +646,7 @@ function computePrefix(f: EnvFile, canonical: EnvFile | undefined, force: boolea
       const envName = token.toLowerCase() || 'production';
       return { envName, prefix };
     }
-    // Production overrides are layered before summaries are built, so we should never hit this,
+    // Production variants are layered before summaries are built, so we should never hit this,
     // but return production/no prefix defensively.
     return { envName: 'production', prefix: '' };
   }
@@ -1356,7 +1356,7 @@ async function main() {
       }
       for (const [k, v] of Object.entries(data)) {
         if (k in productionData) {
-          logWarn(`Production override ${f.name} attempted to change ${k}; keeping canonical value from ${canonical?.name ?? '.env'}.`);
+          logWarn(`Production variant ${f.name} attempted to change ${k}; keeping canonical value from ${canonical?.name ?? '.env'}.`);
           continue;
         }
         productionData[k] = v;

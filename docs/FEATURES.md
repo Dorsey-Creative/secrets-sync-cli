@@ -46,14 +46,14 @@ Uses production (`.env`) as the canonical source of truth.
 **Production file priority:**
 
 1. `.env` - Primary canonical file
-2. `.env.production` - Optional overrides (layered by default)
-3. `.env.prod` - Alternative production file
-4. `.env.prd` - Alternative production file
+2. `.env.production` - Optional production additions (layered by default)
+3. `.env.prod` - Alternative production additions
+4. `.env.prd` - Alternative production additions
 
 **Layering behavior:**
 
 ```bash
-# Default: .env.production overrides .env
+# Default: .env.production adds keys missing from .env
 secrets-sync --dry-run
 
 # Force mode: Use prefixes instead (PROD_SECRET_KEY)
@@ -346,7 +346,7 @@ Multiple production files can be layered or prefixed.
 **Default behavior (layering):**
 
 ```bash
-# .env.production overrides .env
+# .env.production adds keys missing from .env; .env keeps duplicate keys
 secrets-sync --dry-run
 ```
 
@@ -368,7 +368,7 @@ secrets-sync --force --dry-run
   PROD_SECRET=prod_only
 
 # Default (layering):
-API_KEY=prod_override
+API_KEY=base_value
 PROD_SECRET=prod_only
 
 # Force mode (prefixes):
