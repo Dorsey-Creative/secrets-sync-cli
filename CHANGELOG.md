@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Security pipeline with CodeQL SAST, OSV dependency vulnerability scanning, and Gitleaks secret scanning.
+- Dependabot configuration for Bun dependencies and GitHub Actions updates.
 - Environment configuration section in env-config.yml for test and CI/CD settings
     - `skipDependencyCheck`: Skip dependency validation checks
     - `skipGitignoreCheck`: Skip .gitignore validation

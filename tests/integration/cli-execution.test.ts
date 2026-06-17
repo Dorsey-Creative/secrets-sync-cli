@@ -129,4 +129,36 @@ describe("CLI Execution", () => {
     // Should report missing required secret
     expect(output).toContain("MUST_HAVE_SECRET");
   });
+
+  test("keeps canonical .env values when production variants define duplicate keys", () => {
+    mkdirSync(testDir, { recursive: true });
+    writeFileSync(
+      join(testDir, ".env"),
+      "API_KEY=base\nSHARED=one\n"
+    );
+    writeFileSync(
+      join(testDir, ".env.production"),
+      "API_KEY=prod\nPROD_ONLY=two\n"
+    );
+
+    const proc = Bun.spawnSync([
+      "./dist/secrets-sync.js",
+      "--dir", testDir,
+      "--dry-run"
+    ], {
+      env: {
+        ...process.env,
+        SKIP_DEPENDENCY_CHECK: "1",
+        SKIP_GITIGNORE_CHECK: "1"
+      }
+    });
+
+    const output = new TextDecoder().decode(proc.stdout) +
+                   new TextDecoder().decode(proc.stderr);
+
+    expect(proc.exitCode).toBe(0);
+    expect(output).toContain("Production variant .env.production attempted to change API_KEY; keeping canonical value from .env.");
+    expect(output).toMatch(/│\s+\d+\s+│ '?API_KEY'?\s+│ '?\.env'?\s+│/);
+    expect(output).toMatch(/│\s+\d+\s+│ '?PROD_ONLY'?\s+│ '?\.env\.production'?\s+│/);
+  });
 });

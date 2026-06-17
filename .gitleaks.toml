@@ -1,0 +1,16 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow intentionally fake secrets in fixtures plus ignored runtime env/backup files."
+paths = [
+  '''(^|/)config/env/''',
+  '''(^|/)dist/''',
+  '''(^|/)docs/''',
+  '''(^|/)example/''',
+  '''(^|/)examples/''',
+  '''(^|/)[^/]+/bak/''',
+  '''(^|/)scripts/benchmark-scrubbing\.ts$''',
+  '''(^|/)scripts/setup-example\.sh$''',
+  '''(^|/)tests/''',
+]

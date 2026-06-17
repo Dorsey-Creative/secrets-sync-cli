@@ -157,7 +157,7 @@ secrets-sync --force --dry-run
 ```
 
 **Difference:**
-- **Default:** `.env.production` overrides `.env` values
+- **Default:** `.env.production` adds production keys that are missing from `.env`; duplicate keys keep the `.env` value and emit a warning
 - **Force:** `.env.production` values get `PROD_` prefix
 
 **Example:**
@@ -167,9 +167,10 @@ secrets-sync --force --dry-run
 
 .env.production:
   API_KEY=prod
+  PROD_ONLY=enabled
 
-# Default: API_KEY=prod
-# Force: API_KEY=base, PROD_API_KEY=prod
+# Default: API_KEY=base, PROD_ONLY=enabled
+# Force: API_KEY=base, PROD_API_KEY=prod, PROD_PROD_ONLY=enabled
 ```
 
 #### `--skip-unchanged`

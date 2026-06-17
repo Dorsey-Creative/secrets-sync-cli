@@ -53,7 +53,7 @@ your-project/
 ├── config/
 │   └── env/
 │       ├── .env                # production (canonical)
-│       ├── .env.production     # optional overrides
+│       ├── .env.production     # optional production additions
 │       ├── .env.staging
 │       ├── .env.development
 │       └── required-secrets.json (optional)
@@ -62,7 +62,7 @@ your-project/
 
 ## What it does
 1. Discover `.env*` files under the configured directory (skips templates/examples).
-2. Treat `.env` as canonical; compare other envs against it for missing or extra keys.
+2. Treat `.env` as canonical; production variants such as `.env.production`, `.env.prod`, and `.env.prd` add missing keys but do not replace `.env` values.
 3. Optionally validate against `required-secrets.json`.
 4. Show a diff and audit summary; in non-dry runs, write updates and timestamped backups.
 5. When enabled, push secrets to GitHub Actions using the GitHub CLI (`gh secret` commands).
