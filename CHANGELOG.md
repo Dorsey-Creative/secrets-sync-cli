@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `timeout`: Configure operation timeout in milliseconds
     - `mock`: Enable mock mode for testing
 
+### Fixed
+
+- Updated vulnerable dependency resolutions reported by OSV (`yaml` and transitive `picomatch`).
+
 ## [1.2.5] - 2025-12-11
 
 ### Fixed

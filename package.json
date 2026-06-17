@@ -56,6 +56,9 @@
   },
   "dependencies": {
     "lru-cache": "^11.2.2",
-    "yaml": "^2.8.1"
+    "yaml": "^2.9.0"
+  },
+  "overrides": {
+    "picomatch": "2.3.2"
   }
 }
