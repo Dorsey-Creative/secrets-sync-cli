@@ -153,8 +153,10 @@ describe("CLI Execution", () => {
       }
     });
 
-    const output = new TextDecoder().decode(proc.stdout) +
+    const rawOutput = new TextDecoder().decode(proc.stdout) +
                    new TextDecoder().decode(proc.stderr);
+    // Strip ANSI escape codes for regex matching
+    const output = rawOutput.replace(/\x1b\[[0-9;]*m/g, '');
 
     expect(proc.exitCode).toBe(0);
     expect(output).toContain("Production variant .env.production attempted to change API_KEY; keeping canonical value from .env.");

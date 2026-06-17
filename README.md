@@ -140,6 +140,8 @@ Works with short flags too: `secrets-sync -f --help`
 | `--skip-unchanged` | Skip secrets with matching hashes |
 | `--no-confirm` | Non-interactive mode |
 | `--fix-gitignore` | Add missing .gitignore patterns |
+| `--strict-empty-values` | Fail on empty secret values |
+| `--allow-empty <pat>` | Allow empty value for key/pattern |
 | `--verbose` | Show detailed output |
 | `--help, -h` | Show help message |
 | `--version, -v` | Show version |
