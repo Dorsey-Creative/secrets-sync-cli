@@ -66,6 +66,37 @@ gh auth login
 
 Follow the prompts to authenticate via browser or token.
 
+### "GitHub token missing required scope" / "HTTP 403: Must have admin rights to Repository"
+
+**What it means:** Your GitHub CLI token does not have the required OAuth scopes to manage secrets on this repository.
+
+- **Personal repos** require the `repo` scope (included in default `gh auth login` scopes).
+- **Organization repos** require the `admin:org` scope (NOT included by default).
+
+The misleading error `HTTP 403: Must have admin rights to Repository` from `gh secret set` is actually a token scope issue, not a repository permissions issue.
+
+**Solution:** Add the missing scope to your token:
+
+```bash
+# For organization repos (most common fix)
+gh auth refresh -s admin:org
+
+# For repo scope (rare — only if you used a restricted token)
+gh auth refresh -s repo
+```
+
+This preserves your existing scopes and adds the missing one.
+
+**How to check your current scopes:**
+
+```bash
+gh api --include / 2>&1 | grep -i x-oauth-scopes
+```
+
+This shows the scopes your token currently has. Look for `repo` and `admin:org`.
+
+**Note about fine-grained PATs:** Fine-grained personal access tokens use a different permission model and may not report scopes via the `X-Oauth-Scopes` header. If you're using a fine-grained PAT, the pre-flight scope check will pass gracefully, but you may still encounter 403 errors at runtime if the token lacks appropriate permissions.
+
 ## Permission Issues
 
 ### "Permission denied" reading files

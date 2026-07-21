@@ -205,6 +205,27 @@ secrets-sync --no-confirm  # ERROR
 - CI/CD pipelines
 - Cron jobs
 
+### Validation Options
+
+#### `--strict-empty-values`
+Fail with nonzero exit code when empty secret values are detected. Useful for CI gating.
+
+```bash
+# Block sync when empty values exist
+secrets-sync --strict-empty-values --dry-run
+```
+
+#### `--allow-empty <pattern>`
+Allow specific keys to have empty values. Repeatable and comma-separated.
+
+```bash
+# Allow one key
+secrets-sync --allow-empty OPTIONAL_KEY --dry-run
+
+# Allow multiple keys
+secrets-sync --allow-empty "KEY_A,KEY_B" --allow-empty KEY_C --dry-run
+```
+
 ### Utility Options
 
 #### `--fix-gitignore`

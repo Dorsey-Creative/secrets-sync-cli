@@ -140,6 +140,8 @@ Works with short flags too: `secrets-sync -f --help`
 | `--skip-unchanged` | Skip secrets with matching hashes |
 | `--no-confirm` | Non-interactive mode |
 | `--fix-gitignore` | Add missing .gitignore patterns |
+| `--strict-empty-values` | Fail on empty secret values |
+| `--allow-empty <pat>` | Allow empty value for key/pattern |
 | `--verbose` | Show detailed output |
 | `--help, -h` | Show help message |
 | `--version, -v` | Show version |
@@ -156,7 +158,10 @@ secrets-sync --env staging
 # Fix .gitignore patterns
 secrets-sync --fix-gitignore
 
-# Non-interactive mode (requires --overwrite)
+# Non-interactive mode (approves all planned changes without prompts)
+secrets-sync --no-confirm
+
+# Force re-upload all secrets without prompts
 secrets-sync --overwrite --no-confirm
 ```
 

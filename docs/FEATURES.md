@@ -418,6 +418,40 @@ flags:
 | GitLab CI/CD           | ❌    | 🔜 [#54](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/54) |
 | Org-level secrets      | ❌    | 🔜 [#53](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/53) |
 
+## Empty Value Validation
+
+Detects empty secret values before they can be synced to GitHub Actions.
+
+**How it works:**
+
+- After parsing env files and applying production layering, validates all values
+- Detects empty (`KEY=`), whitespace-only, and quoted empty (`KEY=""`) values
+- Warns on the first empty value found (fail-fast)
+- Respects `skipSecrets`, `allowEmptySecrets`, and deprecated key exclusions
+
+**CLI flags:**
+
+```bash
+# Fail on empty values (for CI)
+secrets-sync --strict-empty-values --dry-run
+
+# Allow specific keys to be empty
+secrets-sync --allow-empty OPTIONAL_KEY --dry-run
+secrets-sync --allow-empty "KEY_A,KEY_B" --dry-run
+```
+
+**Configuration:**
+
+```yaml
+# env-config.yml
+validation:
+  strictEmptyValues: true
+
+allowEmptySecrets:
+  - OPTIONAL_PLACEHOLDER
+  - DISABLED_*
+```
+
 ## Limitations
 
 **Current limitations:**

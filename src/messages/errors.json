@@ -43,5 +43,10 @@
     "what": "Command failed: {{command}}",
     "why": "{{reason}}",
     "howToFix": "{{suggestion}}"
+  },
+  "ERR_TOKEN_SCOPE": {
+    "what": "GitHub token missing required scope: {{scope}}",
+    "why": "{{reason}}",
+    "howToFix": "Run: gh auth refresh -s {{scope}}\nThis preserves existing scopes and adds the missing one."
   }
 }
