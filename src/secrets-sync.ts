@@ -771,9 +771,14 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
       const stderr = proc.stderr?.toString() || '';
       // REQ-009: Detect scope-related 403 and enhance error message
       if (/403|admin rights|Resource not accessible/i.test(stderr)) {
+        // F-001: Context-aware scope suggestion — 'admin rights' indicates org scope issue,
+        // generic 403 could be either repo or admin:org, so suggest both
+        const scopeSuggestion = /admin rights/i.test(stderr)
+          ? 'admin:org'
+          : 'repo,admin:org';
         throw new Error(
           `gh secret set ${name} failed: Token may be missing required scope.\n` +
-          `   Fix: gh auth refresh -s admin:org\n` +
+          `   Fix: gh auth refresh -s ${scopeSuggestion}\n` +
           `   Original error: ${stderr.trim()}`
         );
       }
@@ -790,9 +795,14 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
       if (/not found/i.test(stderr)) return;
       // REQ-009: Detect scope-related 403 and enhance error message
       if (/403|admin rights|Resource not accessible/i.test(stderr)) {
+        // F-001: Context-aware scope suggestion — 'admin rights' indicates org scope issue,
+        // generic 403 could be either repo or admin:org, so suggest both
+        const scopeSuggestion = /admin rights/i.test(stderr)
+          ? 'admin:org'
+          : 'repo,admin:org';
         throw new Error(
           `gh secret delete ${name} failed: Token may be missing required scope.\n` +
-          `   Fix: gh auth refresh -s admin:org\n` +
+          `   Fix: gh auth refresh -s ${scopeSuggestion}\n` +
           `   Original error: ${stderr.trim()}`
         );
       }

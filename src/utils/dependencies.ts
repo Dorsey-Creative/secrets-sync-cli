@@ -131,7 +131,35 @@ export const ghAuthCheck: DependencyCheck = {
 // --- GitHub Token Scope Check (REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-014) ---
 
 /** Valid GitHub username regex: alphanumeric + hyphen, max 39 chars, no start/end hyphen (REQ-004) */
-const GITHUB_OWNER_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
+export const GITHUB_OWNER_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
+
+/**
+ * Parse token scopes from raw `gh api --include /` stdout output. (F-002: extracted for testability)
+ * Returns parsed scope array, or null when scopes are undetermined.
+ */
+export function parseTokenScopesFromOutput(stdout: string): string[] | null {
+  const match = stdout.match(/^x-oauth-scopes:[ \t]*(.*)/im);
+  if (!match) return null; // REQ-006: fine-grained PAT or absent header
+  const raw = match[1].trim();
+  if (!raw) return null; // REQ-006: empty scopes header
+  return raw.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+/**
+ * Parse owner type from raw `gh api /users/{owner} --jq ".type"` output. (F-002: extracted for testability)
+ * Returns true for Organization, false otherwise.
+ */
+export function parseOwnerType(typeOutput: string): boolean {
+  return typeOutput.trim() === 'Organization';
+}
+
+/**
+ * Validate an owner string against GitHub username rules. (F-002: extracted for testability)
+ * Returns true if valid, false otherwise.
+ */
+export function isValidGitHubOwner(owner: string): boolean {
+  return GITHUB_OWNER_REGEX.test(owner);
+}
 
 /**
  * Fetch token scopes via the X-Oauth-Scopes response header. (REQ-001, REQ-014)
@@ -142,11 +170,7 @@ export async function getTokenScopes(): Promise<string[] | null> {
     const { stdout } = await execWithTimeout('gh api --include /', {
       operation: 'token scope check',
     });
-    const match = stdout.match(/x-oauth-scopes:\s*(.+)/i);
-    if (!match) return null; // REQ-006: fine-grained PAT or absent header
-    const raw = match[1].trim();
-    if (!raw) return null; // REQ-006: empty scopes header
-    return raw.split(',').map(s => s.trim()).filter(Boolean);
+    return parseTokenScopesFromOutput(stdout);
   } catch {
     return null; // REQ-006: graceful pass on errors
   }
@@ -167,14 +191,14 @@ export async function isOrgRepo(): Promise<boolean | null> {
     if (!owner) return null;
 
     // Sanitize owner to prevent command injection (REQ-004)
-    if (!GITHUB_OWNER_REGEX.test(owner)) return null;
+    if (!isValidGitHubOwner(owner)) return null;
 
     // Step 2: Check if owner is an organization
     const { stdout: typeOut } = await execWithTimeout(
       `gh api /users/${owner} --jq ".type"`,
       { operation: 'owner type check' }
     );
-    return typeOut.trim() === 'Organization';
+    return parseOwnerType(typeOut);
   } catch {
     return null; // REQ-006: graceful pass on failure
   }
