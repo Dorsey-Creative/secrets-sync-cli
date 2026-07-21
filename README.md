@@ -158,7 +158,10 @@ secrets-sync --env staging
 # Fix .gitignore patterns
 secrets-sync --fix-gitignore
 
-# Non-interactive mode (requires --overwrite)
+# Non-interactive mode (approves all planned changes without prompts)
+secrets-sync --no-confirm
+
+# Force re-upload all secrets without prompts
 secrets-sync --overwrite --no-confirm
 ```
 

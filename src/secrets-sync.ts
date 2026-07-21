@@ -1616,6 +1616,30 @@ async function main() {
 
   printDiffSummary(plan);
 
+  // REQ-008: Secrets limit pre-flight check (runs in all modes including mock — data-driven)
+  const creates = plan.filter(p => p.action === 'create').length;
+  const deletes = plan.filter(p => p.action === 'delete').length;
+  const projectedTotal = existing.size + creates - deletes; // REQ-012: Net-change formula
+  const REPO_SECRET_LIMIT = 100;
+
+  if (projectedTotal > REPO_SECRET_LIMIT) {
+    if (existing.size === 0 && creates > 0) {
+      // REQ-013: adapter.list() may have failed — cannot trust count
+      console.warn(`⚠️  Cannot verify secrets limit (existing count is 0 — gh secret list may have failed).`);
+    } else if (flags.dryRun) {
+      // REQ-010: Warn in dry-run mode but don't block
+      console.warn(`⚠️  Plan would exceed GitHub repository secrets limit (${REPO_SECRET_LIMIT}).`);
+      console.warn(`   Current: ${existing.size}, Creating: +${creates}, Deleting: -${deletes}, Projected: ${projectedTotal}`);
+    } else {
+      // REQ-009: Hard block in normal mode
+      console.error(`❌ Would exceed GitHub repository secrets limit (${REPO_SECRET_LIMIT}).`);
+      console.error(`   Current: ${existing.size}, Creating: +${creates}, Deleting: -${deletes}, Projected: ${projectedTotal}`);
+      console.error(`   Reduce the number of secrets or remove unused ones before syncing.`);
+      process.exitCode = 1;
+      return;
+    }
+  }
+
   // Confirmation workflow (no mutations yet)
   const mutating = plan.filter((p) => p.action === 'create' || p.action === 'update' || p.action === 'delete');
   if (flags.dryRun) {
@@ -1633,9 +1657,8 @@ async function main() {
     approved = mutating; // all changes approved without prompts
     console.log('--overwrite supplied: approving all planned changes without prompts.');
   } else if (flags.noConfirm) {
-    console.error('--no-confirm supplied without --overwrite; refusing to prompt. Aborting with no changes.');
-    process.exitCode = 1;
-    return;
+    approved = mutating; // REQ-001: --no-confirm implies consent for all planned changes
+    console.log('--no-confirm supplied: approving all planned changes without prompts.');
   } else {
     const rl = createInterface({ input, output });
     try {
