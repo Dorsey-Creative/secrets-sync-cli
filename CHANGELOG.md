@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-20
+
+### Added
+
+- **Empty value validation**: Detect empty `.env` values before mutation with fail-fast behavior.
+  - Warns on first empty value found (default mode).
+  - `--strict-empty-values` flag exits nonzero before any GitHub mutation.
+  - `--allow-empty <pattern>` flag and `allowEmptySecrets` config for intentional empties.
+  - Respects `skipSecrets` patterns, deprecated keys, and production canonical precedence.
+- **GitHub token scope pre-flight check**: Detect missing `gh` CLI token scopes before attempting secret sync.
+  - Checks `repo` scope (always) and `admin:org` scope (org-owned repos only).
+  - Actionable error messages with copy-pasteable `gh auth refresh` fix commands.
+  - Graceful handling of fine-grained PATs and network failures.
+  - Context-aware 403 error enhancement at runtime with scope fix suggestions.
+- **GitHub secrets limit check**: Warn or block when sync would exceed the 100 repository secret limit.
+  - Calculates projected total (existing + creates − deletes) before mutation.
+  - Blocks with exit 1 in normal mode; warns in dry-run mode.
+- Security pipeline with CodeQL SAST, OSV dependency vulnerability scanning, and Gitleaks secret scanning.
+- Dependabot configuration for Bun dependencies and GitHub Actions updates.
+- Environment configuration section in `env-config.yml` for test and CI/CD settings.
+
+### Fixed
+
+- **`--no-confirm` flag now implies consent** for all planned actions (creates, updates, deletes) instead of aborting. Previously required `--overwrite` alongside it, defeating its purpose in CI pipelines.
+- Updated vulnerable dependency resolutions reported by OSV (`yaml` and transitive `picomatch`).
+
 ## [1.2.5] - 2025-12-11
 
 ### Fixed

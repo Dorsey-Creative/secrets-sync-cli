@@ -46,14 +46,14 @@ Uses production (`.env`) as the canonical source of truth.
 **Production file priority:**
 
 1. `.env` - Primary canonical file
-2. `.env.production` - Optional overrides (layered by default)
-3. `.env.prod` - Alternative production file
-4. `.env.prd` - Alternative production file
+2. `.env.production` - Optional production additions (layered by default)
+3. `.env.prod` - Alternative production additions
+4. `.env.prd` - Alternative production additions
 
 **Layering behavior:**
 
 ```bash
-# Default: .env.production overrides .env
+# Default: .env.production adds keys missing from .env
 secrets-sync --dry-run
 
 # Force mode: Use prefixes instead (PROD_SECRET_KEY)
@@ -304,13 +304,14 @@ skipSecrets:
 | `flags.skipUnchanged`   | boolean | Skip secrets with matching hashes         |
 | `flags.backupRetention` | number  | Number of backups to keep (default: 3)    |
 | `skipSecrets`           | array   | Secret names to skip (supports wildcards) |
+| `environment`           | object  | Environment variable configuration        |
 
 **Wildcard support:**
 
 ```yaml
 skipSecrets:
   - TEST_*      # Skips TEST_API_KEY, TEST_SECRET, etc.
-  - *_LOCAL     # Skips DB_LOCAL, API_LOCAL, etc.
+  - '*_LOCAL'     # Skips DB_LOCAL, API_LOCAL, etc.
   - DEBUG       # Exact match only
 ```
 
@@ -345,7 +346,7 @@ Multiple production files can be layered or prefixed.
 **Default behavior (layering):**
 
 ```bash
-# .env.production overrides .env
+# .env.production adds keys missing from .env; .env keeps duplicate keys
 secrets-sync --dry-run
 ```
 
@@ -367,7 +368,7 @@ secrets-sync --force --dry-run
   PROD_SECRET=prod_only
 
 # Default (layering):
-API_KEY=prod_override
+API_KEY=base_value
 PROD_SECRET=prod_only
 
 # Force mode (prefixes):
@@ -416,6 +417,40 @@ flags:
 | HashiCorp Vault        | ❌    | 🔜 [#52](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/52) |
 | GitLab CI/CD           | ❌    | 🔜 [#54](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/54) |
 | Org-level secrets      | ❌    | 🔜 [#53](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/53) |
+
+## Empty Value Validation
+
+Detects empty secret values before they can be synced to GitHub Actions.
+
+**How it works:**
+
+- After parsing env files and applying production layering, validates all values
+- Detects empty (`KEY=`), whitespace-only, and quoted empty (`KEY=""`) values
+- Warns on the first empty value found (fail-fast)
+- Respects `skipSecrets`, `allowEmptySecrets`, and deprecated key exclusions
+
+**CLI flags:**
+
+```bash
+# Fail on empty values (for CI)
+secrets-sync --strict-empty-values --dry-run
+
+# Allow specific keys to be empty
+secrets-sync --allow-empty OPTIONAL_KEY --dry-run
+secrets-sync --allow-empty "KEY_A,KEY_B" --dry-run
+```
+
+**Configuration:**
+
+```yaml
+# env-config.yml
+validation:
+  strictEmptyValues: true
+
+allowEmptySecrets:
+  - OPTIONAL_PLACEHOLDER
+  - DISABLED_*
+```
 
 ## Limitations
 

@@ -7,7 +7,7 @@ import './bootstrap';
  *
  * Implements:
  *  - EnvDirectoryScanner with ignore rules and deterministic ordering (production first)
- *  - ProductionResolver layering canonical .env with optional production overrides (opt-in prefix mode available)
+ *  - ProductionResolver layering canonical .env with optional production additions (opt-in prefix mode available)
  *  - Dotenv parsing into key/value maps (no values logged)
  *  - Drift detection: warn when non-production has keys missing from production
  */
@@ -19,7 +19,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { Logger } from './utils/logger';
-import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck } from './utils/dependencies';
+import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck, getGhTokenScopeCheck } from './utils/dependencies';
 import { safeReadFile, safeWriteFile, safeReadDir, safeExists } from './utils/safeFs';
 import { buildErrorMessage } from './utils/errorMessages';
 import { fixGitignore, validateGitignore } from './utils/gitignoreValidator';
@@ -39,6 +39,9 @@ interface Flags {
   help?: boolean;
   version?: boolean;
   fixGitignore?: boolean;
+  // REQ-003, REQ-006: Empty value validation flags
+  strictEmptyValues?: boolean;
+  allowEmpty?: string[];
 }
 
 const DEFAULTS = {
@@ -64,6 +67,17 @@ type EnvConfig = {
   flags?: Partial<Flags>;
   skipSecrets?: string[];
   backupRetention?: number;
+  environment?: {
+    skipDependencyCheck?: boolean;
+    skipGitignoreCheck?: boolean;
+    timeout?: number;
+    mock?: boolean;
+  };
+  // REQ-006: Empty value validation config
+  validation?: {
+    strictEmptyValues?: boolean;
+  };
+  allowEmptySecrets?: string[];
 };
 
 type RequiredSecretConfig = {
@@ -132,9 +146,12 @@ function loadEnvConfig(initialDir: string): EnvConfig {
 
 function parseEnvConfig(raw: string): EnvConfig {
   const config: EnvConfig = {};
-  let currentSection: 'flags' | 'skipSecrets' | null = null;
+  let currentSection: 'flags' | 'skipSecrets' | 'environment' | 'validation' | 'allowEmptySecrets' | null = null;
   const skipSecrets: string[] = [];
+  const allowEmptySecrets: string[] = [];
   const flags: Record<string, string> = {};
+  const environment: Record<string, string> = {};
+  const validation: Record<string, string> = {};
 
   const lines = raw.split(/\r?\n/);
   for (const lineRaw of lines) {
@@ -145,6 +162,9 @@ function parseEnvConfig(raw: string): EnvConfig {
       const section = line.slice(0, line.indexOf(':')).trim();
       if (section === 'flags') currentSection = 'flags';
       else if (section === 'skipSecrets') currentSection = 'skipSecrets';
+      else if (section === 'environment') currentSection = 'environment';
+      else if (section === 'validation') currentSection = 'validation';
+      else if (section === 'allowEmptySecrets') currentSection = 'allowEmptySecrets';
       else currentSection = null;
       continue;
     }
@@ -172,11 +192,40 @@ function parseEnvConfig(raw: string): EnvConfig {
       continue;
     }
 
+    // REQ-006: Parse allowEmptySecrets list
+    if (currentSection === 'allowEmptySecrets' && line.startsWith('-')) {
+      let value = line.slice(1).trim();
+      const commentIndex = value.indexOf('#');
+      if (commentIndex !== -1) {
+        value = value.slice(0, commentIndex).trim();
+      }
+      if (value) allowEmptySecrets.push(value);
+      continue;
+    }
+
     if (currentSection === 'flags' && line.includes(':')) {
       const [keyRaw, valueRaw] = line.split(':', 2);
       const key = keyRaw.trim();
       const value = valueRaw.trim();
       if (key) flags[key] = value;
+      continue;
+    }
+
+    if (currentSection === 'environment' && line.includes(':')) {
+      const [keyRaw, valueRaw] = line.split(':', 2);
+      const key = keyRaw.trim();
+      const value = valueRaw.trim();
+      if (key) environment[key] = value;
+      continue;
+    }
+
+    // REQ-006: Parse validation section key-value pairs
+    if (currentSection === 'validation' && line.includes(':')) {
+      const [keyRaw, valueRaw] = line.split(':', 2);
+      const key = keyRaw.trim();
+      const value = valueRaw.trim();
+      if (key) validation[key] = value;
+      continue;
     }
   }
 
@@ -192,8 +241,31 @@ function parseEnvConfig(raw: string): EnvConfig {
     }
   }
 
+  if (Object.keys(environment).length > 0) {
+    config.environment = {};
+    if (environment.skipDependencyCheck) config.environment.skipDependencyCheck = parseBoolean(environment.skipDependencyCheck);
+    if (environment.skipGitignoreCheck) config.environment.skipGitignoreCheck = parseBoolean(environment.skipGitignoreCheck);
+    if (environment.mock) config.environment.mock = parseBoolean(environment.mock);
+    if (environment.timeout) {
+      const num = parseInt(environment.timeout, 10);
+      if (!isNaN(num)) config.environment.timeout = num;
+    }
+  }
+
   if (skipSecrets.length > 0) {
     config.skipSecrets = skipSecrets;
+  }
+
+  // REQ-006: Parse validation config
+  if (Object.keys(validation).length > 0) {
+    config.validation = {};
+    if (validation.strictEmptyValues) {
+      config.validation.strictEmptyValues = parseBoolean(validation.strictEmptyValues);
+    }
+  }
+
+  if (allowEmptySecrets.length > 0) {
+    config.allowEmptySecrets = allowEmptySecrets;
   }
 
   return config;
@@ -314,6 +386,8 @@ export function printHelp() {
   console.log('  --skip-unchanged     Skip secrets with matching hashes');
   console.log('  --no-confirm         Non-interactive mode');
   console.log('  --fix-gitignore      Add missing .gitignore patterns');
+  console.log('  --strict-empty-values  Fail on empty secret values');
+  console.log('  --allow-empty <pat>  Allow empty value for key/pattern');
   console.log('  --verbose            Show detailed output');
   console.log('  --help, -h           Show this help');
   console.log('  --version, -v        Show version');
@@ -350,6 +424,8 @@ export function parseFlags(argv: string[]): Flags | { contextualHelp: string } {
     debugLogger: false,
     help: false,
     version: false,
+    strictEmptyValues: false,
+    allowEmpty: [],
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -393,6 +469,19 @@ export function parseFlags(argv: string[]): Flags | { contextualHelp: string } {
         break;
       case '--fix-gitignore':
         flags.fixGitignore = true;
+        break;
+      // REQ-003: Strict empty value validation flag
+      case '--strict-empty-values':
+        flags.strictEmptyValues = true;
+        break;
+      // REQ-006: Allow-empty flag (repeatable, comma-separated)
+      case '--allow-empty':
+        {
+          const val = argv[++i];
+          if (val) {
+            flags.allowEmpty!.push(...val.split(',').map(s => s.trim()).filter(Boolean));
+          }
+        }
         break;
       default:
         if (arg.startsWith('-')) {
@@ -483,7 +572,7 @@ function resolveProduction(files: EnvFile[], force: boolean) {
   if (prod.length === 1) {
     return { canonical: prod[0], others: [] as EnvFile[] };
   }
-  // multiple production files – layer overrides by default, optional prefix mode with --force
+  // multiple production files - layer additive variants by default, optional prefix mode with --force
   const canonical = prod.find((p) => p.name === '.env') || prod[0];
   const others = prod.filter((p) => p !== canonical);
   if (others.length > 0) {
@@ -498,7 +587,7 @@ function resolveProduction(files: EnvFile[], force: boolean) {
       logInfo(`Prefixing production variants (${forcedList}); ${canonical.name} remains canonical.`);
     } else {
       const layeredNames = others.map((p) => p.name).join(', ');
-      logInfo(`Layering production overrides: ${canonical.name} <- ${layeredNames}`);
+      logInfo(`Layering production variants: ${canonical.name} <- ${layeredNames}`);
     }
   }
   return { canonical, others };
@@ -618,7 +707,7 @@ function computePrefix(f: EnvFile, canonical: EnvFile | undefined, force: boolea
       const envName = token.toLowerCase() || 'production';
       return { envName, prefix };
     }
-    // Production overrides are layered before summaries are built, so we should never hit this,
+    // Production variants are layered before summaries are built, so we should never hit this,
     // but return production/no prefix defensively.
     return { envName: 'production', prefix: '' };
   }
@@ -680,6 +769,19 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
     const proc = spawnSync('gh', ['secret', 'set', name, '--body', value]);
     if (proc.status !== 0) {
       const stderr = proc.stderr?.toString() || '';
+      // REQ-009: Detect scope-related 403 and enhance error message
+      if (/403|admin rights|Resource not accessible/i.test(stderr)) {
+        // F-001: Context-aware scope suggestion — 'admin rights' indicates org scope issue,
+        // generic 403 could be either repo or admin:org, so suggest both
+        const scopeSuggestion = /admin rights/i.test(stderr)
+          ? 'admin:org'
+          : 'repo,admin:org';
+        throw new Error(
+          `gh secret set ${name} failed: Token may be missing required scope.\n` +
+          `   Fix: gh auth refresh -s ${scopeSuggestion}\n` +
+          `   Original error: ${stderr.trim()}`
+        );
+      }
       throw new Error(`gh secret set ${name} failed: ${stderr.trim()}`);
     }
   }
@@ -691,6 +793,19 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
       const stderr = proc.stderr?.toString() || '';
       // Treat not found as success (idempotent)
       if (/not found/i.test(stderr)) return;
+      // REQ-009: Detect scope-related 403 and enhance error message
+      if (/403|admin rights|Resource not accessible/i.test(stderr)) {
+        // F-001: Context-aware scope suggestion — 'admin rights' indicates org scope issue,
+        // generic 403 could be either repo or admin:org, so suggest both
+        const scopeSuggestion = /admin rights/i.test(stderr)
+          ? 'admin:org'
+          : 'repo,admin:org';
+        throw new Error(
+          `gh secret delete ${name} failed: Token may be missing required scope.\n` +
+          `   Fix: gh auth refresh -s ${scopeSuggestion}\n` +
+          `   Original error: ${stderr.trim()}`
+        );
+      }
       throw new Error(`gh secret delete ${name} failed: ${stderr.trim()}`);
     }
   }
@@ -1127,6 +1242,52 @@ function cleanupOldBackups(bakDir: string, fileName: string, keepCount: number) 
   }
 }
 
+// REQ-001, REQ-002, REQ-003: Fail-fast empty value validation helper
+// REQ-005, REQ-006, REQ-009: Respects skipSecrets, allowEmpty, deprecated keys
+// REQ-011: No runtime dependencies added
+function validateEmptyValues(
+  envSummaries: EnvSummary[],
+  skipSecrets: Set<string>,
+  allowEmptyPatterns: Set<string>,
+  strictEmptyValues: boolean,
+  deprecatedKeys: string[]
+): boolean {
+  const deprecatedSet = new Set(deprecatedKeys.map(k => k.toUpperCase()));
+
+  for (const summary of envSummaries) {
+    for (const [key, value] of Object.entries(summary.data)) {
+      // REQ-001: Empty = value.trim().length === 0
+      if (value.trim().length !== 0) continue;
+
+      const upperKey = key.toUpperCase();
+
+      // REQ-009: Skip deprecated keys
+      if (deprecatedSet.has(upperKey)) continue;
+
+      // REQ-005: Skip keys matching skipSecrets patterns
+      if (matchesSkipPattern(key, skipSecrets)) continue;
+
+      // REQ-006: Skip keys matching allowEmpty patterns
+      if (matchesSkipPattern(key, allowEmptyPatterns)) continue;
+
+      // REQ-010: Output identifies key, file, env without printing secret values
+      const msg = `[WARN][Empty] Empty value for ${key} in ${summary.file} (env: ${summary.name}). Use --allow-empty ${key} or env-config.yml allowEmptySecrets to allow this intentionally.`;
+
+      if (strictEmptyValues) {
+        // REQ-003, REQ-012: Strict mode exits nonzero before mutation
+        logWarn(msg);
+        process.exitCode = 1;
+        return false;
+      }
+
+      // REQ-002: Warn by default on first finding
+      logWarn(msg);
+      return true;
+    }
+  }
+  return true;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const result = parseFlags(args);
@@ -1150,17 +1311,43 @@ async function main() {
     return;
   }
 
+  const initialDir = flags.dir ?? DEFAULTS.dir;
+  const envConfig = loadEnvConfig(initialDir);
+
+  // Apply environment configuration from config file if not already set in process.env
+  if (envConfig.environment) {
+    if (envConfig.environment.skipDependencyCheck !== undefined && !process.env.SKIP_DEPENDENCY_CHECK) {
+      process.env.SKIP_DEPENDENCY_CHECK = envConfig.environment.skipDependencyCheck ? '1' : '';
+    }
+    if (envConfig.environment.skipGitignoreCheck !== undefined && !process.env.SKIP_GITIGNORE_CHECK) {
+      process.env.SKIP_GITIGNORE_CHECK = envConfig.environment.skipGitignoreCheck ? '1' : '';
+    }
+    if (envConfig.environment.mock !== undefined && !process.env.SECRETS_SYNC_MOCK) {
+      process.env.SECRETS_SYNC_MOCK = envConfig.environment.mock ? '1' : '';
+    }
+    if (envConfig.environment.timeout !== undefined && !process.env.SECRETS_SYNC_TIMEOUT) {
+      process.env.SECRETS_SYNC_TIMEOUT = String(envConfig.environment.timeout);
+    }
+  }
+
   // Initialize logger with verbose flag
   logger = new Logger({ verbose: flags.verbose, debugLogger: flags.debugLogger });
+  
+  // Log environment config after logger is initialized
+  if (envConfig.environment) {
+    logger.debug(`Applied environment config: ${JSON.stringify(envConfig.environment)}`);
+  }
+  
   logDebug(`Parsed flags: ${JSON.stringify(flags)}`);
 
   // Validate dependencies (unless skipped for CI)
-  if (!process.env.SKIP_DEPENDENCY_CHECK) {
+  if (!process.env.SKIP_DEPENDENCY_CHECK || process.env.SKIP_DEPENDENCY_CHECK === '0') {
     logDebug('Running dependency checks...');
     const result = await validateDependencies([
       nodeVersionCheck,
       ghCliCheck,
       ghAuthCheck,
+      getGhTokenScopeCheck(), // REQ-007: scope check as DependencyCheck
     ]);
 
     if (!result.success) {
@@ -1183,8 +1370,6 @@ async function main() {
     logDebug('Skipping dependency checks (SKIP_DEPENDENCY_CHECK set)');
   }
 
-  const initialDir = flags.dir ?? DEFAULTS.dir;
-  const envConfig = loadEnvConfig(initialDir);
   applyConfigFlags(flags, envConfig.flags);
   const dir = flags.dir ?? DEFAULTS.dir;
   
@@ -1200,6 +1385,14 @@ async function main() {
   
   const skipSecrets = new Set<string>((envConfig.skipSecrets ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean));
   const backupRetention = envConfig.backupRetention ?? 3;
+
+  // REQ-006: Merge strict empty values - CLI takes precedence over config
+  const strictEmptyValues = flags.strictEmptyValues || (envConfig.validation?.strictEmptyValues ?? false);
+  // REQ-006: Merge allow-empty patterns from CLI and config (additive)
+  const allowEmptyPatterns = new Set<string>([
+    ...(flags.allowEmpty ?? []).map(s => s.trim().toUpperCase()),
+    ...(envConfig.allowEmptySecrets ?? []).map(s => s.trim().toUpperCase()),
+  ].filter(Boolean));
 
   // Handle --fix-gitignore flag
   if (flags.fixGitignore) {
@@ -1218,7 +1411,7 @@ async function main() {
   printHeader();
 
   // Validate .gitignore (unless skipped)
-  if (!process.env.SKIP_GITIGNORE_CHECK) {
+  if (!process.env.SKIP_GITIGNORE_CHECK || process.env.SKIP_GITIGNORE_CHECK === '0') {
     const gitignoreResult = validateGitignore();
     if (!gitignoreResult.isValid) {
       console.log(`${COLORS.yellow}${COLORS.bold}⚠️  Security Warning: Your .gitignore may not protect secrets${COLORS.reset}\n`);
@@ -1305,7 +1498,7 @@ async function main() {
       }
       for (const [k, v] of Object.entries(data)) {
         if (k in productionData) {
-          logWarn(`Production override ${f.name} attempted to change ${k}; keeping canonical value from ${canonical?.name ?? '.env'}.`);
+          logWarn(`Production variant ${f.name} attempted to change ${k}; keeping canonical value from ${canonical?.name ?? '.env'}.`);
           continue;
         }
         productionData[k] = v;
@@ -1367,6 +1560,13 @@ async function main() {
     }
   }
 
+  // REQ-002, REQ-003, REQ-004, REQ-012: Validate empty values after production layering, before mutation
+  const emptyValid = validateEmptyValues(envSummaries, skipSecrets, allowEmptyPatterns, strictEmptyValues, DEPRECATED_KEYS);
+  if (!emptyValid && strictEmptyValues) {
+    // REQ-003, REQ-004: In strict mode, return before any mutation/diff in both dry-run and normal sync
+    return;
+  }
+
   // Compute diff (use mock adapter only when MOCK_MODE is explicitly set)
   const MOCK_MODE = process.env.SECRETS_SYNC_MOCK === '1';
   let adapter: GitHubSecretsAdapter;
@@ -1416,6 +1616,30 @@ async function main() {
 
   printDiffSummary(plan);
 
+  // REQ-008: Secrets limit pre-flight check (runs in all modes including mock — data-driven)
+  const creates = plan.filter(p => p.action === 'create').length;
+  const deletes = plan.filter(p => p.action === 'delete').length;
+  const projectedTotal = existing.size + creates - deletes; // REQ-012: Net-change formula
+  const REPO_SECRET_LIMIT = 100;
+
+  if (projectedTotal > REPO_SECRET_LIMIT) {
+    if (existing.size === 0 && creates > 0) {
+      // REQ-013: adapter.list() may have failed — cannot trust count
+      console.warn(`⚠️  Cannot verify secrets limit (existing count is 0 — gh secret list may have failed).`);
+    } else if (flags.dryRun) {
+      // REQ-010: Warn in dry-run mode but don't block
+      console.warn(`⚠️  Plan would exceed GitHub repository secrets limit (${REPO_SECRET_LIMIT}).`);
+      console.warn(`   Current: ${existing.size}, Creating: +${creates}, Deleting: -${deletes}, Projected: ${projectedTotal}`);
+    } else {
+      // REQ-009: Hard block in normal mode
+      console.error(`❌ Would exceed GitHub repository secrets limit (${REPO_SECRET_LIMIT}).`);
+      console.error(`   Current: ${existing.size}, Creating: +${creates}, Deleting: -${deletes}, Projected: ${projectedTotal}`);
+      console.error(`   Reduce the number of secrets or remove unused ones before syncing.`);
+      process.exitCode = 1;
+      return;
+    }
+  }
+
   // Confirmation workflow (no mutations yet)
   const mutating = plan.filter((p) => p.action === 'create' || p.action === 'update' || p.action === 'delete');
   if (flags.dryRun) {
@@ -1433,9 +1657,8 @@ async function main() {
     approved = mutating; // all changes approved without prompts
     console.log('--overwrite supplied: approving all planned changes without prompts.');
   } else if (flags.noConfirm) {
-    console.error('--no-confirm supplied without --overwrite; refusing to prompt. Aborting with no changes.');
-    process.exitCode = 1;
-    return;
+    approved = mutating; // REQ-001: --no-confirm implies consent for all planned changes
+    console.log('--no-confirm supplied: approving all planned changes without prompts.');
   } else {
     const rl = createInterface({ input, output });
     try {

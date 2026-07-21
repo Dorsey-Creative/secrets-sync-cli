@@ -53,7 +53,7 @@ your-project/
 ├── config/
 │   └── env/
 │       ├── .env                # production (canonical)
-│       ├── .env.production     # optional overrides
+│       ├── .env.production     # optional production additions
 │       ├── .env.staging
 │       ├── .env.development
 │       └── required-secrets.json (optional)
@@ -62,7 +62,7 @@ your-project/
 
 ## What it does
 1. Discover `.env*` files under the configured directory (skips templates/examples).
-2. Treat `.env` as canonical; compare other envs against it for missing or extra keys.
+2. Treat `.env` as canonical; production variants such as `.env.production`, `.env.prod`, and `.env.prd` add missing keys but do not replace `.env` values.
 3. Optionally validate against `required-secrets.json`.
 4. Show a diff and audit summary; in non-dry runs, write updates and timestamped backups.
 5. When enabled, push secrets to GitHub Actions using the GitHub CLI (`gh secret` commands).
@@ -140,6 +140,8 @@ Works with short flags too: `secrets-sync -f --help`
 | `--skip-unchanged` | Skip secrets with matching hashes |
 | `--no-confirm` | Non-interactive mode |
 | `--fix-gitignore` | Add missing .gitignore patterns |
+| `--strict-empty-values` | Fail on empty secret values |
+| `--allow-empty <pat>` | Allow empty value for key/pattern |
 | `--verbose` | Show detailed output |
 | `--help, -h` | Show help message |
 | `--version, -v` | Show version |
@@ -156,7 +158,10 @@ secrets-sync --env staging
 # Fix .gitignore patterns
 secrets-sync --fix-gitignore
 
-# Non-interactive mode (requires --overwrite)
+# Non-interactive mode (approves all planned changes without prompts)
+secrets-sync --no-confirm
+
+# Force re-upload all secrets without prompts
 secrets-sync --overwrite --no-confirm
 ```
 

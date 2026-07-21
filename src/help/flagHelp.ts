@@ -108,11 +108,11 @@ const FLAG_HELP: Record<string, FlagHelp> = {
       'secrets-sync --force --env production',
     ],
     whenToUse: [
-      'You want explicit prefixes for production overrides',
+      'You want explicit prefixes for production variant files',
       'You need to distinguish between .env and .env.prod secrets',
     ],
     whenNotToUse: [
-      'You want layered overrides (default behavior)',
+      'You want production variants layered as additive files (default behavior)',
     ],
     relatedFlags: ['--overwrite', '--dry-run'],
     docsUrl: 'https://github.com/Dorsey-Creative/secrets-sync-cli#force',

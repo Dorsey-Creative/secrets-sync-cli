@@ -157,7 +157,7 @@ secrets-sync --force --dry-run
 ```
 
 **Difference:**
-- **Default:** `.env.production` overrides `.env` values
+- **Default:** `.env.production` adds production keys that are missing from `.env`; duplicate keys keep the `.env` value and emit a warning
 - **Force:** `.env.production` values get `PROD_` prefix
 
 **Example:**
@@ -167,9 +167,10 @@ secrets-sync --force --dry-run
 
 .env.production:
   API_KEY=prod
+  PROD_ONLY=enabled
 
-# Default: API_KEY=prod
-# Force: API_KEY=base, PROD_API_KEY=prod
+# Default: API_KEY=base, PROD_ONLY=enabled
+# Force: API_KEY=base, PROD_API_KEY=prod, PROD_PROD_ONLY=enabled
 ```
 
 #### `--skip-unchanged`
@@ -203,6 +204,27 @@ secrets-sync --no-confirm  # ERROR
 - Automated scripts
 - CI/CD pipelines
 - Cron jobs
+
+### Validation Options
+
+#### `--strict-empty-values`
+Fail with nonzero exit code when empty secret values are detected. Useful for CI gating.
+
+```bash
+# Block sync when empty values exist
+secrets-sync --strict-empty-values --dry-run
+```
+
+#### `--allow-empty <pattern>`
+Allow specific keys to have empty values. Repeatable and comma-separated.
+
+```bash
+# Allow one key
+secrets-sync --allow-empty OPTIONAL_KEY --dry-run
+
+# Allow multiple keys
+secrets-sync --allow-empty "KEY_A,KEY_B" --allow-empty KEY_C --dry-run
+```
 
 ### Utility Options
 
@@ -261,7 +283,7 @@ secrets-sync -v
 
 Control tool behavior via environment variables.
 
-> **Note:** Currently, environment variables must be set via shell. Support for configuring these in `env-config.yml` is planned in [issue #55](https://github.com/Dorsey-Creative/secrets-sync-cli/issues/55).
+> **Note:** Environment variables can be set via shell or in `env-config.yml` (see [Configuration File](#configuration-file)). Shell environment variables take priority over `env-config.yml`.
 
 ### `SKIP_DEPENDENCY_CHECK`
 
@@ -379,7 +401,14 @@ skipSecrets:
   - DEBUG
   - LOCAL_ONLY_VAR
   - TEST_*
-  - *_LOCAL
+  - '*_LOCAL'
+
+# Environment variable configuration
+environment:
+  skipDependencyCheck: true
+  skipGitignoreCheck: false
+  timeout: 60000
+  mock: false
 ```
 
 ### Options Reference
@@ -418,23 +447,36 @@ Array of secret names to skip (supports wildcards).
 skipSecrets:
   - DEBUG              # Exact match
   - TEST_*             # Prefix wildcard
-  - *_LOCAL            # Suffix wildcard
-  - *_TEMP_*           # Contains wildcard
+  - '*_LOCAL'          # Suffix wildcard
+  - '*_TEMP_*'         # Contains wildcard
 ```
 
 **Type:** `array<string>`  
 **Default:** `[]`
 
-**Wildcard patterns:**
-- `TEST_*` - Matches `TEST_API_KEY`, `TEST_SECRET`, etc.
-- `*_LOCAL` - Matches `DB_LOCAL`, `API_LOCAL`, etc.
-- `*_TEMP_*` - Matches `API_TEMP_KEY`, `DB_TEMP_URL`, etc.
+#### `environment`
+
+Section for configuring environment variables.
+
+```yaml
+environment:
+  skipDependencyCheck: true
+  skipGitignoreCheck: false
+  timeout: 60000
+  mock: false
+```
+
+- `skipDependencyCheck`: (boolean) Skip `gh` CLI and auth checks.
+- `skipGitignoreCheck`: (boolean) Skip `.gitignore` validation.
+- `timeout`: (number) Network timeout in milliseconds.
+- `mock`: (boolean) Enable mock mode (for testing).
 
 ### Configuration Priority
 
-1. CLI flags (highest priority)
-2. Configuration file (`env-config.yml`)
-3. Default values (lowest priority)
+1. Shell environment variables (highest priority)
+2. CLI flags
+3. Configuration file (`env-config.yml`)
+4. Default values (lowest priority)
 
 **Example:**
 ```bash

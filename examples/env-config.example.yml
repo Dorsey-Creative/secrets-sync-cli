@@ -13,3 +13,20 @@ skipSecrets:
   - DEBUG
   - LOCAL_ONLY_VAR
   - TEST_*  # Wildcards supported
+
+# Empty value validation
+# Set strictEmptyValues to true to fail on empty values (useful for CI)
+validation:
+  strictEmptyValues: false
+
+# Keys allowed to have empty values (suppresses warnings/strict failures)
+allowEmptySecrets:
+  - OPTIONAL_PLACEHOLDER
+  - DISABLED_*  # Wildcards supported
+
+# Environment variable configuration (overridden by shell environment)
+environment:
+  skipDependencyCheck: false
+  skipGitignoreCheck: false
+  timeout: 30000
+  mock: false
