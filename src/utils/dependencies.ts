@@ -128,6 +128,117 @@ export const ghAuthCheck: DependencyCheck = {
   installCommand: 'gh auth login',
 };
 
+// --- GitHub Token Scope Check (REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-014) ---
+
+/** Valid GitHub username regex: alphanumeric + hyphen, max 39 chars, no start/end hyphen (REQ-004) */
+const GITHUB_OWNER_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
+
+/**
+ * Fetch token scopes via the X-Oauth-Scopes response header. (REQ-001, REQ-014)
+ * Returns parsed scope array, or null when scopes are undetermined (fine-grained PATs, errors).
+ */
+export async function getTokenScopes(): Promise<string[] | null> {
+  try {
+    const { stdout } = await execWithTimeout('gh api --include /', {
+      operation: 'token scope check',
+    });
+    const match = stdout.match(/x-oauth-scopes:\s*(.+)/i);
+    if (!match) return null; // REQ-006: fine-grained PAT or absent header
+    const raw = match[1].trim();
+    if (!raw) return null; // REQ-006: empty scopes header
+    return raw.split(',').map(s => s.trim()).filter(Boolean);
+  } catch {
+    return null; // REQ-006: graceful pass on errors
+  }
+}
+
+/**
+ * Detect whether the current repo belongs to a GitHub Organization. (REQ-004, REQ-014)
+ * Returns true for org, false for user, null on failure (graceful degradation).
+ */
+export async function isOrgRepo(): Promise<boolean | null> {
+  try {
+    // Step 1: Get repo owner
+    const { stdout: ownerOut } = await execWithTimeout(
+      'gh repo view --json owner --jq ".owner.login"',
+      { operation: 'repo owner check' }
+    );
+    const owner = ownerOut.trim();
+    if (!owner) return null;
+
+    // Sanitize owner to prevent command injection (REQ-004)
+    if (!GITHUB_OWNER_REGEX.test(owner)) return null;
+
+    // Step 2: Check if owner is an organization
+    const { stdout: typeOut } = await execWithTimeout(
+      `gh api /users/${owner} --jq ".type"`,
+      { operation: 'owner type check' }
+    );
+    return typeOut.trim() === 'Organization';
+  } catch {
+    return null; // REQ-006: graceful pass on failure
+  }
+}
+
+/**
+ * Module-level state for the scope that failed.
+ * Used by the errorMessage/installCommand getters on the returned DependencyCheck.
+ */
+let missingScopeDetail: { scope: string; reason: string } | null = null;
+
+/**
+ * Factory that returns a DependencyCheck for GitHub token scopes. (REQ-007, REQ-015)
+ * Uses dynamic errorMessage/installCommand getters based on which scope was missing.
+ */
+export function getGhTokenScopeCheck(): DependencyCheck {
+  missingScopeDetail = null;
+  return {
+    name: 'gh-token-scope',
+    check: async () => {
+      // REQ-015: Mock mode bypass — no real GitHub interaction
+      if (process.env.SECRETS_SYNC_MOCK === '1') return true;
+
+      // REQ-001: Detect token scopes before any mutation
+      const scopes = await getTokenScopes();
+      if (scopes === null) {
+        // REQ-006: Cannot determine scopes — graceful pass
+        return true;
+      }
+
+      // REQ-002: Verify repo scope (always required)
+      if (!scopes.includes('repo')) {
+        missingScopeDetail = {
+          scope: 'repo',
+          reason: 'Required for managing repository secrets',
+        };
+        return false; // REQ-011: fail-fast
+      }
+
+      // REQ-003: If org repo, verify admin:org scope
+      const isOrg = await isOrgRepo();
+      if (isOrg === true && !scopes.includes('admin:org')) {
+        missingScopeDetail = {
+          scope: 'admin:org',
+          reason: 'Required for managing secrets on organization repositories',
+        };
+        return false; // REQ-011: fail-fast
+      }
+
+      return true;
+    },
+    // REQ-005: Actionable error messages with fix commands
+    get errorMessage() {
+      const scope = missingScopeDetail?.scope || 'admin:org';
+      const reason = missingScopeDetail?.reason || 'Required for managing secrets';
+      return `GitHub token missing required scope: ${scope}. ${reason}`;
+    },
+    get installCommand() {
+      const scope = missingScopeDetail?.scope || 'admin:org';
+      return `gh auth refresh -s ${scope}`;
+    },
+  };
+}
+
 /**
  * Parse Node.js version string (e.g., "v18.0.0" -> [18, 0, 0])
  */

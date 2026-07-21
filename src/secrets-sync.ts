@@ -19,7 +19,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { Logger } from './utils/logger';
-import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck } from './utils/dependencies';
+import { validateDependencies, ghCliCheck, ghAuthCheck, nodeVersionCheck, getGhTokenScopeCheck } from './utils/dependencies';
 import { safeReadFile, safeWriteFile, safeReadDir, safeExists } from './utils/safeFs';
 import { buildErrorMessage } from './utils/errorMessages';
 import { fixGitignore, validateGitignore } from './utils/gitignoreValidator';
@@ -769,6 +769,14 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
     const proc = spawnSync('gh', ['secret', 'set', name, '--body', value]);
     if (proc.status !== 0) {
       const stderr = proc.stderr?.toString() || '';
+      // REQ-009: Detect scope-related 403 and enhance error message
+      if (/403|admin rights|Resource not accessible/i.test(stderr)) {
+        throw new Error(
+          `gh secret set ${name} failed: Token may be missing required scope.\n` +
+          `   Fix: gh auth refresh -s admin:org\n` +
+          `   Original error: ${stderr.trim()}`
+        );
+      }
       throw new Error(`gh secret set ${name} failed: ${stderr.trim()}`);
     }
   }
@@ -780,6 +788,14 @@ class GhCliSecretsAdapter implements GitHubSecretsAdapter {
       const stderr = proc.stderr?.toString() || '';
       // Treat not found as success (idempotent)
       if (/not found/i.test(stderr)) return;
+      // REQ-009: Detect scope-related 403 and enhance error message
+      if (/403|admin rights|Resource not accessible/i.test(stderr)) {
+        throw new Error(
+          `gh secret delete ${name} failed: Token may be missing required scope.\n` +
+          `   Fix: gh auth refresh -s admin:org\n` +
+          `   Original error: ${stderr.trim()}`
+        );
+      }
       throw new Error(`gh secret delete ${name} failed: ${stderr.trim()}`);
     }
   }
@@ -1321,6 +1337,7 @@ async function main() {
       nodeVersionCheck,
       ghCliCheck,
       ghAuthCheck,
+      getGhTokenScopeCheck(), // REQ-007: scope check as DependencyCheck
     ]);
 
     if (!result.success) {
