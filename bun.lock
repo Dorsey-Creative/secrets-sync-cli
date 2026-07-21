@@ -39,7 +39,7 @@
 
     "jscpd-windows-x64-msvc": ["jscpd-windows-x64-msvc@5.0.12", "", { "os": "win32", "cpu": "x64" }, "sha512-01x1klKjvfzI6Of5tI9u72x7TIQZQLLG6kMdsEPJKl/BXbskdknrfCepeTXRBbdFPKs25jfcd0klZ4OdDvww5w=="],
 
-    "lru-cache": ["lru-cache@11.2.2", "", {}, "sha512-F9ODfyqML2coTIsQpSkRHnLSZMtkU8Q+mSfcaIyKwy58u+8k5nvAYeiNhsyMARvzNcXJ9QfWVrcPsC9e9rAxtg=="],
+    "lru-cache": ["lru-cache@11.5.2", "", {}, "sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g=="],
 
     "undici-types": ["undici-types@7.16.0", "", {}, "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw=="],
 
